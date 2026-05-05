@@ -1,0 +1,54 @@
+/* SIDEBAR ROJO */
+.fi-sidebar {
+    background-color: #8f0f12 !important;
+}
+
+.fi-sidebar-nav-groups {
+    background-color: #8f0f12 !important;
+}
+
+/* Links del menú */
+.fi-sidebar-item-button {
+    color: white !important;
+}
+
+.fi-sidebar-item-button:hover {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+}
+
+/* Item activo */
+.fi-sidebar-item-button.fi-active {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+/* Íconos */
+.fi-sidebar-item-button svg {
+    color: white !important;
+}
+
+/* Grupos del menú */
+.fi-sidebar-group-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Header/topbar */
+.fi-topbar {
+    background-color: #8f0f12 !important;
+    border-bottom: none !important;
+}
+
+.fi-topbar-nav {
+    background-color: #8f0f12 !important;
+}
+
+/* Texto del header */
+.fi-topbar nav * {
+    color: white !important;
+}
+
+/* Brand name */
+.fi-logo {
+    color: white !important;
+}
