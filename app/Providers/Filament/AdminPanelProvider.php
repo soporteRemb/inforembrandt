@@ -26,6 +26,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->locale('es')
             ->favicon(asset('images/Logo.png'))
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandName(function() {
