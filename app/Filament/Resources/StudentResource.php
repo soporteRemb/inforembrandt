@@ -310,9 +310,12 @@ class StudentResource extends Resource
                             ->label('')
                             ->content(function (?Student $record) {
                                 if (!$record) return new HtmlString('');
-                                $url   = url("/students/{$record->id}/pdf/pre-matricula");
-                                $reg   = $record->documentos()->where('tipo', 'pre_matricula')->first();
-                                $fecha = $reg ? \Carbon\Carbon::parse($reg->generado_at)->format('d/m/Y') : '—';
+                                $url  = url("/students/{$record->id}/pdf/pre-matricula");
+                                $reg  = $record->documentos()->where('tipo', 'pre_matricula')->first();
+                                $meta = $reg
+                                    ? '<span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;">' . \Carbon\Carbon::parse($reg->generado_at)->format('d/m/Y') . '</span>'
+                                      . ($reg->generado_por ? '<span style="font-size:0.75rem;color:#cbd5e1;white-space:nowrap;">· ' . e($reg->generado_por) . '</span>' : '')
+                                    : '<span style="font-size:0.78rem;color:#cbd5e1;">—</span>';
                                 return new HtmlString('
                                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
                                         <a href="' . $url . '" target="_blank" onclick="setTimeout(()=>window.location.reload(),2000)" style="text-decoration:none;flex:1;">
@@ -321,7 +324,7 @@ class StudentResource extends Resource
                                                 Pre matrícula
                                             </button>
                                         </a>
-                                        <span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;">' . $fecha . '</span>
+                                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">' . $meta . '</div>
                                     </div>
                                 ');
                             }),
@@ -329,9 +332,12 @@ class StudentResource extends Resource
                             ->label('')
                             ->content(function (?Student $record) {
                                 if (!$record) return new HtmlString('');
-                                $url   = url("/students/{$record->id}/pdf/hoja-matricula");
-                                $reg   = $record->documentos()->where('tipo', 'hoja_matricula')->first();
-                                $fecha = $reg ? \Carbon\Carbon::parse($reg->generado_at)->format('d/m/Y') : '—';
+                                $url  = url("/students/{$record->id}/pdf/hoja-matricula");
+                                $reg  = $record->documentos()->where('tipo', 'hoja_matricula')->first();
+                                $meta = $reg
+                                    ? '<span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;">' . \Carbon\Carbon::parse($reg->generado_at)->format('d/m/Y') . '</span>'
+                                      . ($reg->generado_por ? '<span style="font-size:0.75rem;color:#cbd5e1;white-space:nowrap;">· ' . e($reg->generado_por) . '</span>' : '')
+                                    : '<span style="font-size:0.78rem;color:#cbd5e1;">—</span>';
                                 return new HtmlString('
                                     <div style="display:flex;align-items:center;gap:10px;">
                                         <a href="' . $url . '" target="_blank" onclick="setTimeout(()=>window.location.reload(),2000)" style="text-decoration:none;flex:1;">
@@ -340,7 +346,7 @@ class StudentResource extends Resource
                                                 Hoja de matrícula
                                             </button>
                                         </a>
-                                        <span style="font-size:0.78rem;color:#94a3b8;white-space:nowrap;">' . $fecha . '</span>
+                                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;">' . $meta . '</div>
                                     </div>
                                 ');
                             }),
