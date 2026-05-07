@@ -192,8 +192,8 @@
             @php $registro = $generados[$tipo] ?? null; @endphp
             <div class="doc-row" id="row-{{ $tipo }}" data-generado="{{ $registro ? 'true' : 'false' }}">
 
-                {{-- Botón que abre el PDF --}}
-                <a  href="/students/{{ $student->id }}/pdf/formato/{{ $tipo }}"
+                {{-- Botón que abre el PDF original --}}
+                <a  href="{{ asset('formatos/' . rawurlencode($doc['archivo'])) }}"
                     target="_blank"
                     class="doc-btn"
                     style="background:{{ $doc['color'] }}; color:{{ $doc['text'] }}; border:1px solid {{ $doc['border'] }};">
