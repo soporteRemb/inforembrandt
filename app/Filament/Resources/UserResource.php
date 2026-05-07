@@ -47,28 +47,19 @@ class UserResource extends Resource
                 ->required(fn(string $context) => $context === 'create')
                 ->label('Contraseña'),
 
-            Select::make('sede_id')
-                ->label('Sede')
-                ->options(Sede::where('activa', true)->pluck('nombre', 'id'))
-                ->searchable()
-                ->nullable(),
-
-            Select::make('tipo_usuario')
-                ->label('Tipo de usuario')
-                ->options([
-                    'superadmin' => 'Super Admin',
-                    'admin'      => 'Administrador',
-                    'rector'     => 'Rector',
-                    'docente'    => 'Docente',
-                    'acudiente'  => 'Acudiente',
-                ])
-                ->required(),
-
             Select::make('roles')
-                ->label('Rol')
+                ->label('Roles')
                 ->multiple()
                 ->relationship('roles', 'name')
-                ->preload(),
+                ->preload()
+                ->required(),
+
+            Select::make('sedes')
+                ->label('Sedes')
+                ->multiple()
+                ->relationship('sedes', 'nombre')
+                ->preload()
+                ->helperText('Selecciona todas las sedes a las que tiene acceso este usuario.'),
         ]);
     }
 
@@ -84,25 +75,27 @@ class UserResource extends Resource
                 TextColumn::make('email')
                     ->searchable(),
 
-                TextColumn::make('sede.nombre')
-                    ->label('Sede')
-                    ->sortable(),
-
-                TextColumn::make('tipo_usuario')
-                    ->label('Tipo')
-                    ->badge()
-                    ->color(fn(string $state): string => match($state) {
-                        'superadmin' => 'danger',
-                        'admin'      => 'warning',
-                        'rector'     => 'info',
-                        'docente'    => 'success',
-                        'acudiente'  => 'gray',
-                        default      => 'gray',
-                    }),
-
                 TextColumn::make('roles.name')
                     ->label('Rol')
-                    ->badge(),
+                    ->badge()
+                    ->color(fn(string $state): string => match($state) {
+                        'superadmin'              => 'danger',
+                        'admin'                   => 'warning',
+                        'rector'                  => 'info',
+                        'coordinador_academico'   => 'info',
+                        'coordinador_convivencia' => 'info',
+                        'secretaria'              => 'success',
+                        'director_grupo'          => 'success',
+                        'docente'                 => 'success',
+                        'acudiente'               => 'gray',
+                        default                   => 'gray',
+                    }),
+
+                TextColumn::make('sedes.nombre')
+                    ->label('Sedes')
+                    ->badge()
+                    ->color('primary')
+                    ->separator(','),
             ])
             ->filters([])
             ->actions([
@@ -120,9 +113,7 @@ class UserResource extends Resource
     {
         $user = auth()->user();
         if (!$user) return false;
-        if (in_array($user->tipo_usuario ?? '', ['superadmin', 'admin'])) return true;
-        if (method_exists($user, 'hasAnyRole')) return $user->hasAnyRole(['superadmin', 'admin']);
-        return false;
+        return $user->hasAnyRole(['superadmin', 'admin']);
     }
 
     public static function getPages(): array

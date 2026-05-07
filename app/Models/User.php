@@ -36,4 +36,20 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Sede::class);
     }
+
+    public function sedes()
+    {
+        return $this->belongsToMany(Sede::class, 'sede_user');
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasAnyRole(['superadmin', 'admin']);
+    }
+
+    public function canAccessSede(int $sedeId): bool
+    {
+        if ($this->isAdmin()) return true;
+        return $this->sedes()->where('sedes.id', $sedeId)->exists();
+    }
 }

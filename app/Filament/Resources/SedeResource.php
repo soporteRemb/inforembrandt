@@ -97,9 +97,7 @@ class SedeResource extends Resource
     {
         $user = auth()->user();
         if (!$user) return false;
-        if (in_array($user->tipo_usuario ?? '', ['superadmin', 'admin'])) return true;
-        if (method_exists($user, 'hasAnyRole')) return $user->hasAnyRole(['superadmin', 'admin']);
-        return false;
+        return $user->hasAnyRole(['superadmin', 'admin']);
     }
 
     public static function getPages(): array

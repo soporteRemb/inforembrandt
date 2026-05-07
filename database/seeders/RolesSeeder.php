@@ -13,12 +13,19 @@ class RolesSeeder extends Seeder
             'superadmin',
             'admin',
             'rector',
+            'coordinador_academico',
+            'coordinador_convivencia',
+            'secretaria',
+            'director_grupo',
             'docente',
             'acudiente',
         ];
 
         foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role]);
+            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
         }
+
+        // Asignar permisos por defecto
+        $this->call(PermissionsSeeder::class);
     }
 }
