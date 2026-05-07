@@ -18,12 +18,13 @@ return new class extends Migration
         }
 
         // Migrar datos existentes: mover sede_id actual a la tabla pivot
-        DB::table('users')->whereNotNull('sede_id')->each(function ($user) {
+        $rows = DB::table('users')->whereNotNull('sede_id')->orderBy('id')->get(['id', 'sede_id']);
+        foreach ($rows as $user) {
             DB::table('sede_user')->insertOrIgnore([
                 'user_id' => $user->id,
                 'sede_id' => $user->sede_id,
             ]);
-        });
+        }
     }
 
     public function down(): void
