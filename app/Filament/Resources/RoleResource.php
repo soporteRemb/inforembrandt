@@ -9,6 +9,7 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -37,11 +38,17 @@ class RoleResource extends Resource
         foreach ($grupos as $modulo => $permisos) {
             $fieldName = 'perm_' . Str::slug($modulo, '_');
 
-            $options = Permission::whereIn('name', $permisos)
-                ->get()
+            $permRecords = Permission::whereIn('name', $permisos)->get();
+
+            $options = $permRecords
                 ->pluck('name', 'id')
                 ->map(fn($name) => self::etiqueta($name))
                 ->toArray();
+
+            // ID del permiso "ver_" de este módulo (puede no existir en todos)
+            $verPermId = (string) ($permRecords->firstWhere(
+                fn($p) => str_starts_with($p->name, 'ver_')
+            )?->id ?? '');
 
             $sections[] = Section::make($modulo)
                 ->collapsible()
@@ -50,7 +57,14 @@ class RoleResource extends Resource
                         ->label('')
                         ->options($options)
                         ->columns(2)
-                        ->gridDirection('row'),
+                        ->gridDirection('row')
+                        ->live()
+                        ->afterStateUpdated(function (?array $state, Set $set) use ($fieldName, $verPermId) {
+                            // Si "Ver" fue desmarcado, quitar todos los demás del módulo
+                            if ($verPermId && !in_array($verPermId, array_map('strval', $state ?? []))) {
+                                $set($fieldName, []);
+                            }
+                        }),
                 ]);
         }
 
