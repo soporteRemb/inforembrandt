@@ -69,7 +69,32 @@ class StudentPdfController extends Controller
         return view('documentos.estudiante', compact('student'));
     }
 
-    public function marcarDocumento(Student $student, string $tipo): \Illuminate\Http\JsonResponse
+    // ── PDF genérico para los 6 formatos ────────────────────────────────────
+    public function formato(Request $request, Student $student, string $tipo)
+    {
+        $todos = \App\Models\StudentDocumento::todos();
+
+        if (!isset($todos[$tipo])) {
+            abort(404);
+        }
+
+        $student->load(['guardians', 'course', 'periodoLectivo', 'sede']);
+        $doc      = $todos[$tipo];
+        $logoPath = public_path('images/Logo.png');
+        $logoB64  = file_exists($logoPath)
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+        $fecha    = now()->format('d/m/Y');
+        $revisor  = Auth::user()->name ?? 'Administrador';
+
+        $pdf = Pdf::loadView('pdf.formato', compact('student', 'doc', 'tipo', 'fecha', 'revisor', 'logoB64'))
+            ->setPaper('letter', 'portrait');
+
+        return $pdf->stream(str_replace(' ', '-', strtolower($doc['label'])) . '-' . $student->codigo . '.pdf');
+    }
+
+    // ── Toggle marcar/desmarcar documento digital ────────────────────────────
+    public function toggleDocumento(Student $student, string $tipo): \Illuminate\Http\JsonResponse
     {
         $tipos = array_keys(\App\Models\StudentDocumento::todos());
 
@@ -77,12 +102,20 @@ class StudentPdfController extends Controller
             return response()->json(['error' => 'Tipo inválido'], 422);
         }
 
-        $student->documentos()->updateOrCreate(
-            ['tipo' => $tipo],
-            ['generado_at' => now(), 'generado_por' => Auth::user()->name ?? 'Administrador']
-        );
+        $existente = $student->documentos()->where('tipo', $tipo)->first();
 
-        return response()->json(['ok' => true]);
+        if ($existente) {
+            $existente->delete();
+            return response()->json(['ok' => true, 'estado' => 'desmarcado']);
+        }
+
+        $student->documentos()->create([
+            'tipo'         => $tipo,
+            'generado_at'  => now(),
+            'generado_por' => Auth::user()->name ?? 'Administrador',
+        ]);
+
+        return response()->json(['ok' => true, 'estado' => 'marcado', 'quien' => Auth::user()->name, 'cuando' => now()->format('d/m/Y H:i')]);
     }
 
     // ── Documentos físicos (checklist 14 ítems) ──────────────────────────────

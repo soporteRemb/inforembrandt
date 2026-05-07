@@ -66,40 +66,62 @@
         .doc-row {
             display: flex;
             align-items: center;
-            padding: 12px 20px;
+            padding: 11px 20px;
             border-bottom: 1px solid #f1f5f9;
-            gap: 14px;
-            transition: background 0.15s;
+            gap: 12px;
         }
         .doc-row:last-child { border-bottom: none; }
         .doc-row:hover { background: #fafafa; }
 
+        /* Botón PDF */
         .doc-btn {
-            border: none; border-radius: 8px;
-            padding: 7px 16px;
-            font-weight: 600; font-size: 0.83rem;
+            border: none; border-radius: 7px;
+            padding: 6px 14px;
+            font-weight: 600; font-size: 0.82rem;
             cursor: pointer;
             white-space: nowrap;
+            display: inline-flex; align-items: center; gap: 5px;
             transition: opacity 0.15s;
-            display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none;
         }
-        .doc-btn:hover { opacity: 0.85; }
-        .doc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .doc-btn:hover { opacity: 0.82; }
 
-        .doc-meta { margin-left: auto; text-align: right; font-size: 0.78rem; }
-        .doc-meta .done  { color: #16a34a; font-weight: 600; }
-        .doc-meta .pend  { color: #94a3b8; }
-        .doc-meta .who   { color: #64748b; display: block; }
-
-        .all-done {
-            padding: 20px;
-            text-align: center;
-            color: #16a34a;
-            font-weight: 600;
-            font-size: 0.95rem;
+        /* Toggle checkbox */
+        .toggle-wrap {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
         }
+        .toggle-btn {
+            width: 34px; height: 20px;
+            border-radius: 99px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .toggle-btn::after {
+            content: '';
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: white;
+            transition: transform 0.2s;
+        }
+        .toggle-btn.off { background: #cbd5e1; }
+        .toggle-btn.on  { background: #16a34a; }
+        .toggle-btn.on::after { transform: translateX(14px); }
 
-        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 4px; }
+        .doc-meta { font-size: 0.75rem; text-align: right; }
+        .doc-meta .done { color: #16a34a; font-weight: 600; display: block; }
+        .doc-meta .who  { color: #94a3b8; display: block; }
+        .doc-meta .pend { color: #94a3b8; }
+
+        .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .toast {
@@ -166,38 +188,39 @@
                 $generados  = $student->documentos()->get()->keyBy('tipo');
             @endphp
 
-            @forelse($todos as $tipo => $doc)
+            @foreach($todos as $tipo => $doc)
             @php $registro = $generados[$tipo] ?? null; @endphp
             <div class="doc-row" id="row-{{ $tipo }}" data-generado="{{ $registro ? 'true' : 'false' }}">
-                <button
-                    class="doc-btn"
-                    style="background:{{ $doc['color'] }}; color:{{ $doc['text'] }}; border:1px solid {{ $doc['border'] }};"
-                    onclick="accionDoc('{{ $tipo }}', {{ $doc['pdf'] ? 'true' : 'false' }}, '{{ $doc['label'] }}')"
-                    {{ $registro ? 'disabled' : '' }}
-                    id="btn-{{ $tipo }}">
-                    @if($doc['pdf'])
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-                    @else
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V19.5a2.25 2.25 0 002.25 2.25h.75m0-3.75h3M3.75 18h.008v.008H3.75V18zm0-3h.008v.008H3.75V15zm0-3h.008v.008H3.75V12z"/></svg>
-                    @endif
-                    {{ $doc['label'] }}
-                </button>
 
-                <div class="doc-meta">
-                    @if($registro)
-                        <span class="done">✓ Generado</span>
-                        <span class="who">{{ \Carbon\Carbon::parse($registro->generado_at)->format('d/m/Y H:i') }} · {{ $registro->generado_por }}</span>
-                    @else
-                        <span class="pend">Pendiente</span>
-                    @endif
+                {{-- Botón que abre el PDF --}}
+                <a  href="/students/{{ $student->id }}/pdf/formato/{{ $tipo }}"
+                    target="_blank"
+                    class="doc-btn"
+                    style="background:{{ $doc['color'] }}; color:{{ $doc['text'] }}; border:1px solid {{ $doc['border'] }};">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="13" height="13" style="flex-shrink:0"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    {{ $doc['label'] }}
+                </a>
+
+                {{-- Toggle + meta --}}
+                <div class="toggle-wrap">
+                    <div class="doc-meta" id="meta-{{ $tipo }}">
+                        @if($registro)
+                            <span class="done">✓ Entregado</span>
+                            <span class="who">{{ \Carbon\Carbon::parse($registro->generado_at)->format('d/m/Y H:i') }} · {{ $registro->generado_por }}</span>
+                        @else
+                            <span class="pend">Pendiente</span>
+                        @endif
+                    </div>
+                    <button
+                        class="toggle-btn {{ $registro ? 'on' : 'off' }}"
+                        id="toggle-{{ $tipo }}"
+                        onclick="toggleDoc('{{ $tipo }}')"
+                        title="{{ $registro ? 'Desmarcar como entregado' : 'Marcar como entregado' }}">
+                    </button>
                 </div>
+
             </div>
-            @empty
-            <div class="all-done">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" width="20" height="20" style="display:inline;vertical-align:middle;margin-right:6px"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                Todos los documentos están completos
-            </div>
-            @endforelse
+            @endforeach
         </div>
     </div>
 
@@ -208,6 +231,7 @@
 <script>
 const studentId = {{ $student->id }};
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const userName  = '{{ auth()->user()->name }}';
 
 function updateBadge() {
     const pendientes = document.querySelectorAll('.doc-row[data-generado="false"]').length;
@@ -223,41 +247,42 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-async function marcarGenerado(tipo) {
-    await fetch(`/students/${studentId}/documentos/${tipo}/marcar`, {
-        method: 'POST',
-        headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
-    });
+async function toggleDoc(tipo) {
+    const toggleBtn = document.getElementById('toggle-' + tipo);
+    const row       = document.getElementById('row-' + tipo);
+    const meta      = document.getElementById('meta-' + tipo);
 
-    const row = document.getElementById('row-' + tipo);
-    const btn = document.getElementById('btn-' + tipo);
-    const meta = row.querySelector('.doc-meta');
-    const ahora = new Date().toLocaleString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    toggleBtn.innerHTML = '<span class="spinner"></span>';
+    toggleBtn.disabled  = true;
 
-    row.dataset.generado = 'true';
-    btn.disabled = true;
-    meta.innerHTML = `<span class="done">✓ Generado</span><span class="who">${ahora} · {{ auth()->user()->name }}</span>`;
+    try {
+        const res  = await fetch(`/students/${studentId}/documentos/${tipo}/toggle`, {
+            method:  'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
 
-    updateBadge();
-    showToast('✓ Documento registrado');
-}
-
-async function accionDoc(tipo, esPdf, label) {
-    const urls = {
-        pre_matricula:  `/students/${studentId}/pdf/pre-matricula`,
-        hoja_matricula: `/students/${studentId}/pdf/hoja-matricula`,
-    };
-
-    if (esPdf) {
-        window.open(urls[tipo], '_blank');
-        await marcarGenerado(tipo);
-    } else {
-        if (!confirm(`¿Marcar "${label}" como entregado?`)) return;
-        await marcarGenerado(tipo);
+        if (data.estado === 'marcado') {
+            row.dataset.generado  = 'true';
+            toggleBtn.className   = 'toggle-btn on';
+            const ahora = new Date().toLocaleString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+            meta.innerHTML = `<span class="done">✓ Entregado</span><span class="who">${ahora} · ${userName}</span>`;
+            showToast('✓ Marcado como entregado');
+        } else {
+            row.dataset.generado  = 'false';
+            toggleBtn.className   = 'toggle-btn off';
+            meta.innerHTML        = '<span class="pend">Pendiente</span>';
+            showToast('Desmarcado');
+        }
+    } catch(e) {
+        showToast('Error al guardar');
     }
+
+    toggleBtn.innerHTML = '';
+    toggleBtn.disabled  = false;
+    updateBadge();
 }
 
-// Badge inicial
 document.addEventListener('DOMContentLoaded', updateBadge);
 </script>
 </body>

@@ -17,10 +17,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::get('/students/{student}/pdf/pre-matricula',  [StudentPdfController::class, 'preMatricula'])->name('students.pdf.pre-matricula');
-    Route::get('/students/{student}/pdf/hoja-matricula', [StudentPdfController::class, 'hojaMatricula'])->name('students.pdf.hoja-matricula');
-    Route::get('/students/{student}/documentos',                [StudentPdfController::class, 'documentos'])->name('students.documentos');
-    Route::post('/students/{student}/documentos/{tipo}/marcar', [StudentPdfController::class, 'marcarDocumento'])->name('students.documentos.marcar');
+    Route::get('/students/{student}/pdf/pre-matricula',    [StudentPdfController::class, 'preMatricula'])->name('students.pdf.pre-matricula');
+    Route::get('/students/{student}/pdf/hoja-matricula',  [StudentPdfController::class, 'hojaMatricula'])->name('students.pdf.hoja-matricula');
+    Route::get('/students/{student}/pdf/formato/{tipo}',  [StudentPdfController::class, 'formato'])->name('students.pdf.formato');
+    Route::get('/students/{student}/documentos',                 [StudentPdfController::class, 'documentos'])->name('students.documentos');
+    Route::post('/students/{student}/documentos/{tipo}/toggle',  [StudentPdfController::class, 'toggleDocumento'])->name('students.documentos.toggle');
     Route::get('/students/{student}/documentos-fisicos',                   [StudentPdfController::class, 'documentosFisicos'])->name('students.documentos.fisicos');
     Route::post('/students/{student}/documentos-fisicos/{item}/toggle',    [StudentPdfController::class, 'toggleDocumentoFisico'])->name('students.documentos.fisicos.toggle');
 });
