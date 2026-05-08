@@ -120,7 +120,7 @@ class StudentResource extends Resource
 
                             // Foto + botón cámara (columna 1)
                             Group::make([
-                                FileUpload::make('foto')
+                                FileUpload::make('foto')                                  
                                     ->label('')
                                     ->image()
                                     ->imageEditor()
