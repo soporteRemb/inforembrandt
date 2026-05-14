@@ -8,6 +8,7 @@ use Database\Seeders\PermissionsSeeder;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\View as ViewField;
 use Filament\Forms\Form;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
@@ -75,6 +76,9 @@ class RoleResource extends Resource
                 ->maxLength(50)
                 ->disabled(fn($record) => in_array($record?->name ?? '', ['superadmin', 'admin']))
                 ->helperText('Los roles superadmin y admin no se pueden renombrar.'),
+
+            ViewField::make('filament.forms.role-filter-toolbar')
+                ->label(''),
 
             ...$sections,
         ]);
