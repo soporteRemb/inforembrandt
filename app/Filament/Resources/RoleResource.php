@@ -78,7 +78,8 @@ class RoleResource extends Resource
                 ->helperText('Los roles superadmin y admin no se pueden renombrar.'),
 
             ViewField::make('filament.forms.role-filter-toolbar')
-                ->label(''),
+                ->label('')
+                ->columnSpanFull(),
 
             ...$sections,
         ]);
