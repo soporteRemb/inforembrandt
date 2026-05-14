@@ -42,6 +42,23 @@
         Solo marcados
     </label>
 
+    <div class="flex gap-2 flex-wrap">
+        <button type="button" onclick="rpSelectAll()"
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-primary-50 text-primary-700 hover:bg-primary-100 border border-primary-200 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Seleccionar todo
+        </button>
+        <button type="button" onclick="rpDeselectAll()"
+            class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Deseleccionar todo
+        </button>
+    </div>
+
     <div class="flex gap-2 ml-auto">
         <button type="button" onclick="rpExpandAll()"
             class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
@@ -138,4 +155,30 @@ function rpSetCollapsed(value) {
 
 function rpExpandAll()  { rpSetCollapsed(false); }
 function rpCollapseAll(){ rpSetCollapsed(true);  }
+
+function rpToggleCheckboxes(check) {
+    // Solo actúa sobre las secciones visibles (respeta el filtro activo)
+    document.querySelectorAll('.fi-section').forEach(section => {
+        if (section.style.display === 'none') return;
+
+        section.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            // Buscar el contenedor del item para ver si está visible
+            let item = cb.parentElement;
+            for (let i = 0; i < 4; i++) {
+                if (!item || item === section) break;
+                if (item.querySelectorAll('input[type="checkbox"]').length === 1) break;
+                item = item.parentElement;
+            }
+            // Si el item está oculto por el filtro, no tocarlo
+            if (item && item.style.display === 'none') return;
+
+            if (cb.checked !== check) {
+                cb.click(); // Simula clic real para que Livewire/Alpine se enteren
+            }
+        });
+    });
+}
+
+function rpSelectAll()   { rpToggleCheckboxes(true);  }
+function rpDeselectAll() { rpToggleCheckboxes(false); }
 </script>
