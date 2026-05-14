@@ -30,17 +30,17 @@
         </button>
     </div>
 
-    {{-- Solo marcados --}}
-    <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700">
-        <div onclick="document.getElementById('rp-only').click()" id="rp-toggle-track"
-            class="relative w-9 h-5 rounded-full bg-gray-200 transition-colors duration-200 cursor-pointer flex-shrink-0">
+    {{-- Solo marcados — toggle fuera del label para evitar doble clic --}}
+    <div class="flex items-center gap-2 cursor-pointer select-none" onclick="rpToggleOnlyChecked()">
+        <div id="rp-toggle-track"
+            class="relative w-9 h-5 rounded-full bg-gray-200 transition-colors duration-200 flex-shrink-0">
             <span id="rp-toggle-thumb"
                 class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200">
             </span>
         </div>
-        <input id="rp-only" type="checkbox" class="sr-only" onchange="rpFilter(); rpToggleUI(this.checked);">
-        Solo marcados
-    </label>
+        <span class="text-sm font-medium text-gray-700">Solo marcados</span>
+    </div>
+    <input id="rp-only" type="checkbox" class="sr-only" onchange="rpFilter()">
 
     <div class="flex gap-2 flex-wrap">
         <button type="button" onclick="rpSelectAll()"
@@ -78,18 +78,28 @@
 </div>
 
 <script>
-function rpToggleUI(checked) {
+// ── Toggle "Solo marcados" ───────────────────────────────────────────────────
+function rpToggleOnlyChecked() {
+    const cb    = document.getElementById('rp-only');
     const track = document.getElementById('rp-toggle-track');
     const thumb = document.getElementById('rp-toggle-thumb');
-    if (checked) {
-        track.classList.replace('bg-gray-200', 'bg-primary-600');
-        thumb.style.transform = 'translateX(1rem)';
+
+    cb.checked = !cb.checked;
+
+    if (cb.checked) {
+        track.style.backgroundColor = 'rgb(var(--color-primary-600, 30 64 175))';
+        track.style.background = '#c1121f';
+        thumb.style.transform  = 'translateX(1rem)';
     } else {
-        track.classList.replace('bg-primary-600', 'bg-gray-200');
-        thumb.style.transform = '';
+        track.style.background = '';
+        track.classList.add('bg-gray-200');
+        thumb.style.transform  = '';
     }
+
+    rpFilter();
 }
 
+// ── Filtrar secciones ────────────────────────────────────────────────────────
 function rpFilter() {
     const q          = (document.getElementById('rp-search')?.value ?? '').toLowerCase().trim();
     const onlyCheck  = document.getElementById('rp-only')?.checked ?? false;
@@ -98,19 +108,19 @@ function rpFilter() {
     const clearBtn = document.getElementById('rp-clear');
     if (clearBtn) clearBtn.style.display = q ? '' : 'none';
 
-    // Cada sección de Filament
     document.querySelectorAll('.fi-section').forEach(section => {
-        const headingText = (section.querySelector('.fi-section-header-heading')?.textContent
+        const headingText = (
+            section.querySelector('.fi-section-header-heading')?.textContent
             ?? section.querySelector('h3, h2')?.textContent
-            ?? '').toLowerCase();
+            ?? ''
+        ).toLowerCase();
 
-        // Todos los checkboxes de esta sección
         const checkboxes = section.querySelectorAll('input[type="checkbox"]');
-        if (!checkboxes.length) return; // sección sin checkboxes, ignorar
+        if (!checkboxes.length) return;
 
         let visible = 0;
         checkboxes.forEach(cb => {
-            // Contenedor del item (sube hasta encontrar algo con un solo checkbox)
+            // Sube hasta encontrar el contenedor del item individual
             let item = cb.parentElement;
             for (let i = 0; i < 4; i++) {
                 if (!item || item === section) break;
@@ -120,26 +130,26 @@ function rpFilter() {
             if (!item || item === section) return;
 
             const labelText = (item.textContent ?? '').toLowerCase().trim();
-            const matchQ    = !q           || labelText.includes(q) || headingText.includes(q);
-            const matchCk   = !onlyCheck   || cb.checked;
+            const matchQ    = !q          || labelText.includes(q) || headingText.includes(q);
+            const matchCk   = !onlyCheck  || cb.checked;
 
             item.style.display = (matchQ && matchCk) ? '' : 'none';
             if (matchQ && matchCk) visible++;
         });
 
-        // Ocultar sección entera si no hay nada visible
-        section.style.display = visible === 0 ? 'none' : '';
+        // Ocultar la sección Y su wrapper padre para no dejar espacio vacío
+        const wrapper = section.parentElement ?? section;
+        wrapper.style.display = visible === 0 ? 'none' : '';
     });
 }
 
+// ── Colapsar / Expandir ──────────────────────────────────────────────────────
 function rpSetCollapsed(value) {
     document.querySelectorAll('.fi-section').forEach(section => {
-        // Intentar con Alpine.$data (API pública)
         try {
             const d = window.Alpine.$data(section);
             if (typeof d.isCollapsed !== 'undefined') { d.isCollapsed = value; return; }
         } catch(e) {}
-        // Fallback: buscar el elemento con x-data dentro de la sección
         const xEl = section.querySelector('[x-data]');
         if (xEl) {
             try {
@@ -147,7 +157,6 @@ function rpSetCollapsed(value) {
                 if (typeof d.isCollapsed !== 'undefined') { d.isCollapsed = value; return; }
             } catch(e) {}
         }
-        // Último fallback: clic en el botón solo si el estado es diferente al deseado
         const btn = section.querySelector('button[type="button"]');
         if (btn) btn.click();
     });
@@ -156,25 +165,21 @@ function rpSetCollapsed(value) {
 function rpExpandAll()  { rpSetCollapsed(false); }
 function rpCollapseAll(){ rpSetCollapsed(true);  }
 
+// ── Seleccionar / Deseleccionar ──────────────────────────────────────────────
 function rpToggleCheckboxes(check) {
-    // Solo actúa sobre las secciones visibles (respeta el filtro activo)
     document.querySelectorAll('.fi-section').forEach(section => {
-        if (section.style.display === 'none') return;
+        const wrapper = section.parentElement ?? section;
+        if (wrapper.style.display === 'none') return;
 
         section.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            // Buscar el contenedor del item para ver si está visible
             let item = cb.parentElement;
             for (let i = 0; i < 4; i++) {
                 if (!item || item === section) break;
                 if (item.querySelectorAll('input[type="checkbox"]').length === 1) break;
                 item = item.parentElement;
             }
-            // Si el item está oculto por el filtro, no tocarlo
             if (item && item.style.display === 'none') return;
-
-            if (cb.checked !== check) {
-                cb.click(); // Simula clic real para que Livewire/Alpine se enteren
-            }
+            if (cb.checked !== check) cb.click();
         });
     });
 }
