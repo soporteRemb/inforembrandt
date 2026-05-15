@@ -19,7 +19,9 @@ class PermissionsSeeder extends Seeder
             'Periodos'        => ['ver_periodos', 'crear_periodos', 'editar_periodos', 'eliminar_periodos'],
             'Acudientes'      => ['ver_acudientes', 'crear_acudientes', 'editar_acudientes', 'eliminar_acudientes'],
             'Matrículas'      => ['ver_matriculas', 'crear_matriculas', 'editar_matriculas', 'eliminar_matriculas'],
-            'Roles'           => ['ver_roles', 'editar_roles'],
+            'Roles'              => ['ver_roles', 'editar_roles'],
+            'Conceptos de Cobro' => ['ver_conceptos_cobro', 'crear_conceptos_cobro', 'editar_conceptos_cobro', 'eliminar_conceptos_cobro'],
+            'Asignación Costos'  => ['ver_asignacion_costos', 'crear_asignacion_costos', 'editar_asignacion_costos', 'eliminar_asignacion_costos'],
         ];
     }
 

@@ -180,14 +180,16 @@ class RoleResource extends Resource
         ];
 
         $recursos = [
-            'estudiantes' => 'Estudiantes',
-            'usuarios'    => 'Usuarios',
-            'cursos'      => 'Cursos',
-            'sedes'       => 'Sedes',
-            'periodos'    => 'Períodos',
-            'acudientes'  => 'Acudientes',
-            'matriculas'  => 'Matrículas',
-            'roles'       => 'Roles',
+            'estudiantes'       => 'Estudiantes',
+            'usuarios'          => 'Usuarios',
+            'cursos'            => 'Cursos',
+            'sedes'             => 'Sedes',
+            'periodos'          => 'Períodos',
+            'acudientes'        => 'Acudientes',
+            'matriculas'        => 'Matrículas',
+            'roles'             => 'Roles',
+            'conceptos_cobro'   => 'Conceptos de Cobro',
+            'asignacion_costos' => 'Asignación Costos',
         ];
 
         foreach ($mapa as $prefijo => $label) {
