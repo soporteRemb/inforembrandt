@@ -120,28 +120,48 @@ class AsignacionConceptoResource extends Resource
 
                         Forms\Components\TextInput::make('tarifa_ordinaria')
                             ->label('Tarifa Ordinaria')
-                            ->numeric()
-                            ->integer()
+                            ->prefix('$')
+                            ->inputMode('decimal')
+                            ->formatStateUsing(function ($state) {
+                                if ($state === null) {
+                                    return null;
+                                }
+
+                                return fmod((float) $state, 1) == 0
+                                    ? number_format((float) $state, 0, '', '')
+                                    : str_replace('.', ',', (string) $state);
+                            })
+                            ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
+                            ->rule('regex:/^\d+(,\d{1,2})?$/')
                             ->validationMessages([
-                                'integer' => 'Ingrese el valor sin puntos ni comas.',
+                                'regex' => 'Ingrese el valor sin puntos ni comas.',
                             ])
                             ->minValue(0)
                             ->default(0)
-                            ->prefix('$')
                             ->required()
                             ->columnSpan(2),
 
                         Forms\Components\TextInput::make('tarifa_extemporanea')
                             ->label('Tarifa Extemporánea')
-                            ->numeric()
-                            ->integer()
+                            ->prefix('$')
+                            ->inputMode('decimal')
+                            ->formatStateUsing(function ($state) {
+                                if ($state === null) {
+                                    return null;
+                                }
+
+                                return fmod((float) $state, 1) == 0
+                                    ? number_format((float) $state, 0, '', '')
+                                    : str_replace('.', ',', (string) $state);
+                            })
+                            ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
+                            ->rule('regex:/^\d+(,\d{1,2})?$/')
                             ->validationMessages([
-                                'integer' => 'Ingrese el valor sin puntos ni comas.',
+                                'regex' => 'Ingrese el valor sin puntos ni comas.',
                             ])
                             ->minValue(0)
                             ->default(0)
-                            ->prefix('$')
-                            ->required()  
+                            ->required()
                             ->columnSpan(2),
 
                         Forms\Components\TextInput::make('orden')
@@ -158,7 +178,7 @@ class AsignacionConceptoResource extends Resource
                             ->label('Activo')
                             ->default(true)
                             ->inline(false)
-                            ->columnSpan(1),
+                            ->columnSpan(1)
                     ]),
 
                 

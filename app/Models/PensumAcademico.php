@@ -4,25 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AsignacionConcepto extends Model
+class PensumAcademico extends Model
 {
-    protected $table = 'asignacion_conceptos';
+    protected $table = 'pensum_academicos';
 
     protected $fillable = [
         'sede_id',
         'periodo_lectivo_id',
+        'course_id',
         'grado',
-        'concepto_cobro_id',
-        'tarifa_ordinaria',
-        'tarifa_extemporanea',
+        'docente_id',
+        'codigo',
         'orden',
-        'activo',
-    ];
-
-    protected $casts = [
-        'tarifa_ordinaria' => 'decimal:2',
-        'tarifa_extemporanea' => 'decimal:2',
-        'activo' => 'boolean',
+        'nombre',
+        'nombre_corto',
+        'tipo',
+        'intensidad_horaria',
+        'forma_evaluar',
+        'estado',
     ];
 
     /*
@@ -41,16 +40,18 @@ class AsignacionConcepto extends Model
         return $this->belongsTo(PeriodoLectivo::class);
     }
 
-    public function conceptoCobro()
+    public function course()
     {
-        return $this->belongsTo(ConceptoCobro::class);
+        return $this->belongsTo(Course::class);
     }
 
-    public function vencimientos()
+    public function docente()
     {
-        return $this->hasMany(
-            AsignacionConceptoVencimiento::class,
-            'asignacion_concepto_id'
-        );
+        return $this->belongsTo(Docente::class);
+    }
+
+    public function notas()
+    {
+        return $this->hasMany(NotaEstudiante::class, 'pensum_academico_id');
     }
 }

@@ -52,4 +52,12 @@ class User extends Authenticatable
         if ($this->isAdmin()) return true;
         return $this->sedes()->where('sedes.id', $sedeId)->exists();
     }
+
+
+    public function docente()
+    {
+        return $this->hasOne(Docente::class);
+    }
+
+
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StudentPdfController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CostosEstudianteController;
 
 Route::redirect('/', '/admin/login');
 
@@ -23,5 +24,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/students/{student}/documentos-fisicos',                   [StudentPdfController::class, 'documentosFisicos'])->name('students.documentos.fisicos');
     Route::post('/students/{student}/documentos-fisicos/{item}/toggle',    [StudentPdfController::class, 'toggleDocumentoFisico'])->name('students.documentos.fisicos.toggle');
 });
+
+Route::get(
+    '/admin/estudiantes/{student}/costos',
+    [CostosEstudianteController::class, 'index']
+)->name('costos.estudiante');
+
+Route::post(
+    '/admin/estudiantes/{student}/costos',
+    [CostosEstudianteController::class, 'guardar']
+)->name('costos.estudiante.guardar');
+
+Route::post(
+    '/admin/estudiantes/{student}/costos/asignar',
+    [CostosEstudianteController::class, 'asignarCostos']
+)->name('costos.estudiante.asignar');
 
 require __DIR__.'/auth.php';

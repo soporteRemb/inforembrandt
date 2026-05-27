@@ -20,4 +20,13 @@ class PeriodoLectivo extends Model
     {
         return $this->belongsTo(Sede::class);
     }
+
+
+    public function pensumAcademicos()
+    {
+        return $this->hasMany(PensumAcademico::class);
+    }
+
+
+
 }

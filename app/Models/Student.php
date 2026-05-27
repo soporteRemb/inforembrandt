@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Matricula;
 use App\Models\StudentDocumento;
+use App\Models\FichaCostoEstudiante;
 
 class Student extends Model
 {
@@ -132,4 +133,15 @@ class Student extends Model
     {
         return $this->primer_nombre . ' ' . $this->primer_apellido;
     }
+    public function fichaCosto()
+    {
+        return $this->hasOne(FichaCostoEstudiante::class, 'student_id', 'id');
+    }
+
+
+    public function notas()
+    {
+        return $this->hasMany(NotaEstudiante::class);
+    }
+
 }

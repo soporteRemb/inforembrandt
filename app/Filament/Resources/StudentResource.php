@@ -399,38 +399,104 @@ class StudentResource extends Resource
                             ->label('')
                             ->content(function (?Student $record) {
                                 if (!$record) return new HtmlString('');
+
                                 $url = url("/students/{$record->id}/documentos");
-                                $todos      = \App\Models\StudentDocumento::todos();
+                                $todos = \App\Models\StudentDocumento::todos();
                                 $entregados = $record->documentos->pluck('tipo')->toArray();
-                                $done  = count(array_intersect(array_keys($todos), $entregados));
+                                $done = count(array_intersect(array_keys($todos), $entregados));
                                 $total = count($todos);
-                                $pend  = $total - $done;
+                                $pend = $total - $done;
+
                                 $badge = $pend === 0
                                     ? '<span style="background:#bbf7d0;color:#166534;padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;">✓ Completo</span>'
                                     : '<span style="background:#dcfce7;color:#166534;padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;">' . $pend . ' pendiente' . ($pend !== 1 ? 's' : '') . '</span>';
+
                                 return new HtmlString('
                                     <a href="' . $url . '" target="_blank" style="text-decoration:none;display:block;margin-bottom:8px;">
-                                        <div style="display:flex;align-items:center;justify-content:space-between;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'">
+                                        <div style="display:flex;align-items:center;justify-content:space-between;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px;cursor:pointer;">
+                                            
                                             <div style="display:flex;align-items:center;gap:9px;">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#166534" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                                                
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    width="18"
+                                                    height="18"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="#16a34a"
+                                                    stroke-width="1.8">
+
+                                                    <path stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H6.75A2.25 2.25 0 004.5 4.5v15A2.25 2.25 0 006.75 21.75h10.5A2.25 2.25 0 0019.5 19.5V18"/>
+                                                </svg>
+
                                                 <div>
-                                                    <div style="font-size:0.85rem;font-weight:600;color:#166534;">Formatos de matrícula</div>
-                                                    <div style="font-size:0.75rem;color:#16a34a;margin-top:1px;">' . $done . ' / ' . $total . ' formatos generados</div>
+                                                    <div style="font-size:0.85rem;font-weight:600;color:#166534;">
+                                                        Formatos de matrícula
+                                                    </div>
+
+                                                    <div style="font-size:0.75rem;color:#16a34a;margin-top:1px;">
+                                                        ' . $done . ' / ' . $total . ' formatos generados
+                                                    </div>
                                                 </div>
                                             </div>
+
                                             ' . $badge . '
                                         </div>
                                     </a>
                                 ');
                             }),
+
                         Placeholder::make('btn_costos')
                             ->label('')
-                            ->content(new HtmlString('
-                                <button type="button" style="display:flex;align-items:center;gap:7px;width:100%;padding:8px 12px;background:#cffafe;color:#155e75;border:1px solid #67e8f9;border-radius:8px;font-weight:600;font-size:0.83rem;cursor:pointer;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    Costos
-                                </button>
-                            ')),
+                            ->content(function (?Student $record) {
+
+                                if (!$record) {
+                                    return new HtmlString('');
+                                }
+
+                                $url = route('costos.estudiante', $record);
+
+                                return new HtmlString('
+                                    <a href="' . $url . '" target="_blank" style="text-decoration:none; width:100%; display:block;">
+                                        
+                                        <button type="button"
+                                            style="
+                                                display:flex;
+                                                align-items:center;
+                                                justify-content:flex-start;
+                                                gap:8px;
+                                                width:100%;
+                                                padding:10px 14px;
+                                                background:#d7f3f7;
+                                                color:#256b75;
+                                                border:1px solid #aee4ec;
+                                                border-radius:10px;
+                                                font-weight:600;
+                                                font-size:0.90rem;
+                                                cursor:pointer;
+                                                transition:all .2s ease;
+                                            "
+                                        >
+                                            
+                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke-width="1.8"
+                                                stroke="currentColor"
+                                                width="16"
+                                                height="16">
+
+                                                <path stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+
+                                            Costos
+                                        </button>
+                                    </a>
+                                ');
+                            }),
                     ])->compact()->hidden(fn(string $operation) => $operation === 'create'),
 
                 ])->columnSpan(['xl' => 1]),

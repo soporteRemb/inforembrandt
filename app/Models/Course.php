@@ -32,4 +32,11 @@ class Course extends Model
     {
         return $this->hasMany(Student::class);
     }
+
+
+    public function pensumAcademicos()
+    {
+        return $this->hasMany(PensumAcademico::class);
+    }
+
 }
