@@ -34,15 +34,16 @@ class DocenteResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label('Usuario del sistema')
-                            
                             ->options(
                                 User::query()
+                                    ->whereHas('roles', fn ($query) => $query->where('name', 'docente'))
                                     ->orderBy('name')
                                     ->pluck('name', 'id')
                             )
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->helperText('Seleccione el usuario con el que el docente iniciará sesión.'),
 
                         Forms\Components\TextInput::make('identificacion')
                             ->label('Identificación')

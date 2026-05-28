@@ -41,11 +41,12 @@ class UserResource extends Resource
                 ->maxLength(255),
 
             TextInput::make('password')
+                ->label('Contraseña')
                 ->password()
-                ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                ->dehydrated(fn($state) => filled($state))
-                ->required(fn(string $context) => $context === 'create')
-                ->label('Contraseña'),
+                ->revealable()
+                ->dehydrated(fn ($state) => filled($state))
+                ->required(fn (string $context): bool => $context === 'create')
+                ->dehydrateStateUsing(fn ($state) => filled($state) ? Hash::make($state) : null),
 
             Select::make('roles')
                 ->label('Roles')

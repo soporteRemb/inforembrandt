@@ -483,6 +483,63 @@
         }
 
 
+        .rn-export-search{
+            width:100%;
+            height:42px;
+            border:1px solid #d1d5db;
+            border-radius:10px;
+            padding:0 14px;
+            font-size:13px;
+            outline:none;
+        }
+
+        .rn-export-list{
+            margin-top:10px;
+            max-height:220px;
+            overflow-y:auto;
+            border:1px solid #e5e7eb;
+            border-radius:10px;
+            background:#fff;
+        }
+
+        .rn-export-item{
+            width:100%;
+            text-align:left;
+            padding:12px 14px;
+            border:none;
+            background:#fff;
+            cursor:pointer;
+            font-size:13px;
+            border-bottom:1px solid #f1f5f9;
+        }
+
+        .rn-export-item:hover{
+            background:#f8fafc;
+        }
+
+        .rn-export-item.active{
+            background:#991b1b;
+            color:white;
+        }
+
+        .rn-export-empty{
+            padding:14px;
+            font-size:13px;
+            color:#6b7280;
+        }
+
+        .rn-input-error {
+            border: 1px solid #dc2626 !important;
+            background: #fef2f2 !important;
+        }
+
+        .rn-error-text {
+            color: #dc2626;
+            font-size: 11px;
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
 
     </style>
 
@@ -574,15 +631,19 @@
                     class="rn-search-input"
                 />
 
+                @php
+                    $periodoCerrado = ! $this->periodoLectivoEstaAbierto();
+                @endphp
+
                 <button
                     type="button"
-                    wire:click="exportarExcel"
+                    wire:click="abrirModalExportar"
                     class="rn-btn rn-btn-light"
                 >
                     Exportar Excel
                 </button>
 
-                <button type="button" wire:click="abrirModalImportar" class="rn-btn rn-btn-success">
+                <button type="button" wire:click="abrirModalImportar" class="rn-btn rn-btn-success" @disabled($periodoCerrado)>
                     Importar Excel
                 </button>
 
@@ -590,6 +651,7 @@
                     type="button"
                     wire:click="guardarNotas"
                     class="rn-btn rn-btn-primary"
+                    @disabled($periodoCerrado)
                 >
                     Guardar notas
                 </button>
@@ -598,9 +660,14 @@
 
         </div>
 
+
+            
             <div class="rn-scroll">
 
-                <table class="rn-table">
+                <table
+                    class="rn-table"
+                    wire:key="tabla-notas-{{ $this->data['course_id'] ?? 'curso' }}-{{ $this->data['pensum_academico_id'] ?? 'asignatura' }}-{{ $this->data['periodo'] ?? 'periodo' }}"
+                >
 
                     <thead>
                         <tr>
@@ -619,15 +686,24 @@
                     <tbody>
                         @forelse($this->estudiantesFiltrados as $index => $estudiante)
 
-                            <tr>
+                            <tr wire:key="fila-nota-{{ $estudiante['student_id'] }}-{{ $this->data['course_id'] ?? 'curso' }}-{{ $this->data['pensum_academico_id'] ?? 'asignatura' }}-{{ $this->data['periodo'] ?? 'periodo' }}">
                                 <td class="rn-student-cell">
                                     {{ $estudiante['nombre'] }}
                                 </td>
 
                                 <td>
-                                    <input type="number" min="0" max="100" step="1"
+                                    <input
+                                        type="text"
+                                        inputmode="decimal"
                                         wire:model.live.debounce.300ms="estudiantes.{{ $index }}.nota"
-                                        class="rn-input nota-cell">
+                                        class="rn-input nota-cell {{ isset($this->erroresNotas[$index]) ? 'rn-input-error' : '' }}"
+                                        @disabled($periodoCerrado)
+                                    >
+                                    @if(isset($this->erroresNotas[$index]))
+                                        <div class="rn-error-text">
+                                            {{ $this->erroresNotas[$index] }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>
                                     <span class="rn-performance-badge">
@@ -638,21 +714,24 @@
                                 <td>
                                     <input type="number" min="0"
                                         wire:model="estudiantes.{{ $index }}.fallas"
-                                        class="rn-input nota-cell">
+                                        class="rn-input nota-cell"
+                                        @disabled($periodoCerrado)>
                                 </td>
 
                                 @foreach(['01', '02', '03', '04'] as $codigo)
                                     <td>
                                         <input type="text"
                                             wire:model="estudiantes.{{ $index }}.mejoramientos.{{ $codigo }}"
-                                            class="rn-input nota-cell">
+                                            class="rn-input nota-cell"
+                                            @disabled($periodoCerrado)>
                                     </td>
                                 @endforeach
 
                                 <td>
                                     <input type="text"
                                         wire:model="estudiantes.{{ $index }}.pgc"
-                                        class="rn-input nota-cell">
+                                        class="rn-input nota-cell"
+                                        @disabled($periodoCerrado)>
                                 </td>
                             </tr>
 
@@ -885,6 +964,76 @@
             }
         });
     </script>
+
+    @if($mostrarModalExportar)
+        <div class="rn-modal-backdrop">
+            <div class="rn-modal">
+                <div class="rn-modal-header">
+                    <h3>Exportar planillas de notas</h3>
+
+                    <button type="button" wire:click="cerrarModalExportar" class="rn-modal-close">
+                        ×
+                    </button>
+                </div>
+
+                <div class="rn-modal-body">
+                    <label class="rn-file-label">
+                        Docente
+                    </label>
+
+                    <input
+                        type="text"
+                        wire:model.live="buscarDocenteExportar"
+                        placeholder="Buscar docente..."
+                        class="rn-export-search"
+                    />
+
+                    <div class="rn-export-list">
+
+                        @forelse($this->docentesFiltradosExportar as $docente)
+
+                            <button
+                                type="button"
+                                wire:click="$set('docenteExportarId', {{ $docente['id'] }})"
+                                class="rn-export-item
+                                {{ $docenteExportarId == $docente['id'] ? 'active' : '' }}"
+                            >
+                                {{ $docente['nombre'] }}
+                            </button>
+
+                        @empty
+
+                            <div class="rn-export-empty">
+                                No se encontraron docentes.
+                            </div>
+
+                        @endforelse
+
+                    </div>
+
+                    <p class="rn-help-text">
+                        Seleccione el docente para generar un archivo con sus cursos y asignaturas asignadas.
+                    </p>
+                </div>
+
+                <div class="rn-modal-footer">
+                    <button type="button" wire:click="cerrarModalExportar" class="rn-btn rn-btn-light">
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="button"
+                        wire:click="exportarExcel"
+                        class="rn-btn rn-btn-primary"
+                    >
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
 
 
 
