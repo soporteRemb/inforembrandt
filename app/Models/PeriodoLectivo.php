@@ -28,5 +28,12 @@ class PeriodoLectivo extends Model
     }
 
 
+    public function periodosAcademicos()
+    {
+        return $this->hasMany(PeriodoAcademico::class);
+    }
+
+    
+
 
 }

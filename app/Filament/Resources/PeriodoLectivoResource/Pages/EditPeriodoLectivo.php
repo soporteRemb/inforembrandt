@@ -16,4 +16,12 @@ class EditPeriodoLectivo extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function afterSave(): void
+    {
+        PeriodoLectivoResource::guardarPeriodosAcademicos(
+            $this->record,
+            $this->form->getRawState()
+        );
+    }
 }

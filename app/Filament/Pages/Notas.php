@@ -10,6 +10,7 @@ use App\Models\NotaEstudiante;
 use App\Models\RangoDesempenoNota;
 use App\Models\Docente;
 use App\Models\DocenteAsignatura;
+use App\Models\PeriodoAcademico;
 
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -63,6 +64,8 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
     public bool $mostrarModalErrores = false;
 
+    public bool $periodoAcademicoCerrado = false;
+
     public array $indicadores = [
         'total' => 0,
         'registradas' => 0,
@@ -103,6 +106,23 @@ class Notas extends Page implements Forms\Contracts\HasForms
     {
         $this->form->fill();
         $this->cargarRangosDesempeno();
+    }
+
+    public function verificarPeriodoAcademicoCerrado(): void
+    {
+        $periodoLectivoId = $this->data['periodo_lectivo_id'] ?? null;
+        $periodoAcademico = $this->data['periodo'] ?? null;
+
+        if (! $periodoLectivoId || ! $periodoAcademico) {
+            $this->periodoAcademicoCerrado = false;
+            return;
+        }
+
+        $this->periodoAcademicoCerrado = PeriodoAcademico::query()
+            ->where('periodo_lectivo_id', $periodoLectivoId)
+            ->where('numero', $periodoAcademico)
+            ->where('estado', 'cerrado')
+            ->exists();
     }
 
 
@@ -311,6 +331,7 @@ class Notas extends Page implements Forms\Contracts\HasForms
                             ->afterStateUpdated(function () {
                                 $this->actualizarTextosFiltro();
                                 $this->refrescarTablaNotas();
+                                $this->verificarPeriodoAcademicoCerrado();
                             }),
 
                         Forms\Components\Select::make('course_id')
@@ -438,6 +459,7 @@ class Notas extends Page implements Forms\Contracts\HasForms
                             ->afterStateUpdated(function () {
                                 $this->actualizarTextosFiltro();
                                 $this->refrescarTablaNotas();
+                                $this->verificarPeriodoAcademicoCerrado();
                             }),
 
                     ])
@@ -557,6 +579,18 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
     public function guardarNotas(): void
     {
+        $this->verificarPeriodoAcademicoCerrado();
+
+        if ($this->periodoAcademicoCerrado) {
+            Notification::make()
+                ->title('Periodo académico cerrado')
+                ->body('No es posible guardar notas en un periodo académico cerrado.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+        
         $this->validarNotas();
 
         if ($this->hayErroresNotas) {
@@ -1233,6 +1267,8 @@ class Notas extends Page implements Forms\Contracts\HasForms
             }
         }
     }
+
+    
 
     
 

@@ -643,7 +643,8 @@
                     Exportar Excel
                 </button>
 
-                <button type="button" wire:click="abrirModalImportar" class="rn-btn rn-btn-success" @disabled($periodoCerrado)>
+                <button type="button" wire:click="abrirModalImportar" class="rn-btn rn-btn-success" @disabled($periodoCerrado)
+                @disabled($this->periodoAcademicoCerrado)>
                     Importar Excel
                 </button>
 
@@ -652,6 +653,7 @@
                     wire:click="guardarNotas"
                     class="rn-btn rn-btn-primary"
                     @disabled($periodoCerrado)
+                    @disabled($this->periodoAcademicoCerrado)
                 >
                     Guardar notas
                 </button>
@@ -698,6 +700,7 @@
                                         wire:model.live.debounce.300ms="estudiantes.{{ $index }}.nota"
                                         class="rn-input nota-cell {{ isset($this->erroresNotas[$index]) ? 'rn-input-error' : '' }}"
                                         @disabled($periodoCerrado)
+                                        @disabled($this->periodoAcademicoCerrado)
                                     >
                                     @if(isset($this->erroresNotas[$index]))
                                         <div class="rn-error-text">
@@ -715,7 +718,8 @@
                                     <input type="number" min="0"
                                         wire:model="estudiantes.{{ $index }}.fallas"
                                         class="rn-input nota-cell"
-                                        @disabled($periodoCerrado)>
+                                        @disabled($periodoCerrado)
+                                        @disabled($this->periodoAcademicoCerrado)>
                                 </td>
 
                                 @foreach(['01', '02', '03', '04'] as $codigo)
@@ -723,7 +727,8 @@
                                         <input type="text"
                                             wire:model="estudiantes.{{ $index }}.mejoramientos.{{ $codigo }}"
                                             class="rn-input nota-cell"
-                                            @disabled($periodoCerrado)>
+                                            @disabled($periodoCerrado)
+                                            @disabled($this->periodoAcademicoCerrado)>
                                     </td>
                                 @endforeach
 
@@ -731,7 +736,8 @@
                                     <input type="text"
                                         wire:model="estudiantes.{{ $index }}.pgc"
                                         class="rn-input nota-cell"
-                                        @disabled($periodoCerrado)>
+                                        @disabled($periodoCerrado)
+                                        @disabled($this->periodoAcademicoCerrado)>
                                 </td>
                             </tr>
 
