@@ -19,6 +19,10 @@ use App\Models\BoletinRecomendacion;
 use Illuminate\Support\Facades\Auth;
 
 
+use App\Models\Docente;
+
+
+
 class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
@@ -199,13 +203,47 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                                     return [];
                                 }
 
-                                return PensumAcademico::query()
-                                    ->where('periodo_lectivo_id', $periodoLectivoId)
-                                    ->whereNotNull('grado')
-                                    ->select('grado')
-                                    ->distinct()
-                                    ->orderBy('grado')
-                                    ->pluck('grado', 'grado')
+                                if (! $this->usuarioEsDocente()) {
+                                    return PensumAcademico::query()
+                                        ->where('periodo_lectivo_id', $periodoLectivoId)
+                                        ->whereNotNull('grado')
+                                        ->select('grado')
+                                        ->distinct()
+                                        ->orderBy('grado')
+                                        ->pluck('grado', 'grado')
+                                        ->toArray();
+                                }
+
+                                $docente = $this->docenteActual();
+
+                                if (! $docente) {
+                                    return [];
+                                }
+
+                                $gradosAsignaturas = $docente->asignaturas()
+                                    ->whereHas('course', function ($query) use ($periodoLectivoId) {
+                                        $query->where('periodo_lectivo_id', $periodoLectivoId);
+                                    })
+                                    ->with('course')
+                                    ->get()
+                                    ->pluck('course.grado')
+                                    ->filter()
+                                    ->toArray();
+
+                                $gradosDireccion = [];
+
+                                if (
+                                    $docente->direccionCurso &&
+                                    (int) $docente->direccionCurso->periodo_lectivo_id === (int) $periodoLectivoId
+                                ) {
+                                    $gradosDireccion[] = $docente->direccionCurso->grado;
+                                }
+
+                                return collect(array_merge($gradosAsignaturas, $gradosDireccion))
+                                    ->filter()
+                                    ->unique()
+                                    ->sort()
+                                    ->mapWithKeys(fn ($grado) => [$grado => $grado])
                                     ->toArray();
                             })
                             ->native(false)
@@ -214,7 +252,8 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                             ->live()
                             ->required()
                             ->afterStateUpdated(function (Set $set) {
-                                $set('pensum_academico_id', null);
+                            $set('tipo', 'desempeno');    
+                            $set('pensum_academico_id', null);
 
                                 $this->asignaturaSeleccionada = '';
                                 $this->desempenos = ['', '', '', ''];
@@ -251,12 +290,30 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
 
                         Forms\Components\Select::make('tipo')
                             ->label('Tipo')
-                            ->options([
-                                'desempeno' => 'Desempeño',
-                                'perfil' => 'Perfil Rembrandtino',
-                                'acompanamiento' => 'Acompañamiento Familiar',
-                                'mejoramiento' => 'Actividades de Mejoramiento',
-                            ])
+                            ->options(function (Get $get) {
+                                $grado = $get('grado');
+
+                                if (! $this->usuarioEsDocente()) {
+                                    return [
+                                        'desempeno' => 'Desempeño',
+                                        'perfil' => 'Perfil Rembrandtino',
+                                        'acompanamiento' => 'Acompañamiento Familiar',
+                                        'mejoramiento' => 'Actividades de Mejoramiento',
+                                    ];
+                                }
+
+                                $opciones = [
+                                    'desempeno' => 'Desempeño',
+                                    'mejoramiento' => 'Actividades de Mejoramiento',
+                                ];
+
+                                if ($grado && $this->docenteEsDirectorDelGrado($grado)) {
+                                    $opciones['perfil'] = 'Perfil Rembrandtino';
+                                    $opciones['acompanamiento'] = 'Acompañamiento Familiar';
+                                }
+
+                                return $opciones;
+                            })
                             ->native(false)
                             ->live()
                             ->default('desempeno')
@@ -278,31 +335,15 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
 
                         Forms\Components\Select::make('pensum_academico_id')
                             ->label('Asignatura')
-                            ->options(function (Get $get) {
-                                $periodoLectivoId = $get('periodo_lectivo_id');
-                                $grado = $get('grado');
-
-                                if (! $periodoLectivoId || ! $grado) {
-                                    return [];
-                                }
-
-                                $query = PensumAcademico::query()
-                                    ->where('periodo_lectivo_id', $periodoLectivoId)
-                                    ->where('grado', $grado)
-                                    ->where('estado', 'activo');
-
-                                if (in_array(($get('tipo') ?? 'desempeno'), ['desempeno', 'mejoramiento'])) {
-                                    $query->whereNotIn('nombre', [
-                                        'Perfil Rembrandtino',
-                                        'Acompañamiento familiar',
-                                    ]);
-                                }
-
-                                return $query
-                                    ->orderBy('orden')
-                                    ->orderBy('nombre')
+                            ->options(function () {
+                                return collect($this->asignaturasAvance)
                                     ->pluck('nombre', 'id')
                                     ->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                $pensum = PensumAcademico::find($value);
+
+                                return $pensum?->nombre;
                             })
                             ->native(false)
                             ->searchable()
@@ -323,7 +364,6 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                                 $this->cargarCodigos();
                                 $this->cargarResumenCodigos();
                             }),
-
                         
 
                         Forms\Components\Actions::make([
@@ -391,13 +431,9 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                                                         return [];
                                                     }
 
-                                                    return PensumAcademico::query()
-                                                        ->where('periodo_lectivo_id', $periodoLectivoId)
-                                                        ->whereNotNull('grado')
-                                                        ->select('grado')
-                                                        ->distinct()
-                                                        ->orderBy('grado')
-                                                        ->pluck('grado', 'grado')
+                                                    return collect($this->gradosPermitidosDocente((int) $periodoLectivoId))
+                                                        ->sort()
+                                                        ->mapWithKeys(fn ($grado) => [$grado => $grado])
                                                         ->toArray();
                                                 })
                                                 ->searchable()
@@ -429,12 +465,7 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                                             
                                             Forms\Components\Select::make('origen_tipo')
                                                 ->label('Tipo origen')
-                                                ->options([
-                                                    'desempeno' => 'Desempeño',
-                                                    'perfil' => 'Perfil Rembrandtino',
-                                                    'acompanamiento' => 'Acompañamiento Familiar',
-                                                    'mejoramiento' => 'Actividades de Mejoramiento',
-                                                ])
+                                                ->options(fn (Get $get) => $this->tiposPermitidosDocente($get('origen_grado')))
                                                 ->native(false)
                                                 ->default('desempeno')
                                                 ->live()
@@ -448,37 +479,17 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                                                 ->options(function (Get $get) {
                                                     $periodoLectivoId = $get('origen_periodo_lectivo_id');
                                                     $grado = $get('origen_grado');
-                                                    $tipo = $get('origen_tipo');
+                                                    $tipo = $get('origen_tipo') ?? 'desempeno';
 
                                                     if (! $periodoLectivoId || ! $grado) {
                                                         return [];
                                                     }
 
-                                                    $query = PensumAcademico::query()
-                                                        ->where('periodo_lectivo_id', $periodoLectivoId)
-                                                        ->where('grado', $grado)
-                                                        ->where('estado', 'activo');
-
-                                                    if ($tipo === 'perfil') {
-                                                        $query->where('nombre', 'Perfil Rembrandtino');
-                                                    }
-
-                                                    elseif ($tipo === 'acompanamiento') {
-                                                        $query->where('nombre', 'Acompañamiento familiar');
-                                                    }
-
-                                                    elseif (in_array($tipo, ['desempeno', 'mejoramiento'])) {
-                                                        $query->whereNotIn('nombre', [
-                                                            'Perfil Rembrandtino',
-                                                            'Acompañamiento familiar',
-                                                        ]);
-                                                    }
-
-                                                    return $query
-                                                        ->orderBy('orden')
-                                                        ->orderBy('nombre')
-                                                        ->pluck('nombre', 'id')
-                                                        ->toArray();
+                                                    return $this->opcionesAsignaturasPermitidasDocente(
+                                                        (int) $periodoLectivoId,
+                                                        $grado,
+                                                        $tipo
+                                                    );
                                                 })
                                                 ->searchable()
                                                 ->preload()
@@ -550,13 +561,9 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                                                         return [];
                                                     }
 
-                                                    return PensumAcademico::query()
-                                                        ->where('periodo_lectivo_id', $periodoLectivoId)
-                                                        ->whereNotNull('grado')
-                                                        ->select('grado')
-                                                        ->distinct()
-                                                        ->orderBy('grado')
-                                                        ->pluck('grado', 'grado')
+                                                    return collect($this->gradosPermitidosDocente((int) $periodoLectivoId))
+                                                        ->sort()
+                                                        ->mapWithKeys(fn ($grado) => [$grado => $grado])
                                                         ->toArray();
                                                 })
                                                 ->searchable()
@@ -594,12 +601,7 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
 
                                             Forms\Components\Select::make('destino_tipo')
                                                 ->label('Tipo destino')
-                                                ->options([
-                                                    'desempeno' => 'Desempeño',
-                                                    'perfil' => 'Perfil Rembrandtino',
-                                                    'acompanamiento' => 'Acompañamiento Familiar',
-                                                    'mejoramiento' => 'Actividades de Mejoramiento',
-                                                ])
+                                                ->options(fn (Get $get) => $this->tiposPermitidosDocente($get('destino_grado')))
                                                 ->native(false)
                                                 ->default('desempeno')
                                                 ->live()
@@ -632,7 +634,7 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
 
                                             Forms\Components\Select::make('destino_pensum_academico_id')
                                                 ->label('Asignatura destino')
-                                                ->options(function (Get $get) {
+                                               ->options(function (Get $get) {
                                                     $periodoLectivoId = $get('destino_periodo_lectivo_id');
                                                     $grado = $get('destino_grado');
                                                     $tipo = $get('destino_tipo') ?? 'desempeno';
@@ -641,27 +643,11 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
                                                         return [];
                                                     }
 
-                                                    $query = PensumAcademico::query()
-                                                        ->where('periodo_lectivo_id', $periodoLectivoId)
-                                                        ->where('grado', $grado)
-                                                        ->where('estado', 'activo');
-
-                                                    if ($tipo === 'perfil') {
-                                                        $query->where('nombre', 'Perfil Rembrandtino');
-                                                    } elseif ($tipo === 'acompanamiento') {
-                                                        $query->where('nombre', 'Acompañamiento familiar');
-                                                    } elseif (in_array($tipo, ['desempeno', 'mejoramiento'])) {
-                                                        $query->whereNotIn('nombre', [
-                                                            'Perfil Rembrandtino',
-                                                            'Acompañamiento familiar',
-                                                        ]);
-                                                    }
-
-                                                    return $query
-                                                        ->orderBy('orden')
-                                                        ->orderBy('nombre')
-                                                        ->pluck('nombre', 'id')
-                                                        ->toArray();
+                                                    return $this->opcionesAsignaturasPermitidasDocente(
+                                                        (int) $periodoLectivoId,
+                                                        $grado,
+                                                        $tipo
+                                                    );
                                                 })
                                                 ->searchable()
                                                 ->preload()
@@ -853,6 +839,30 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
     {
         $origenTipo = $data['origen_tipo'] ?? null;
         $destinoTipo = $data['destino_tipo'] ?? null;
+        
+        if ($this->usuarioEsDocente()) {
+            if (
+                ! array_key_exists($data['origen_pensum_academico_id'], $this->opcionesAsignaturasPermitidasDocente(
+                    (int) $data['origen_periodo_lectivo_id'],
+                    $data['origen_grado'],
+                    $data['origen_tipo']
+                ))
+                ||
+                ! array_key_exists($data['destino_pensum_academico_id'], $this->opcionesAsignaturasPermitidasDocente(
+                    (int) $data['destino_periodo_lectivo_id'],
+                    $data['destino_grado'],
+                    $data['destino_tipo']
+                ))
+            ) {
+                Notification::make()
+                    ->title('Acción no permitida')
+                    ->body('No tiene autorización para duplicar información en una asignatura no asignada.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+        }
 
         if ($origenTipo !== $destinoTipo) {
             Notification::make()
@@ -1318,16 +1328,45 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
             return;
         }
 
-        $pensums = PensumAcademico::query()
+        $query = PensumAcademico::query()
             ->where('periodo_lectivo_id', $periodoLectivoId)
             ->where('grado', $grado)
             ->where('estado', 'activo')
-            ->orderBy('orden')
-            ->orderBy('nombre')
             ->whereNotIn('nombre', [
                 'Perfil Rembrandtino',
                 'Acompañamiento familiar',
-            ])
+            ]);
+
+        if ($this->usuarioEsDocente()) {
+            $docente = $this->docenteActual();
+
+            if (! $docente) {
+                $this->asignaturasAvance = [];
+                $this->totalAsignaturas = 0;
+                $this->totalCompletas = 0;
+                $this->totalIncompletas = 0;
+                $this->totalPendientes = 0;
+                return;
+            }
+
+            $nombresAsignados = $docente->asignaturas()
+                ->whereHas('course', function ($q) use ($periodoLectivoId, $grado) {
+                    $q->where('periodo_lectivo_id', $periodoLectivoId)
+                        ->where('grado', $grado);
+                })
+                ->with('pensumAcademico')
+                ->get()
+                ->pluck('pensumAcademico.nombre')
+                ->filter()
+                ->unique()
+                ->toArray();
+
+            $query->whereIn('nombre', $nombresAsignados);
+        }
+
+        $pensums = $query
+            ->orderBy('orden')
+            ->orderBy('nombre')
             ->get();
 
         $this->asignaturasAvance = $pensums
@@ -1380,7 +1419,6 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
             ->where('estado', 'pendiente')
             ->count();
     }
-    
 
 
 
@@ -1648,5 +1686,183 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
             ->count('pensum_academico_id');
     }
 
+    public function usuarioEsDocente(): bool
+    {
+        return Auth::user()?->hasRole('docente') ?? false;
+    }
+
+    public function docenteActual(): ?Docente
+    {
+        return Docente::query()
+            ->where('user_id', Auth::id())
+            ->with(['asignaturas.pensumAcademico', 'direccionCurso'])
+            ->first();
+    }
+
+
+    public function docenteEsDirectorDelGrado($grado): bool
+    {
+        if (! $this->usuarioEsDocente()) {
+            return true;
+        }
+
+        $docente = $this->docenteActual();
+        $periodoLectivoId = $this->data['periodo_lectivo_id'] ?? null;
+
+        if (! $docente || ! $docente->direccionCurso || ! $periodoLectivoId) {
+            return false;
+        }
+
+        return (int) $docente->direccionCurso->periodo_lectivo_id === (int) $periodoLectivoId
+            && (string) $docente->direccionCurso->grado === (string) $grado;
+    }
+
+
+
+    private function gradosPermitidosDocente(int $periodoLectivoId): array
+    {
+        if (! $this->usuarioEsDocente()) {
+            return PensumAcademico::query()
+                ->where('periodo_lectivo_id', $periodoLectivoId)
+                ->whereNotNull('grado')
+                ->select('grado')
+                ->distinct()
+                ->pluck('grado')
+                ->toArray();
+        }
+
+        $docente = $this->docenteActual();
+
+        if (! $docente) {
+            return [];
+        }
+
+        $gradosAsignaturas = $docente->asignaturas()
+            ->whereHas('course', function ($query) use ($periodoLectivoId) {
+                $query->where('periodo_lectivo_id', $periodoLectivoId);
+            })
+            ->with('course')
+            ->get()
+            ->pluck('course.grado')
+            ->filter()
+            ->toArray();
+
+        $gradosDireccion = [];
+
+        if (
+            $docente->direccionCurso &&
+            (int) $docente->direccionCurso->periodo_lectivo_id === (int) $periodoLectivoId
+        ) {
+            $gradosDireccion[] = $docente->direccionCurso->grado;
+        }
+
+        return collect(array_merge($gradosAsignaturas, $gradosDireccion))
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
+    private function tiposPermitidosDocente($grado): array
+    {
+        if (! $this->usuarioEsDocente()) {
+            return [
+                'desempeno' => 'Desempeño',
+                'perfil' => 'Perfil Rembrandtino',
+                'acompanamiento' => 'Acompañamiento Familiar',
+                'mejoramiento' => 'Actividades de Mejoramiento',
+            ];
+        }
+
+        $opciones = [
+            'desempeno' => 'Desempeño',
+            'mejoramiento' => 'Actividades de Mejoramiento',
+        ];
+
+        if ($grado && $this->docenteEsDirectorDelGrado($grado)) {
+            $opciones['perfil'] = 'Perfil Rembrandtino';
+            $opciones['acompanamiento'] = 'Acompañamiento Familiar';
+        }
+
+        return $opciones;
+    }
+
+    private function opcionesAsignaturasPermitidasDocente(int $periodoLectivoId, $grado, string $tipo): array
+    {
+        $query = PensumAcademico::query()
+            ->where('periodo_lectivo_id', $periodoLectivoId)
+            ->where('grado', $grado)
+            ->where('estado', 'activo');
+
+        if (! $this->usuarioEsDocente()) {
+            if ($tipo === 'perfil') {
+                $query->where('nombre', 'Perfil Rembrandtino');
+            } elseif ($tipo === 'acompanamiento') {
+                $query->where('nombre', 'Acompañamiento familiar');
+            } else {
+                $query->whereNotIn('nombre', [
+                    'Perfil Rembrandtino',
+                    'Acompañamiento familiar',
+                ]);
+            }
+
+            return $query->orderBy('orden')->orderBy('nombre')->pluck('nombre', 'id')->toArray();
+        }
+
+        $docente = $this->docenteActual();
+
+        if (! $docente) {
+            return [];
+        }
+
+        if (in_array($tipo, ['desempeno', 'mejoramiento'])) {
+            $nombresAsignados = $docente->asignaturas()
+                ->whereHas('course', function ($q) use ($periodoLectivoId, $grado) {
+                    $q->where('periodo_lectivo_id', $periodoLectivoId)
+                        ->where('grado', $grado);
+                })
+                ->with('pensumAcademico')
+                ->get()
+                ->pluck('pensumAcademico.nombre')
+                ->filter()
+                ->unique()
+                ->toArray();
+
+            return $query
+                ->whereIn('nombre', $nombresAsignados)
+                ->whereNotIn('nombre', [
+                    'Perfil Rembrandtino',
+                    'Acompañamiento familiar',
+                ])
+                ->orderBy('orden')
+                ->orderBy('nombre')
+                ->pluck('nombre', 'id')
+                ->toArray();
+        }
+
+        if ($tipo === 'perfil') {
+            if (! $this->docenteEsDirectorDelGrado($grado)) {
+                return [];
+            }
+
+            return $query
+                ->where('nombre', 'Perfil Rembrandtino')
+                ->pluck('nombre', 'id')
+                ->toArray();
+        }
+
+        if ($tipo === 'acompanamiento') {
+            if (! $this->docenteEsDirectorDelGrado($grado)) {
+                return [];
+            }
+
+            return $query
+                ->where('nombre', 'Acompañamiento familiar')
+                ->pluck('nombre', 'id')
+                ->toArray();
+        }
+
+        return [];
+    }
 
 }

@@ -85,8 +85,8 @@ class DocenteResource extends Resource
 
                         Forms\Components\Select::make('direccion_curso_id')
                             ->label('Dirección de curso')
-                            ->options(function () {
-                                $sedeId = Auth::user()?->sede_id;
+                            ->options(function (?Docente $record) {
+                                $sedeId = $record?->user?->sede_id ?? Auth::user()?->sede_id;
 
                                 $periodoLectivoId = PeriodoLectivo::query()
                                     ->where('sede_id', $sedeId)
@@ -101,9 +101,18 @@ class DocenteResource extends Resource
                                     ->orderBy('curso')
                                     ->get()
                                     ->mapWithKeys(fn ($course) => [
-                                        $course->id => "{$course->curso} - {$course->descripcion}",
+                                        $course->id => "{$course->curso} | Grado {$course->grado} - {$course->descripcion}",
                                     ])
                                     ->toArray();
+                            })
+                            ->getOptionLabelUsing(function ($value): ?string {
+                                $course = Course::find($value);
+
+                                if (! $course) {
+                                    return null;
+                                }
+
+                                return "{$course->curso} | Grado {$course->grado} - {$course->descripcion}";
                             })
                             ->searchable()
                             ->preload()
