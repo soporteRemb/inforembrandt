@@ -176,10 +176,33 @@ class GuardianResource extends Resource
                     ->searchable(),
 
                 TextColumn::make('user.name')
-                    ->label('Usuario acceso')
-                    ->placeholder('Sin usuario')
+                    ->label('Cuenta familiar')
+                    ->placeholder('Sin cuenta')
                     ->searchable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->description(function ($record) {
+                        if (! $record->user_id) {
+                            return 'Sin acceso al portal';
+                        }
+
+                        return Guardian::query()
+                            ->with('student')
+                            ->where('user_id', $record->user_id)
+                            ->where('estado', 'activo')
+                            ->get()
+                            ->pluck('student')
+                            ->filter()
+                            ->unique('id')
+                            ->map(fn ($student) =>
+                                trim(
+                                    $student->primer_nombre . ' ' .
+                                    $student->primer_apellido
+                                )
+                            )
+                            ->implode(' · ');
+                    }),
+
+                        
 
                 TextColumn::make('telefono')
                     ->label('Teléfono'),
