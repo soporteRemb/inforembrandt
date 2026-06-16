@@ -59,5 +59,9 @@ class User extends Authenticatable
         return $this->hasOne(Docente::class);
     }
 
+    public function guardians()
+    {
+        return $this->hasMany(Guardian::class);
+    }
 
 }

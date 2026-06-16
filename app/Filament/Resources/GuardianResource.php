@@ -2,11 +2,21 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\GuardianResource\Pages;
+
 use App\Models\Guardian;
 use App\Models\PeriodoLectivo;
 use App\Models\Student;
+use App\Models\User;
+
+use App\Traits\HasRolePermissions;
+
+
+use App\Filament\Resources\GuardianResource\Pages;
+
+
 use Illuminate\Database\Eloquent\Builder;
+
+
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -16,7 +26,7 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use App\Traits\HasRolePermissions;
+
 
 class GuardianResource extends Resource
 {
@@ -69,6 +79,22 @@ class GuardianResource extends Resource
                         ->searchable()
                         ->required(),
 
+                    Select::make('user_id')
+                        ->label('Usuario de acceso')
+                        ->options(
+                            User::query()
+                                ->orderBy('name')
+                                ->get()
+                                ->mapWithKeys(fn ($user) => [
+                                    $user->id => $user->name . ' - ' . $user->email,
+                                ])
+                                ->toArray()
+                        )
+                        ->searchable()
+                        ->preload()
+                        ->nullable()
+                        ->helperText('Cuenta con la que este acudiente podrá ingresar al portal. Puede repetirse para hermanos o grupo familiar.'),
+
                     Select::make('tipo')
                         ->label('Tipo')
                         ->options([
@@ -78,7 +104,7 @@ class GuardianResource extends Resource
                             'deudor_economico' => 'Deudor Económico',
                         ])
                         ->required(),
-                ])->columns(2),
+                ])->columns(3),
 
             Section::make('Datos personales')
                 ->schema([
@@ -148,6 +174,12 @@ class GuardianResource extends Resource
                 TextColumn::make('nombre')
                     ->label('Nombre')
                     ->searchable(),
+
+                TextColumn::make('user.name')
+                    ->label('Usuario acceso')
+                    ->placeholder('Sin usuario')
+                    ->searchable()
+                    ->toggleable(),
 
                 TextColumn::make('telefono')
                     ->label('Teléfono'),

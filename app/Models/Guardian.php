@@ -18,10 +18,15 @@ class Guardian extends Model
         'lugar_trabajo',
         'parentesco',
         'estado',
+        'user_id',
     ];
 
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

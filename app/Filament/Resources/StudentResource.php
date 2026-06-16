@@ -7,6 +7,7 @@ use App\Traits\ScopedBySedePeriodo;
 use App\Models\Student;
 use App\Models\Sede;
 use App\Models\PeriodoLectivo;
+use App\Models\User;
 use Filament\Forms\Components\Actions as FormActions;
 use Filament\Forms\Components\Actions\Action as FormAction;
 use Filament\Forms\Components\DatePicker;
@@ -51,8 +52,26 @@ class StudentResource extends Resource
     private static function guardianSchema(string $tipo): array
     {
         return [
-            TextInput::make("g_{$tipo}_nombre")->label('Nombre')->columnSpanFull(),
-            TextInput::make("g_{$tipo}_telefono")->label('Teléfono'),
+
+            TextInput::make("g_{$tipo}_nombre")
+                ->label('Nombre')
+                ->columnSpanFull(),
+
+            Select::make("g_{$tipo}_user_id")
+                ->label('Usuario de acceso al portal')
+                ->options(
+                    User::query()
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                )
+                ->searchable()
+                ->preload()
+                ->helperText('Cuenta de acceso familiar.')
+                ->columnSpanFull(),
+
+            TextInput::make("g_{$tipo}_telefono")
+                ->label('Teléfono'),
+
             Select::make("g_{$tipo}_tipo_documento")
                 ->label('Tipo de documento')
                 ->options([
@@ -60,10 +79,21 @@ class StudentResource extends Resource
                     'CE' => 'Cédula Extranjería',
                     'PA' => 'Pasaporte',
                 ]),
-            TextInput::make("g_{$tipo}_documento")->label('Documento'),
-            TextInput::make("g_{$tipo}_lugar_trabajo")->label('Lugar de trabajo'),
-            TextInput::make("g_{$tipo}_correo")->label('Correo electrónico')->email()->columnSpanFull(),
-            TextInput::make("g_{$tipo}_direccion")->label('Dirección')->columnSpanFull(),
+
+            TextInput::make("g_{$tipo}_documento")
+                ->label('Documento'),
+
+            TextInput::make("g_{$tipo}_lugar_trabajo")
+                ->label('Lugar de trabajo'),
+
+            TextInput::make("g_{$tipo}_correo")
+                ->label('Correo electrónico')
+                ->email()
+                ->columnSpanFull(),
+
+            TextInput::make("g_{$tipo}_direccion")
+                ->label('Dirección')
+                ->columnSpanFull(),
         ];
     }
 
