@@ -49,6 +49,20 @@ class OtrosParametros extends Page
                 'activo' => (bool) $rango->activo,
             ])
             ->toArray();
+
+        $this->rangos = RangoDesempenoNota::query()
+            ->orderBy('orden')
+            ->get()
+            ->map(fn ($rango) => [
+                'id' => $rango->id,
+                'nombre' => $rango->nombre,
+                'convencion' => $rango->convencion,
+                'descripcion_convencion' => $rango->descripcion_convencion,
+                'desde' => $rango->desde,
+                'hasta' => $rango->hasta,
+                'activo' => (bool) $rango->activo,
+            ])
+            ->toArray();
     }
 
     public function guardarRangos(): void
@@ -64,8 +78,19 @@ class OtrosParametros extends Page
                 return;
             }
 
+            if (mb_strlen(trim($rango['descripcion_convencion'] ?? '')) > 70) {
+                Notification::make()
+                    ->title('La descripción de la convención no puede superar los 70 caracteres.')
+                    ->danger()
+                    ->send();
+
+                return;
+            }
+            
             RangoDesempenoNota::where('id', $rango['id'])->update([
                 'nombre' => trim($rango['nombre']),
+                'convencion' => trim($rango['convencion']),
+                'descripcion_convencion' => trim($rango['descripcion_convencion']),
                 'desde' => $rango['desde'],
                 'hasta' => $rango['hasta'],
                 'activo' => $rango['activo'] ?? true,
@@ -79,4 +104,6 @@ class OtrosParametros extends Page
             ->success()
             ->send();
     }
+
+    
 }

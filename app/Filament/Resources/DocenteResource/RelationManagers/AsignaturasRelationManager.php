@@ -5,11 +5,14 @@ namespace App\Filament\Resources\DocenteResource\RelationManagers;
 use App\Models\Course;
 use App\Models\PensumAcademico;
 use App\Models\PeriodoLectivo;
+
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
+
+
 use Illuminate\Support\Facades\Auth;
 
 class AsignaturasRelationManager extends RelationManager
@@ -52,19 +55,25 @@ class AsignaturasRelationManager extends RelationManager
 
                 Forms\Components\Select::make('pensum_academico_id')
                     ->label('Asignatura')
-                    ->options(function () {
+                    ->options(function (Forms\Get $get) {
+                        $courseId = $get('course_id');
 
-                        $sedeId = Auth::user()?->sede_id;
+                        if (! $courseId) {
+                            return [];
+                        }
 
-                        $periodoLectivoId = PeriodoLectivo::query()
-                            ->where('sede_id', $sedeId)
-                            ->where('estado', 'abierto')
-                            ->latest('id')
-                            ->value('id');
+                        $course = Course::find($courseId);
+
+                        if (! $course) {
+                            return [];
+                        }
 
                         return PensumAcademico::query()
-                            ->where('sede_id', $sedeId)
-                            ->where('periodo_lectivo_id', $periodoLectivoId)
+                            ->where('sede_id', $course->sede_id)
+                            ->where('periodo_lectivo_id', $course->periodo_lectivo_id)
+                            ->where('grado', $course->grado)
+                            ->where('estado', 'activo')
+                            ->orderBy('orden')
                             ->orderBy('nombre')
                             ->get()
                             ->mapWithKeys(fn ($pensum) => [
@@ -74,7 +83,7 @@ class AsignaturasRelationManager extends RelationManager
                     })
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
             ]);
     }
 

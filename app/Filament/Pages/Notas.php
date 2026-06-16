@@ -217,8 +217,10 @@ class Notas extends Page implements Forms\Contracts\HasForms
         $courseId = $this->data['course_id'] ?? null;
         $pensumId = $this->data['pensum_academico_id'] ?? null;
         $periodo = $this->data['periodo'] ?? null;
+        $periodoLectivoId = $this->data['periodo_lectivo_id'] ?? null;
+        $sedeId = session('sede_id');
 
-        if (! $courseId) {
+        if (! $courseId || ! $periodoLectivoId || ! $sedeId) {
             $this->estudiantes = [];
             $this->notasRegistradas = [];
             $this->pendientes = [];
@@ -246,7 +248,10 @@ class Notas extends Page implements Forms\Contracts\HasForms
         }
 
         $this->estudiantes = Student::query()
+            ->where('sede_id', $sedeId)
+            ->where('periodo_lectivo_id', $periodoLectivoId)
             ->where('course_id', $courseId)
+            ->where('estado', 'activo')
             ->orderBy('primer_apellido')
             ->orderBy('segundo_apellido')
             ->orderBy('primer_nombre')
@@ -257,12 +262,12 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
                 return [
                     'student_id' => $student->id,
-                    'nombre' => trim(
-                        $student->primer_apellido . ' ' .
-                        $student->segundo_apellido . ' ' .
-                        $student->primer_nombre . ' ' .
-                        $student->segundo_nombre
-                    ),
+                    'nombre' => collect([
+                        $student->primer_apellido,
+                        $student->segundo_apellido,
+                        $student->primer_nombre,
+                        $student->segundo_nombre,
+                    ])->filter()->implode(' '),
                     'nota' => $nota?->nota,
                     'fallas' => $nota?->fallas ?? 0,
                     'mejoramientos' => [
@@ -287,7 +292,7 @@ class Notas extends Page implements Forms\Contracts\HasForms
             ->values()
             ->toArray();
 
-        $this->calcularIndicadores();    
+        $this->calcularIndicadores();
     }
 
 
@@ -727,6 +732,8 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
             $course = Course::query()
                 ->where('curso', $cursoCodigo)
+                ->where('sede_id', session('sede_id'))
+                ->where('periodo_lectivo_id', $this->data['periodo_lectivo_id'] ?? null)
                 ->first();
 
             if (! $course) {
@@ -767,6 +774,8 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
                 $student = Student::query()
                     ->where('codigo', $codigoEstudiante)
+                    ->where('sede_id', $course->sede_id)
+                    ->where('periodo_lectivo_id', $course->periodo_lectivo_id)
                     ->first();
 
                 if (! $student) {
@@ -1093,7 +1102,10 @@ class Notas extends Page implements Forms\Contracts\HasForms
             $sheet->setCellValue('F4', $curso->curso ?? $curso->codigo ?? '');
 
             $estudiantes = Student::query()
+                ->where('sede_id', $curso->sede_id)
+                ->where('periodo_lectivo_id', $curso->periodo_lectivo_id)
                 ->where('course_id', $curso->id)
+                ->where('estado', 'activo')
                 ->orderBy('primer_apellido')
                 ->orderBy('segundo_apellido')
                 ->orderBy('primer_nombre')
