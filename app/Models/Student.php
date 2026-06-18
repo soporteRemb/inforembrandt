@@ -90,7 +90,7 @@ class Student extends Model
 
             $numero = $ultimo ? (intval(substr($ultimo, 4)) + 1) : 1;
 
-            $student->codigo = $anio . str_pad($numero, 3, '0', STR_PAD_LEFT);
+            $student->codigo = $anio . $numero;
         });
     }
     public function sede()
