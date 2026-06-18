@@ -83,15 +83,14 @@ class Student extends Model
     {
         static::creating(function (Student $student) {
             $anio = date('Y');
-            $ultimo = Student::whereYear('created_at', $anio)->max('codigo');
-            
-            if ($ultimo) {
-                $numero = intval(substr($ultimo, 4)) + 1;
-            } else {
-                $numero = 1;
-            }
-            
-            $student->codigo = $anio . $numero;
+            // max() compara como texto y falla con 10+; usamos orden numérico
+            $ultimo = Student::whereYear('created_at', $anio)
+                ->orderByRaw('CAST(codigo AS UNSIGNED) DESC')
+                ->value('codigo');
+
+            $numero = $ultimo ? (intval(substr($ultimo, 4)) + 1) : 1;
+
+            $student->codigo = $anio . str_pad($numero, 3, '0', STR_PAD_LEFT);
         });
     }
     public function sede()
