@@ -91,16 +91,6 @@ class BoletinesAdministrativos extends Page
 
 
 
-    public function vistaPrevia(): void
-    {
-        Notification::make()
-            ->title('Vista previa')
-            ->body('Más adelante se abrirá la vista previa del boletín.')
-            ->info()
-            ->send();
-    }
-
-
     public function generarPdfEstudiante(
         BoletinDataService $dataService,
         BoletinPdfService $pdfService

@@ -535,9 +535,6 @@
                     Guardar cambios
                 </button>
 
-                <button wire:click="vistaPrevia" class="br-btn br-btn-preview">
-                    Vista previa
-                </button>
 
                 <button wire:click="generarPdfEstudiante" class="br-btn br-btn-pdf">
                     Generar PDF

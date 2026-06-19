@@ -65,8 +65,12 @@ class CourseResource extends Resource
 
                     TextInput::make('grado')
                         ->label('Grado')
-                        ->numeric()
-                        ->required(),
+                        ->placeholder('Ej: P, J, T, 1, 10, 11...')
+                        ->maxLength(2)
+                        ->required()
+                        ->dehydrateStateUsing(fn ($state) => strtoupper(trim($state)))
+                        ->rule('regex:/^[A-Za-z0-9]{1,2}$/'),
+                        
 
                     TextInput::make('descripcion')
                         ->label('Descripción')

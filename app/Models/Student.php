@@ -82,7 +82,13 @@ class Student extends Model
     protected static function booted(): void
     {
         static::creating(function (Student $student) {
+
+            if (! empty($student->codigo)) {
+                return;
+            }
+
             $anio = date('Y');
+
             // max() compara como texto y falla con 10+; usamos orden numérico
             $ultimo = Student::whereYear('created_at', $anio)
                 ->orderByRaw('CAST(codigo AS UNSIGNED) DESC')
