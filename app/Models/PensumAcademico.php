@@ -50,6 +50,35 @@ class PensumAcademico extends Model
         return $this->belongsTo(Docente::class);
     }
 
+    public function docentesAsignados()
+    {
+        return $this->hasMany(DocenteAsignatura::class, 'pensum_academico_id');
+    }
+
+    public function docentePreferido(int $courseId): ?Docente
+    {
+        // Primero busca un docente ACTIVO
+        $activo = $this->docentesAsignados()
+            ->where('course_id', $courseId)
+            ->whereHas('docente', function ($query) {
+                $query->where('estado', 'activo');
+            })
+            ->with('docente')
+            ->first();
+
+        if ($activo) {
+            return $activo->docente;
+        }
+
+        // Si no existe activo, devuelve el primero disponible
+        $cualquiera = $this->docentesAsignados()
+            ->where('course_id', $courseId)
+            ->with('docente')
+            ->first();
+
+        return $cualquiera?->docente;
+    }
+
     public function notas()
     {
         return $this->hasMany(NotaEstudiante::class, 'pensum_academico_id');

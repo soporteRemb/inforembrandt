@@ -4,10 +4,17 @@ namespace App\Filament\Pages;
 
 use App\Models\PeriodoLectivo;
 use App\Models\Sede;
+
 use App\Services\Importacion\DTO\ResultadoImportacion;
 use App\Services\Importacion\Estudiantes\EstudiantesImportService;
+use App\Services\Importacion\Pensum\PensumImportService;
+use App\Services\Importacion\Docentes\DocentesImportService;
+use App\Services\Importacion\Asignaciones\AsignacionesImportService;
+
+
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+
 use Livewire\WithFileUploads;
 
 class ImportacionDatos extends Page
@@ -38,6 +45,40 @@ class ImportacionDatos extends Page
 
 
     public bool $mostrarModalErroresEstudiantes = false;
+
+
+    public $archivoPensum = null;
+
+    public array $erroresPensum = [];
+
+    public ?array $resultadoPensum = null;
+
+    public bool $mostrarModalErroresPensum = false;
+
+    public $archivoDocentes = null;
+
+    public array $erroresDocentes = [];
+
+    public ?array $resultadoDocentes = null;
+
+    public bool $mostrarModalErroresDocentes = false;
+
+
+
+    public $archivoAsignaciones = null;
+
+    public array $erroresAsignaciones = [];
+
+    public ?array $resultadoAsignaciones = null;
+
+    public bool $mostrarModalErroresAsignaciones = false;
+
+
+
+
+
+
+
 
     public function mount(): void
     {
@@ -85,6 +126,148 @@ class ImportacionDatos extends Page
             ->{$resultado->tieneErrores() ? 'warning' : 'success'}()
             ->send();
     }
+
+
+    public function importarPensum(): void
+    {
+        if (! $this->archivoPensum) {
+            Notification::make()
+                ->title('Seleccione un archivo Excel.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $this->sedeId || ! $this->periodoLectivoId) {
+            Notification::make()
+                ->title('Filtros incompletos')
+                ->body('Seleccione sede y periodo lectivo antes de importar.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $service = new PensumImportService();
+
+        $resultado = $service->importar(
+            $this->archivoPensum->getRealPath(),
+            [
+                'sede_id' => $this->sedeId,
+                'periodo_lectivo_id' => $this->periodoLectivoId,
+            ]
+        );
+
+        $this->resultadoPensum = $resultado->toArray();
+        $this->erroresPensum = $resultado->errores;
+        $this->mostrarModalErroresPensum = $resultado->tieneErrores();
+
+        Notification::make()
+            ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
+            ->body(
+                'Filas leídas: '.$resultado->filasLeidas.
+                ' | Importados: '.$resultado->totalImportados().
+                ' | Inconsistencias: '.$resultado->totalErrores()
+            )
+            ->{$resultado->tieneErrores() ? 'warning' : 'success'}()
+            ->send();
+    }
+
+
+    public function importarDocentes(): void
+    {
+        if (! $this->archivoDocentes) {
+            Notification::make()
+                ->title('Seleccione un archivo Excel.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $this->sedeId || ! $this->periodoLectivoId) {
+            Notification::make()
+                ->title('Filtros incompletos')
+                ->body('Seleccione sede y periodo lectivo antes de importar.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $service = new DocentesImportService();
+
+        $resultado = $service->importar(
+            $this->archivoDocentes->getRealPath(),
+            [
+                'sede_id' => $this->sedeId,
+                'periodo_lectivo_id' => $this->periodoLectivoId,
+            ]
+        );
+
+        $this->resultadoDocentes = $resultado->toArray();
+        $this->erroresDocentes = $resultado->errores;
+        $this->mostrarModalErroresDocentes = $resultado->tieneErrores();
+
+        Notification::make()
+            ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
+            ->body(
+                'Filas leídas: '.$resultado->filasLeidas.
+                ' | Importados: '.$resultado->totalImportados().
+                ' | Inconsistencias: '.$resultado->totalErrores()
+            )
+            ->{$resultado->tieneErrores() ? 'warning' : 'success'}()
+            ->send();
+    }
+
+
+    public function importarAsignaciones(): void
+    {
+        if (! $this->archivoAsignaciones) {
+            Notification::make()
+                ->title('Seleccione un archivo Excel.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $this->sedeId || ! $this->periodoLectivoId) {
+            Notification::make()
+                ->title('Filtros incompletos')
+                ->body('Seleccione sede y periodo lectivo antes de importar.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $service = new AsignacionesImportService();
+
+        $resultado = $service->importar(
+            $this->archivoAsignaciones->getRealPath(),
+            [
+                'sede_id' => $this->sedeId,
+                'periodo_lectivo_id' => $this->periodoLectivoId,
+            ]
+        );
+
+        $this->resultadoAsignaciones = $resultado->toArray();
+        $this->erroresAsignaciones = $resultado->errores;
+        $this->mostrarModalErroresAsignaciones = $resultado->tieneErrores();
+
+        Notification::make()
+            ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
+            ->body(
+                'Filas leídas: '.$resultado->filasLeidas.
+                ' | Importados: '.$resultado->totalImportados().
+                ' | Inconsistencias: '.$resultado->totalErrores()
+            )
+            ->{$resultado->tieneErrores() ? 'warning' : 'success'}()
+            ->send();
+    }
+
 
     public function getSedesProperty()
     {

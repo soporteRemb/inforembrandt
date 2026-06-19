@@ -490,6 +490,7 @@ class BoletinesAdministrativos extends Page
             ->where('sede_id', session('sede_id'))
             ->where('grado', $course->grado)
             ->where('estado', 'activo')
+            ->where('tipo', 'asignatura')
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();

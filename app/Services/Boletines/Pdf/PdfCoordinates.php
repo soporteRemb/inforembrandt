@@ -31,7 +31,7 @@ class PdfCoordinates
 
         'periodo_academico' => [170, 70, 28],
 
-        'director_curso' => [68, 83, 75],
+        'director_curso' => [83, 83, 75],
     ];
 
     /******************************************************************

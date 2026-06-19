@@ -495,6 +495,484 @@
 
     </div>
 
+
+
+    <div class="id-card">
+
+        <div class="id-card-header">
+            <h2>Pensum académico</h2>
+            <p>Importa áreas y asignaturas desde Excel, asociadas al grado, sede y periodo lectivo seleccionado.</p>
+        </div>
+
+        <div class="id-card-body">
+
+            <div class="id-grid">
+                <div>
+                    <label class="id-label">Sede</label>
+
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select wire:model.live="sedeId">
+                            <option value="">Seleccione una sede</option>
+                            @foreach($this->sedes as $id => $nombre)
+                                <option value="{{ $id }}">{{ $nombre }}</option>
+                            @endforeach
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                </div>
+
+                <div>
+                    <label class="id-label">Periodo lectivo</label>
+
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select wire:model.live="periodoLectivoId">
+                            <option value="">Seleccione un periodo</option>
+                            @foreach($this->periodos as $id => $nombre)
+                                <option value="{{ $id }}">{{ $nombre }}</option>
+                            @endforeach
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                </div>
+            </div>
+
+            <label
+                class="id-upload-box"
+                x-data
+                x-on:dragover.prevent="$el.classList.add('id-upload-box-active')"
+                x-on:dragleave.prevent="$el.classList.remove('id-upload-box-active')"
+                x-on:drop.prevent="
+                    $el.classList.remove('id-upload-box-active');
+                    const file = $event.dataTransfer.files[0];
+                    if (file) {
+                        $wire.upload('archivoPensum', file);
+                    }
+                "
+            >
+                <input
+                    type="file"
+                    wire:model="archivoPensum"
+                    accept=".xlsx,.xls"
+                    class="id-file-hidden"
+                >
+
+                <div class="id-upload-icon">
+                    <x-heroicon-o-document-arrow-up class="w-5 h-5" />
+                </div>
+
+                <div>
+                    <strong>Seleccionar archivo Excel de pensum académico</strong>
+                    <span>Formatos permitidos: .xlsx, .xls</span>
+                </div>
+            </label>
+
+            @if($archivoPensum)
+                <div class="id-file-selected">
+                    <x-heroicon-o-check-circle class="w-5 h-5" />
+                    <span>{{ $archivoPensum->getClientOriginalName() }}</span>
+                </div>
+            @endif
+
+            <div wire:loading wire:target="archivoPensum" class="id-uploading">
+                <x-heroicon-o-arrow-path class="w-4 h-4 id-spin" />
+                <span>Subiendo archivo...</span>
+            </div>
+
+            <div wire:loading wire:target="importarPensum" class="id-import-progress">
+                <div class="id-import-progress-info">
+                    <span>Procesando archivo Excel...</span>
+                    <small>Esto puede tardar unos segundos.</small>
+                </div>
+
+                <div class="id-progress-bar">
+                    <div class="id-progress-bar-fill"></div>
+                </div>
+            </div>
+
+            @if($resultadoPensum)
+                <div class="id-summary">
+                    <div class="id-summary-card">
+                        <span>Última importación</span>
+                        <strong>{{ $resultadoPensum['fecha'] }}</strong>
+                    </div>
+
+                    <div class="id-summary-card">
+                        <span>Filas leídas</span>
+                        <strong>{{ $resultadoPensum['filasLeidas'] }}</strong>
+                    </div>
+
+                    <div class="id-summary-card">
+                        <span>Importados</span>
+                        <strong>{{ $resultadoPensum['totalImportados'] }}</strong>
+                    </div>
+
+                    <div class="id-summary-card">
+                        <span>Actualizados</span>
+                        <strong>{{ $resultadoPensum['actualizados'] }}</strong>
+                    </div>
+
+                    <div class="id-summary-card">
+                        <span>Inconsistencias</span>
+                        <strong>{{ $resultadoPensum['totalErrores'] }}</strong>
+                    </div>
+                </div>
+            @endif
+
+        </div>
+
+        <div class="id-card-footer">
+             
+
+            <div style="display:flex; gap:10px;">
+                @if(count($erroresPensum) > 0)
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresPensum', true)"
+                        class="id-btn-light"
+                    >
+                        Ver inconsistencias
+                    </button>
+                @endif
+
+                <button
+                    type="button"
+                    wire:click="importarPensum"
+                    wire:loading.attr="disabled"
+                    wire:target="importarPensum"
+                    class="id-btn-primary"
+                    @disabled(! $sedeId || ! $periodoLectivoId || ! $archivoPensum)
+                >
+                    <span wire:loading.remove wire:target="importarPensum">
+                        Importar pensum
+                    </span>
+
+                    <span wire:loading wire:target="importarPensum">
+                        Procesando...
+                    </span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+
+
+
+    <div class="id-card">
+
+        <div class="id-card-header">
+                <h2>Docentes</h2>
+                <p>Importa docentes desde Excel, crea o actualiza su información y asigna la dirección de curso si aplica.</p>
+            </div>
+
+            <div class="id-card-body">
+
+                <div class="id-grid">
+                    <div>
+                        <label class="id-label">Sede</label>
+
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select wire:model.live="sedeId">
+                                <option value="">Seleccione una sede</option>
+                                @foreach($this->sedes as $id => $nombre)
+                                    <option value="{{ $id }}">{{ $nombre }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+
+                    <div>
+                        <label class="id-label">Periodo lectivo</label>
+
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select wire:model.live="periodoLectivoId">
+                                <option value="">Seleccione un periodo</option>
+                                @foreach($this->periodos as $id => $nombre)
+                                    <option value="{{ $id }}">{{ $nombre }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+                </div>
+
+                <label
+                    class="id-upload-box"
+                    x-data
+                    x-on:dragover.prevent="$el.classList.add('id-upload-box-active')"
+                    x-on:dragleave.prevent="$el.classList.remove('id-upload-box-active')"
+                    x-on:drop.prevent="
+                        $el.classList.remove('id-upload-box-active');
+                        const file = $event.dataTransfer.files[0];
+                        if (file) {
+                            $wire.upload('archivoDocentes', file);
+                        }
+                    "
+                >
+                    <input
+                        type="file"
+                        wire:model="archivoDocentes"
+                        accept=".xlsx,.xls"
+                        class="id-file-hidden"
+                    >
+
+                    <div class="id-upload-icon">
+                        <x-heroicon-o-document-arrow-up class="w-5 h-5" />
+                    </div>
+
+                    <div>
+                        <strong>Seleccionar archivo Excel de docentes</strong>
+                        <span>Formatos permitidos: .xlsx, .xls</span>
+                    </div>
+                </label>
+
+                @if($archivoDocentes)
+                    <div class="id-file-selected">
+                        <x-heroicon-o-check-circle class="w-5 h-5" />
+                        <span>{{ $archivoDocentes->getClientOriginalName() }}</span>
+                    </div>
+                @endif
+
+                <div wire:loading wire:target="archivoDocentes" class="id-uploading">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 id-spin" />
+                    <span>Subiendo archivo...</span>
+                </div>
+
+                <div wire:loading wire:target="importarDocentes" class="id-import-progress">
+                    <div class="id-import-progress-info">
+                        <span>Procesando archivo Excel...</span>
+                        <small>Esto puede tardar unos segundos.</small>
+                    </div>
+
+                    <div class="id-progress-bar">
+                        <div class="id-progress-bar-fill"></div>
+                    </div>
+                </div>
+
+                @if($resultadoDocentes)
+                    <div class="id-summary">
+                        <div class="id-summary-card">
+                            <span>Última importación</span>
+                            <strong>{{ $resultadoDocentes['fecha'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Filas leídas</span>
+                            <strong>{{ $resultadoDocentes['filasLeidas'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Importados</span>
+                            <strong>{{ $resultadoDocentes['totalImportados'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Actualizados</span>
+                            <strong>{{ $resultadoDocentes['actualizados'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Inconsistencias</span>
+                            <strong>{{ $resultadoDocentes['totalErrores'] }}</strong>
+                        </div>
+                    </div>
+                @endif
+
+            </div>
+
+            <div class="id-card-footer">
+
+                <div style="display:flex; gap:10px;">
+                    @if(count($erroresDocentes) > 0)
+                        <button
+                            type="button"
+                            wire:click="$set('mostrarModalErroresDocentes', true)"
+                            class="id-btn-light"
+                        >
+                            Ver inconsistencias
+                        </button>
+                    @endif
+
+                    <button
+                        type="button"
+                        wire:click="importarDocentes"
+                        wire:loading.attr="disabled"
+                        wire:target="importarDocentes"
+                        class="id-btn-primary"
+                        @disabled(! $sedeId || ! $periodoLectivoId || ! $archivoDocentes)
+                    >
+                        <span wire:loading.remove wire:target="importarDocentes">
+                            Importar docentes
+                        </span>
+
+                        <span wire:loading wire:target="importarDocentes">
+                            Procesando...
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+
+
+
+
+
+        <div class="id-card">
+
+            <div class="id-card-header">
+                <h2>Asignación de materias (Docente)</h2>
+                <p>Importa la relación entre docente, curso y asignatura para dejar listas las cargas académicas.</p>
+            </div>
+
+            <div class="id-card-body">
+
+                <div class="id-grid">
+                    <div>
+                        <label class="id-label">Sede</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select wire:model.live="sedeId">
+                                <option value="">Seleccione una sede</option>
+                                @foreach($this->sedes as $id => $nombre)
+                                    <option value="{{ $id }}">{{ $nombre }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+
+                    <div>
+                        <label class="id-label">Periodo lectivo</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select wire:model.live="periodoLectivoId">
+                                <option value="">Seleccione un periodo</option>
+                                @foreach($this->periodos as $id => $nombre)
+                                    <option value="{{ $id }}">{{ $nombre }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+                </div>
+
+                <label
+                    class="id-upload-box"
+                    x-data
+                    x-on:dragover.prevent="$el.classList.add('id-upload-box-active')"
+                    x-on:dragleave.prevent="$el.classList.remove('id-upload-box-active')"
+                    x-on:drop.prevent="
+                        $el.classList.remove('id-upload-box-active');
+                        const file = $event.dataTransfer.files[0];
+                        if (file) {
+                            $wire.upload('archivoAsignaciones', file);
+                        }
+                    "
+                >
+                    <input
+                        type="file"
+                        wire:model="archivoAsignaciones"
+                        accept=".xlsx,.xls"
+                        class="id-file-hidden"
+                    >
+
+                    <div class="id-upload-icon">
+                        <x-heroicon-o-document-arrow-up class="w-5 h-5" />
+                    </div>
+
+                    <div>
+                        <strong>Seleccionar archivo Excel de asignación de materias</strong>
+                        <span>Formatos permitidos: .xlsx, .xls</span>
+                    </div>
+                </label>
+
+                @if($archivoAsignaciones)
+                    <div class="id-file-selected">
+                        <x-heroicon-o-check-circle class="w-5 h-5" />
+                        <span>{{ $archivoAsignaciones->getClientOriginalName() }}</span>
+                    </div>
+                @endif
+
+                <div wire:loading wire:target="archivoAsignaciones" class="id-uploading">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 id-spin" />
+                    <span>Subiendo archivo...</span>
+                </div>
+
+                <div wire:loading wire:target="importarAsignaciones" class="id-import-progress">
+                    <div class="id-import-progress-info">
+                        <span>Procesando archivo Excel...</span>
+                        <small>Esto puede tardar unos segundos.</small>
+                    </div>
+
+                    <div class="id-progress-bar">
+                        <div class="id-progress-bar-fill"></div>
+                    </div>
+                </div>
+
+                @if($resultadoAsignaciones)
+                    <div class="id-summary">
+                        <div class="id-summary-card">
+                            <span>Última importación</span>
+                            <strong>{{ $resultadoAsignaciones['fecha'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Filas leídas</span>
+                            <strong>{{ $resultadoAsignaciones['filasLeidas'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Importados</span>
+                            <strong>{{ $resultadoAsignaciones['totalImportados'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Actualizados</span>
+                            <strong>{{ $resultadoAsignaciones['actualizados'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Inconsistencias</span>
+                            <strong>{{ $resultadoAsignaciones['totalErrores'] }}</strong>
+                        </div>
+                    </div>
+                @endif
+
+            </div>
+
+            <div class="id-card-footer">
+
+                <div style="display:flex; gap:10px;">
+                    @if(count($erroresAsignaciones) > 0)
+                        <button
+                            type="button"
+                            wire:click="$set('mostrarModalErroresAsignaciones', true)"
+                            class="id-btn-light"
+                        >
+                            Ver inconsistencias
+                        </button>
+                    @endif
+
+                    <button
+                        type="button"
+                        wire:click="importarAsignaciones"
+                        wire:loading.attr="disabled"
+                        wire:target="importarAsignaciones"
+                        class="id-btn-primary"
+                        @disabled(! $sedeId || ! $periodoLectivoId || ! $archivoAsignaciones)
+                    >
+                        <span wire:loading.remove wire:target="importarAsignaciones">
+                            Importar asignaciones
+                        </span>
+
+                        <span wire:loading wire:target="importarAsignaciones">
+                            Procesando...
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+
+
+
+
     @if($mostrarModalErroresEstudiantes ?? false)
         <div class="id-modal-backdrop">
             <div class="id-modal">
@@ -531,5 +1009,132 @@
             </div>
         </div>
     @endif
+
+
+
+
+    @if($mostrarModalErroresPensum ?? false)
+        <div class="id-modal-backdrop">
+            <div class="id-modal">
+                <div class="id-modal-header">
+                    <h3>Inconsistencias de importación - Pensum académico</h3>
+
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresPensum', false)"
+                        class="id-modal-close"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="id-modal-body">
+                    @foreach($erroresPensum as $error)
+                        <div class="id-error-item">
+                            <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
+                            <span>{{ $error }}</span>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="id-modal-footer">
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresPensum', false)"
+                        class="id-btn-light"
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
+
+
+
+    @if($mostrarModalErroresDocentes ?? false)
+        <div class="id-modal-backdrop">
+            <div class="id-modal">
+                <div class="id-modal-header">
+                    <h3>Inconsistencias de importación - Docentes</h3>
+
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresDocentes', false)"
+                        class="id-modal-close"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="id-modal-body">
+                    @foreach($erroresDocentes as $error)
+                        <div class="id-error-item">
+                            <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
+                            <span>{{ $error }}</span>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="id-modal-footer">
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresDocentes', false)"
+                        class="id-btn-light"
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
+
+
+
+
+
+
+    @if($mostrarModalErroresAsignaciones ?? false)
+        <div class="id-modal-backdrop">
+            <div class="id-modal">
+                <div class="id-modal-header">
+                    <h3>Inconsistencias de importación - Asignación de materias</h3>
+
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresAsignaciones', false)"
+                        class="id-modal-close"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="id-modal-body">
+                    @foreach($erroresAsignaciones as $error)
+                        <div class="id-error-item">
+                            <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
+                            <span>{{ $error }}</span>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="id-modal-footer">
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresAsignaciones', false)"
+                        class="id-btn-light"
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
 
 </x-filament-panels::page>

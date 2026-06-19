@@ -175,6 +175,7 @@ class BoletinDataService
             ->where('periodo_lectivo_id', $periodoLectivo->id)
             ->where('grado', $course->grado)
             ->where('estado', 'activo')
+            ->where('tipo', 'asignatura')
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();
@@ -284,6 +285,7 @@ class BoletinDataService
             ->where('periodo_lectivo_id', $periodoLectivo->id)
             ->where('grado', $course->grado)
             ->where('estado', 'activo')
+            ->where('tipo', 'asignatura')
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();
@@ -331,6 +333,7 @@ class BoletinDataService
             ->where('periodo_lectivo_id', $periodoLectivo->id)
             ->where('grado', $course->grado)
             ->where('estado', 'activo')
+            ->where('tipo', 'asignatura')
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();
@@ -448,33 +451,21 @@ class BoletinDataService
         ])->filter()->implode(' ');
     }
 
-    protected function docenteAsignatura($asignatura, $course): string
-    {
-        if (! $asignatura || ! $course) {
-            return '';
-        }
+    private function docenteAsignatura(
+        PensumAcademico $pensum,
+        Course $course
+    ): string {
 
-        $asignacion = DocenteAsignatura::query()
-            ->where('course_id', $course->id)
-            ->where('pensum_academico_id', $asignatura->id)
-            ->first();
-
-        if (! $asignacion) {
-            return '';
-        }
-
-        $docente = Docente::query()
-            ->where('id', $asignacion->docente_id)
-            ->first();
+        $docente = $pensum->docentePreferido($course->id);
 
         if (! $docente) {
             return '';
         }
 
-        return collect([
-            $docente->nombres ?? null,
-            $docente->apellidos ?? null,
-        ])->filter()->implode(' ');
+        return trim(
+            $docente->nombres . ' ' .
+            $docente->apellidos
+        );
     }
 
 }

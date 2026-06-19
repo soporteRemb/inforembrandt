@@ -9,6 +9,7 @@ class Docente extends Model
     protected $table = 'docentes';
 
     protected $fillable = [
+        'codigo',
         'user_id',
         'identificacion',
         'nombres',

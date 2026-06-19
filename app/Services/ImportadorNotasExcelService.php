@@ -104,11 +104,26 @@ class ImportadorNotasExcelService
             */
 
             $pensum = PensumAcademico::query()
-                ->where('docente_id', $docente->id)
-                ->where('course_id', $course->id)
                 ->where('periodo_lectivo_id', $periodoLectivoId)
-                ->where('nombre', $materiaNombre)
+                ->where('sede_id', $course->sede_id)
+                ->where('grado', $course->grado)
+                ->where('estado', 'activo')
+                ->where('tipo', 'asignatura')
+                ->where(function ($query) use ($materiaCodigo, $materiaNombre) {
+                    $query->where('codigo', $materiaCodigo)
+                        ->orWhere('nombre', $materiaNombre)
+                        ->orWhere('nombre_corto', $materiaNombre);
+                })
                 ->first();
+
+            if ($pensum && $pensum->tipo !== 'asignatura') {
+                $errores++;
+
+                $detalles[] =
+                    "Hoja {$sheetName}: {$materiaNombre} corresponde a un área y no a una asignatura.";
+
+                continue;
+            }
 
             if (! $pensum) {
 

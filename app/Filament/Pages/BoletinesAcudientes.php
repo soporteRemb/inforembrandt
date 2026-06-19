@@ -204,6 +204,7 @@ class BoletinesAcudientes extends Page
             ->where('sede_id', $this->student->sede_id)
             ->where('grado', $this->student->course->grado)
             ->where('estado', 'activo')
+            ->where('tipo', 'asignatura')
             ->orderBy('orden')
             ->orderBy('nombre')
             ->get();

@@ -138,6 +138,7 @@ class Notas extends Page implements Forms\Contracts\HasForms
                 ->where('sede_id', $cursoNuevo->sede_id)
                 ->where('grado', $cursoNuevo->grado)
                 ->where('estado', 'activo')
+                ->where('tipo', 'asignatura')
                 ->where(function ($query) use ($pensumAnterior) {
                     $query->where('codigo', $pensumAnterior->codigo)
                         ->orWhere('nombre', $pensumAnterior->nombre);
@@ -412,7 +413,10 @@ class Notas extends Page implements Forms\Contracts\HasForms
                                         ->with('pensumAcademico')
                                         ->where('docente_id', $docente->id)
                                         ->where('course_id', $courseId)
-                                        ->whereHas('pensumAcademico', fn ($q) => $q->where('periodo_lectivo_id', $periodoId))
+                                        ->whereHas('pensumAcademico', fn ($q) => $q
+                                            ->where('periodo_lectivo_id', $periodoId)
+                                            ->where('tipo', 'asignatura')
+                                        )
                                         ->get()
                                         ->pluck('pensumAcademico')
                                         ->filter()
@@ -435,6 +439,7 @@ class Notas extends Page implements Forms\Contracts\HasForms
                                     ->where('sede_id', $course->sede_id)
                                     ->where('grado', $course->grado)
                                     ->where('estado', 'activo')
+                                    ->where('tipo', 'asignatura')
                                     ->orderBy('orden')
                                     ->orderBy('nombre')
                                     ->pluck('nombre', 'id')
@@ -611,6 +616,21 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
         $courseId = (int) ($this->data['course_id'] ?? 0);
         $pensumId = (int) ($this->data['pensum_academico_id'] ?? 0);
+        
+        $pensumSeleccionado = PensumAcademico::query()
+            ->where('id', $pensumId)
+            ->where('tipo', 'asignatura')
+            ->first();
+
+        if (! $pensumSeleccionado) {
+            Notification::make()
+                ->title('Asignatura inválida')
+                ->body('No se pueden guardar notas sobre registros tipo área. Seleccione una asignatura.')
+                ->danger()
+                ->send();
+
+            return;
+        }
         $periodo = $this->data['periodo'] ?? null;
 
         if (! $courseId || ! $pensumId || ! $periodo) {
@@ -746,6 +766,7 @@ class Notas extends Page implements Forms\Contracts\HasForms
                 ->where('periodo_lectivo_id', $course->periodo_lectivo_id)
                 ->where('grado', $course->grado)
                 ->where('estado', 'activo')
+                ->where('tipo', 'asignatura')
                 ->where(function ($query) use ($codigoMateria, $nombreMateria) {
                     $query->where('codigo', $codigoMateria)
                         ->orWhere('nombre', $nombreMateria);

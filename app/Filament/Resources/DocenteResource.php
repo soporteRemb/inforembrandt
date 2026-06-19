@@ -45,6 +45,10 @@ class DocenteResource extends Resource
                             ->required()
                             ->helperText('Seleccione el usuario con el que el docente iniciará sesión.'),
 
+                        Forms\Components\TextInput::make('codigo')
+                            ->label('Código')
+                            ->maxLength(20),
+
                         Forms\Components\TextInput::make('identificacion')
                             ->label('Identificación')
                             ->required()
@@ -151,9 +155,7 @@ class DocenteResource extends Resource
                     ->label('Especialidad')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('cargo')
-                    ->label('Cargo')
-                    ->searchable(),
+                
 
                 Tables\Columns\BadgeColumn::make('estado')
                     ->label('Estado')
