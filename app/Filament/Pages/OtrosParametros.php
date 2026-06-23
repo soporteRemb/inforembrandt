@@ -3,6 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Models\RangoDesempenoNota;
+use App\Models\Eps;
+use App\Models\Jornada;
+
+
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
@@ -22,9 +26,14 @@ class OtrosParametros extends Page
 
     public array $rangos = [];
 
+    public array $eps = [];
+    public array $jornadas = [];
+
     public function mount(): void
     {
         $this->cargarRangos();
+        $this->cargarEps();
+        $this->cargarJornadas();
     }
 
     public function cargarRangos(): void
@@ -105,5 +114,131 @@ class OtrosParametros extends Page
             ->send();
     }
 
+    public function cargarEps(): void
+    {
+        $this->eps = Eps::query()
+            ->orderBy('nombre')
+            ->get()
+            ->map(fn ($eps) => [
+                'id' => $eps->id,
+                'nombre' => $eps->nombre,
+                'activo' => (bool) $eps->activo,
+            ])
+            ->toArray();
+    }
+
+    public function agregarEps(): void
+    {
+        $this->eps[] = [
+            'id' => null,
+            'nombre' => '',
+            'activo' => true,
+        ];
+    }
+
+    public function guardarEps(): void
+    {
+        foreach ($this->eps as $item) {
+            $nombre = trim($item['nombre'] ?? '');
+
+            if ($nombre === '') {
+                continue;
+            }
+
+            Eps::updateOrCreate(
+                ['id' => $item['id'] ?? null],
+                [
+                    'nombre' => $nombre,
+                    'activo' => (bool) ($item['activo'] ?? true),
+                ]
+            );
+        }
+
+        $this->cargarEps();
+
+        Notification::make()
+            ->title('EPS guardadas correctamente')
+            ->success()
+            ->send();
+    }
+
+    public function cargarJornadas(): void
+    {
+        if (Jornada::count() === 0) {
+            Jornada::create([
+                'nombre' => 'Completa',
+                'activo' => true,
+            ]);
+        }
+
+        $this->jornadas = Jornada::query()
+            ->orderBy('nombre')
+            ->get()
+            ->map(fn ($jornada) => [
+                'id' => $jornada->id,
+                'nombre' => $jornada->nombre,
+                'activo' => (bool) $jornada->activo,
+            ])
+            ->toArray();
+    }
+
+    public function agregarJornada(): void
+    {
+        $this->jornadas[] = [
+            'id' => null,
+            'nombre' => '',
+            'activo' => true,
+        ];
+    }
+
+    public function guardarJornadas(): void
+    {
+        foreach ($this->jornadas as $item) {
+            $nombre = trim($item['nombre'] ?? '');
+
+            if ($nombre === '') {
+                continue;
+            }
+
+            Jornada::updateOrCreate(
+                ['id' => $item['id'] ?? null],
+                [
+                    'nombre' => $nombre,
+                    'activo' => (bool) ($item['activo'] ?? true),
+                ]
+            );
+        }
+
+        $this->cargarJornadas();
+
+        Notification::make()
+            ->title('Jornadas guardadas correctamente')
+            ->success()
+            ->send();
+    }
+
+    public function eliminarEps(int $index): void
+    {
+        if (!empty($this->eps[$index]['id'])) {
+            Eps::where('id', $this->eps[$index]['id'])->delete();
+        }
+
+        unset($this->eps[$index]);
+
+        $this->eps = array_values($this->eps);
+    }
+
+    public function eliminarJornada(int $index): void
+    {
+        if (!empty($this->jornadas[$index]['id'])) {
+            Jornada::where('id', $this->jornadas[$index]['id'])->delete();
+        }
+
+        unset($this->jornadas[$index]);
+
+        $this->jornadas = array_values($this->jornadas);
+    }
+
+    
     
 }

@@ -370,7 +370,7 @@
 
                     <div>
                         <strong>Jornada:</strong>
-                        {{ $student?->course?->jornada ?? '-' }}
+                        {{ $student?->course?->jornada ?: 'Completa' }}
                     </div>
                 </div>
 

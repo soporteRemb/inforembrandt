@@ -81,7 +81,7 @@ class BoletinesAcudientes extends Page
         $students = Student::query()
             ->whereHas('guardians', function ($query) {
                 $query->where('user_id', auth()->id())
-                    ->where('estado', 'activo');
+                    ->where('guardians.estado', 'activo');
             })
             ->where('estado', 'activo')
             ->with('course')
@@ -115,7 +115,7 @@ class BoletinesAcudientes extends Page
             ->where('estado', 'activo')
             ->whereHas('guardians', function ($query) {
                 $query->where('user_id', auth()->id())
-                    ->where('estado', 'activo');
+                    ->where('guardians.estado', 'activo');
             })
             ->with(['course', 'periodoLectivo'])
             ->first();

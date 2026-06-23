@@ -160,6 +160,37 @@
             font-weight: 400;
             opacity: 1;
         }
+
+        .op-list-scroll {
+            height: 230px;
+            max-height: 230px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .op-card-body.op-list-scroll {
+            display: block;
+        }
+
+        .op-btn-add {
+            background: #d5f8e7;
+            color: #047857;
+            border: 1px solid #84ebaa;
+        }
+
+        .op-btn-delete {
+            background: #fff1f2;
+            color: #b91c1c;
+            border: 1px solid #fecdd3;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .op-btn-delete:hover {
+            background: #ffe4e6;
+        }
     </style>
 
     <div class="op-container">
@@ -259,6 +290,96 @@
 
         </div>
 
+    </div>
+
+
+
+
+
+
+
+    <div class="op-card">
+        <div class="op-card-header">
+            <h2>EPS</h2>
+            <p>Configure las EPS disponibles para seleccionar en estudiantes.</p>
+        </div>
+
+        <div class="op-card-body op-list-scroll">
+            @foreach($eps as $index => $item)
+                <div class="op-row" style="grid-template-columns: 1fr 130px;">
+                    <input
+                        type="text"
+                        wire:model="eps.{{ $index }}.nombre"
+                        class="op-input-desc"
+                        placeholder="Nombre de la EPS"
+                    >
+
+                    <button
+                        type="button"
+                        wire:click="eliminarEps({{ $index }})"
+                        class="op-btn-delete"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="op-card-footer" style="justify-content: space-between;">
+            <button type="button" wire:click="agregarEps" class="op-btn-save op-btn-add">
+                Agregar EPS
+            </button>
+
+            <button type="button" wire:click="guardarEps" class="op-btn-save">
+                Guardar EPS
+            </button>
+        </div>
+    </div>
+
+
+
+
+
+
+
+
+
+    <div class="op-card">
+        <div class="op-card-header">
+            <h2>Jornadas académicas</h2>
+            <p>Configure las jornadas disponibles para cursos y boletines.</p>
+        </div>
+
+        <div class="op-card-body op-list-scroll">
+            @foreach($jornadas as $index => $item)
+                <div class="op-row" style="grid-template-columns: 1fr 130px;">
+                    <input
+                        type="text"
+                        wire:model="jornadas.{{ $index }}.nombre"
+                        class="op-input-desc"
+                        placeholder="Nombre de la jornada"
+                    >
+
+                    <button
+                        type="button"
+                        wire:click="eliminarJornada({{ $index }})"
+                        class="op-btn-delete"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="op-card-footer" style="justify-content: space-between;">
+            <button type="button" wire:click="agregarJornada" class="op-btn-save op-btn-add">
+                Agregar jornada
+            </button>
+
+            <button type="button" wire:click="guardarJornadas" class="op-btn-save">
+                Guardar jornadas
+            </button>
+        </div>
     </div>
 
 </x-filament-panels::page>

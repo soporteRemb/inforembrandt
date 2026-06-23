@@ -139,6 +139,10 @@ class DocenteResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('codigo')
+                    ->label('Código')
+                    ->searchable(),
+
                 Tables\Columns\TextColumn::make('identificacion')
                     ->label('Identificación')
                     ->searchable(),
@@ -146,10 +150,6 @@ class DocenteResource extends Resource
                 Tables\Columns\TextColumn::make('nombre_completo')
                     ->label('Docente')
                     ->searchable(['nombres', 'apellidos']),
-
-                Tables\Columns\TextColumn::make('user.name')
-                    ->label('Usuario')
-                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('especialidad')
                     ->label('Especialidad')

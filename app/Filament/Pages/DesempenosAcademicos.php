@@ -47,7 +47,7 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
 
 
 
-    public int $limiteCaracteres = 60;
+    public int $limiteCaracteres = 68;
 
 
     public int $totalAsignaturas = 0;
@@ -1236,10 +1236,10 @@ class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
         }
 
 
-        if (in_array($tipo, ['perfil', 'acompanamiento']) && mb_strlen($descripcion) > 60) {
+        if (in_array($tipo, ['perfil', 'acompanamiento']) && mb_strlen($descripcion) > 68) {
             Notification::make()
                 ->title('Descripción demasiado larga')
-                ->body('Para Perfil Rembrandtino y Acompañamiento Familiar la descripción debe tener máximo 60 caracteres.')
+                ->body('Para Perfil Rembrandtino y Acompañamiento Familiar la descripción debe tener máximo 68 caracteres.')
                 ->warning()
                 ->send();
 

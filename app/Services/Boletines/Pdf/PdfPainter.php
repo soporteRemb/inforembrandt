@@ -32,10 +32,17 @@ class PdfPainter
         [$x, $y, $w] = PdfCoordinates::ENCABEZADO['curso_grado'];
         $this->textoCentrado($pdf, $x, $y, $w, $curso['grado_curso'] ?? '');
 
-        // Jornada fija temporalmente
+        // Jornada
         $this->fuenteNormal($pdf, 10);
         [$x, $y, $w] = PdfCoordinates::ENCABEZADO['curso_jornada'];
-        $this->textoCentrado($pdf, $x, $y, $w, 'Completa');
+
+        $this->textoCentrado(
+            $pdf,
+            $x,
+            $y,
+            $w,
+            $data['curso']['jornada'] ?? 'Completa'
+        );
 
         // Periodo académico. Ejemplo:
         // PRIMERO

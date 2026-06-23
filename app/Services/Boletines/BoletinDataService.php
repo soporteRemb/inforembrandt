@@ -99,7 +99,7 @@ class BoletinDataService
             'codigo' => $course?->curso,
             'nombre' => $course?->nombre ?? $course?->curso,
             'grado' => $course?->grado,
-            'jornada' => 'Completa',
+            'jornada' => $course?->jornada ?? 'Completa',
 
             'grado_curso' => trim(($course?->nombre ?? $this->nombreGrado($course?->grado)) . ' - ' . ($course?->curso ?? '')),
             'director_curso' => $this->directorCurso($course),

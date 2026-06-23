@@ -545,6 +545,22 @@
 
     {{ $this->form }}
 
+    @if($this->periodoAcademicoCerrado)
+        <div
+            style="
+                margin-top:20px;
+                padding:12px 16px;
+                border:1px solid #fdba74;
+                background:#fff7ed;
+                color:#c2410c;
+                border-radius:12px;
+                font-weight:500;
+            "
+        >
+            Periodo académico cerrado. Solo se permite consulta.
+        </div>
+    @endif
+
     <div class="rn-indicators mt-5">
 
         <div class="rn-indicator-card">

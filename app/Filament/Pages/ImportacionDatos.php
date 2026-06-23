@@ -10,12 +10,16 @@ use App\Services\Importacion\Estudiantes\EstudiantesImportService;
 use App\Services\Importacion\Pensum\PensumImportService;
 use App\Services\Importacion\Docentes\DocentesImportService;
 use App\Services\Importacion\Asignaciones\AsignacionesImportService;
+use App\Services\Importacion\Acudientes\AcudientesImportService;
 
 
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
 use Livewire\WithFileUploads;
+
+
+use Illuminate\Support\Facades\Cache;
 
 class ImportacionDatos extends Page
 {
@@ -74,6 +78,17 @@ class ImportacionDatos extends Page
     public bool $mostrarModalErroresAsignaciones = false;
 
 
+    public $archivoAcudientes = null;
+
+    public array $erroresAcudientes = [];
+
+    public ?array $resultadoAcudientes = null;
+
+    public bool $mostrarModalErroresAcudientes = false;
+
+    public string $buscarImportador = '';
+
+
 
 
 
@@ -88,6 +103,16 @@ class ImportacionDatos extends Page
             ->where('sede_id', session('sede_id'))
             ->where('estado', 'abierto')
             ->value('id');
+    }
+
+    private function guardarHistorialImportacion(string $clave, array $resultado): void
+    {
+        Cache::forever("importacion_datos_{$clave}", $resultado);
+    }
+
+    public function historialImportacion(string $clave): ?array
+    {
+        return Cache::get("importacion_datos_{$clave}");
     }
 
     public function importarEstudiantes(): void
@@ -115,6 +140,7 @@ class ImportacionDatos extends Page
         $this->resultadoEstudiantes = $resultado->toArray();
         $this->erroresEstudiantes = $resultado->errores;
         $this->mostrarModalErroresEstudiantes = $resultado->tieneErrores();
+        $this->guardarHistorialImportacion('estudiantes', $this->resultadoEstudiantes);
 
         Notification::make()
             ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
@@ -162,6 +188,7 @@ class ImportacionDatos extends Page
         $this->resultadoPensum = $resultado->toArray();
         $this->erroresPensum = $resultado->errores;
         $this->mostrarModalErroresPensum = $resultado->tieneErrores();
+        $this->guardarHistorialImportacion('pensum', $this->resultadoPensum);
 
         Notification::make()
             ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
@@ -209,6 +236,7 @@ class ImportacionDatos extends Page
         $this->resultadoDocentes = $resultado->toArray();
         $this->erroresDocentes = $resultado->errores;
         $this->mostrarModalErroresDocentes = $resultado->tieneErrores();
+        $this->guardarHistorialImportacion('docentes', $this->resultadoDocentes);
 
         Notification::make()
             ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
@@ -256,6 +284,7 @@ class ImportacionDatos extends Page
         $this->resultadoAsignaciones = $resultado->toArray();
         $this->erroresAsignaciones = $resultado->errores;
         $this->mostrarModalErroresAsignaciones = $resultado->tieneErrores();
+        $this->guardarHistorialImportacion('asignaciones', $this->resultadoAsignaciones);
 
         Notification::make()
             ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
@@ -267,6 +296,55 @@ class ImportacionDatos extends Page
             ->{$resultado->tieneErrores() ? 'warning' : 'success'}()
             ->send();
     }
+
+
+    public function importarAcudientes(): void
+    {
+        if (! $this->archivoAcudientes) {
+            Notification::make()
+                ->title('Seleccione un archivo Excel.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $this->sedeId || ! $this->periodoLectivoId) {
+            Notification::make()
+                ->title('Filtros incompletos')
+                ->body('Seleccione sede y periodo lectivo antes de importar.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $service = new AcudientesImportService();
+
+        $resultado = $service->importar(
+            $this->archivoAcudientes->getRealPath(),
+            [
+                'sede_id' => $this->sedeId,
+                'periodo_lectivo_id' => $this->periodoLectivoId,
+            ]
+        );
+
+        $this->resultadoAcudientes = $resultado->toArray();
+        $this->erroresAcudientes = $resultado->errores;
+        $this->mostrarModalErroresAcudientes = $resultado->tieneErrores();
+        $this->guardarHistorialImportacion('acudientes', $this->resultadoAcudientes);
+
+        Notification::make()
+            ->title($resultado->tieneErrores() ? 'Importación finalizada con inconsistencias' : 'Importación completada')
+            ->body(
+                'Filas leídas: '.$resultado->filasLeidas.
+                ' | Importados: '.$resultado->totalImportados().
+                ' | Inconsistencias: '.$resultado->totalErrores()
+            )
+            ->{$resultado->tieneErrores() ? 'warning' : 'success'}()
+            ->send();
+    }
+
 
 
     public function getSedesProperty()

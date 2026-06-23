@@ -2,10 +2,16 @@
 
 namespace App\Filament\Resources\StudentResource\Pages;
 
-use App\Filament\Resources\StudentResource;
+
+use App\Models\Guardian;
+
+
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\StudentResource;
+
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EditStudent extends EditRecord
 {
@@ -33,7 +39,9 @@ class EditStudent extends EditRecord
         ];
 
         foreach ($tipos as $tipo) {
-            $guardian = $this->record->guardians()->where('tipo', $tipo)->first();
+            $guardian = $this->record->guardians()
+                ->wherePivot('tipo', $tipo)
+                ->first();
 
             foreach ($fields as $field) {
                 $data["g_{$tipo}_{$field}"] = $guardian?->{$field} ?? null;
@@ -69,12 +77,38 @@ class EditStudent extends EditRecord
                 $guardianData[$field] = $this->data["g_{$tipo}_{$field}"] ?? null;
             }
 
-            if (! empty($guardianData['nombre'])) {
-                $this->record->guardians()->updateOrCreate(
-                    ['tipo' => $tipo],
-                    array_merge($guardianData, ['tipo' => $tipo])
-                );
+            if (empty($guardianData['nombre'])) {
+                continue;
             }
+
+            $documento = trim((string) ($guardianData['documento'] ?? ''));
+
+            if ($documento === '') {
+                $documento = 'TEMP-' . strtoupper($tipo) . '-' . $this->record->id;
+                $guardianData['documento'] = $documento;
+            }
+
+            $guardian = Guardian::updateOrCreate(
+                ['documento' => $documento],
+                array_merge($guardianData, [
+                    'student_id' => $this->record->id, // compatibilidad temporal
+                    'tipo' => $tipo,                  // compatibilidad temporal
+                    'estado' => 'activo',
+                ])
+            );
+
+            \DB::table('guardian_student')->updateOrInsert(
+                [
+                    'guardian_id' => $guardian->id,
+                    'student_id' => $this->record->id,
+                    'tipo' => $tipo,
+                ],
+                [
+                    'estado' => 'activo',
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
         }
     }
 

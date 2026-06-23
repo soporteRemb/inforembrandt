@@ -619,7 +619,7 @@
                             wire:model.live="codigoForm.descripcion"
                             placeholder="Escriba la descripción del código"
                             @if (in_array($this->data['tipo'] ?? '', ['perfil', 'acompanamiento']))
-                                maxlength="60"
+                                maxlength="68"
                             @endif
                         ></textarea>
                         @if (
@@ -627,7 +627,7 @@
                             && mb_strlen($this->codigoForm['descripcion'] ?? '') >= 60
                         )
                             <p style="margin-top:4px;font-size:12px;color:#b91c1c;font-weight:700;">
-                                Máximo 60 caracteres permitidos.
+                                Máximo 68 caracteres permitidos.
                             </p>
                         @endif
                     </div>

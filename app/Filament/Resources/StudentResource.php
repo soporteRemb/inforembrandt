@@ -206,7 +206,7 @@ class StudentResource extends Resource
                                     ->options(['Masculino' => 'Masculino', 'Femenino' => 'Femenino'])
                                     ->required(),
                                 DatePicker::make('fecha_nacimiento')->label('Fec. nacimiento')->native(false)->displayFormat('d/m/Y'),
-                                TextInput::make('edad')->numeric()->required(),
+                                TextInput::make('edad')->numeric(),
                                 TextInput::make('ciudad_nacimiento')->label('C. nacimiento')->required(),
                             ])->columnSpan(['default' => 1, 'lg' => 4]),
 
@@ -214,7 +214,7 @@ class StudentResource extends Resource
 
                         // ── Fila inferior: correo + rh + eps + teléfono (4 cols, ancho completo) ──
                         Grid::make(4)->schema([
-                            TextInput::make('correo')->label('Correo')->email()->required()
+                            TextInput::make('correo')->label('Correo')->required()
                                 ->columnSpan(2),
                             TextInput::make('correo_familiar')->label('Familiar')->email(),
                             Select::make('rh')->label('RH')
@@ -223,11 +223,19 @@ class StudentResource extends Resource
                                     'A+' => 'A+', 'A-' => 'A-',
                                     'B+' => 'B+', 'B-' => 'B-',
                                     'AB+' => 'AB+', 'AB-' => 'AB-',
-                                ])
-                                ->required(),
+                                ]),
+                                
 
-                            TextInput::make('eps')->label('EPS')->required(),
-                            TextInput::make('telefono_emergencia')->label('Tel. emergencia')->required(),
+                            Select::make('eps')
+                                ->label('EPS')
+                                ->options(
+                                    \App\Models\Eps::orderBy('nombre')
+                                        ->pluck('nombre', 'nombre')
+                                )
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                            TextInput::make('telefono_emergencia')->label('Tel. emergencia'),
                             TextInput::make('referido')->label('Referido'),
                             TextInput::make('parentesco_matricula')->label('Parentesco')->required(),
                         ]),

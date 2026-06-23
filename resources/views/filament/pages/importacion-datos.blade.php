@@ -329,6 +329,30 @@
         }
 
 
+        .id-search-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .id-search-input {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.95rem;
+        }
+
+        .id-last-import {
+            display: block;
+            margin-top: 6px;
+            color: #64748b;
+            font-size: 0.78rem;
+        }
+
+
     </style>
 
 
@@ -338,6 +362,18 @@
 
     <div class="id-container">
 
+    <div class="id-search-card">
+        <input
+            type="text"
+            wire:model.live="buscarImportador"
+            placeholder="Buscar importador..."
+            class="id-search-input"
+        >
+    </div>
+
+    @if(blank($buscarImportador) || str_contains(mb_strtolower('estudiantes alumnos matriculas'), mb_strtolower($buscarImportador)))
+
+    
         <div class="id-card">
 
             <div class="id-card-header">
@@ -493,10 +529,23 @@
 
         </div>
 
-    </div>
+    
+    @php($historial = $this->historialImportacion('estudiantes'))
+        @if($historial)
+            <small class="id-last-import">Última importación: {{ $historial['fecha'] }}</small>
+        @endif
+    @endif
 
 
 
+
+
+
+
+
+
+
+    @if(blank($buscarImportador) || str_contains(mb_strtolower('pensum academico materias asignaturas areas'), mb_strtolower($buscarImportador)))
     <div class="id-card">
 
         <div class="id-card-header">
@@ -652,10 +701,24 @@
         </div>
 
     </div>
+    @php($historial = $this->historialImportacion('pensum'))
+        @if($historial)
+            <small class="id-last-import">Última importación: {{ $historial['fecha'] }}</small>
+        @endif
+    @endif
 
 
 
 
+
+
+
+
+
+
+
+
+    @if(blank($buscarImportador) || str_contains(mb_strtolower('docentes profesores maestros'), mb_strtolower($buscarImportador)))
     <div class="id-card">
 
         <div class="id-card-header">
@@ -810,12 +873,24 @@
             </div>
 
         </div>
+        @php($historial = $this->historialImportacion('docentes'))
+            @if($historial)
+                <small class="id-last-import">Última importación: {{ $historial['fecha'] }}</small>
+            @endif
+        @endif
 
 
 
 
 
 
+
+
+
+
+
+
+        @if(blank($buscarImportador) || str_contains(mb_strtolower('asignacion materias docente asignaturas carga academica'), mb_strtolower($buscarImportador)))
         <div class="id-card">
 
             <div class="id-card-header">
@@ -968,6 +1043,190 @@
             </div>
 
         </div>
+        @php($historial = $this->historialImportacion('asignaciones'))
+            @if($historial)
+                <small class="id-last-import">Última importación: {{ $historial['fecha'] }}</small>
+            @endif
+        @endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+        @if(blank($buscarImportador) || str_contains(mb_strtolower('acudientes padres madres deudor economico familiares'), mb_strtolower($buscarImportador)))
+        <div class="id-card">
+
+            <div class="id-card-header">
+                <h2>Acudientes</h2>
+                <p>Importa acudiente, padre, madre y deudor económico, relacionándolos con el estudiante sin duplicar personas por documento.</p>
+            </div>
+
+            <div class="id-card-body">
+
+                <div class="id-grid">
+                    <div>
+                        <label class="id-label">Sede</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select wire:model.live="sedeId">
+                                <option value="">Seleccione una sede</option>
+                                @foreach($this->sedes as $id => $nombre)
+                                    <option value="{{ $id }}">{{ $nombre }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+
+                    <div>
+                        <label class="id-label">Periodo lectivo</label>
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select wire:model.live="periodoLectivoId">
+                                <option value="">Seleccione un periodo</option>
+                                @foreach($this->periodos as $id => $nombre)
+                                    <option value="{{ $id }}">{{ $nombre }}</option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+                </div>
+
+                <label
+                    class="id-upload-box"
+                    x-data
+                    x-on:dragover.prevent="$el.classList.add('id-upload-box-active')"
+                    x-on:dragleave.prevent="$el.classList.remove('id-upload-box-active')"
+                    x-on:drop.prevent="
+                        $el.classList.remove('id-upload-box-active');
+                        const file = $event.dataTransfer.files[0];
+                        if (file) {
+                            $wire.upload('archivoAcudientes', file);
+                        }
+                    "
+                >
+                    <input
+                        type="file"
+                        wire:model="archivoAcudientes"
+                        accept=".xlsx,.xls"
+                        class="id-file-hidden"
+                    >
+
+                    <div class="id-upload-icon">
+                        <x-heroicon-o-document-arrow-up class="w-5 h-5" />
+                    </div>
+
+                    <div>
+                        <strong>Seleccionar archivo Excel de acudientes</strong>
+                        <span>Formatos permitidos: .xlsx, .xls</span>
+                    </div>
+                </label>
+
+                @if($archivoAcudientes)
+                    <div class="id-file-selected">
+                        <x-heroicon-o-check-circle class="w-5 h-5" />
+                        <span>{{ $archivoAcudientes->getClientOriginalName() }}</span>
+                    </div>
+                @endif
+
+                <div wire:loading wire:target="archivoAcudientes" class="id-uploading">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 id-spin" />
+                    <span>Subiendo archivo...</span>
+                </div>
+
+                <div wire:loading wire:target="importarAcudientes" class="id-import-progress">
+                    <div class="id-import-progress-info">
+                        <span>Procesando archivo Excel...</span>
+                        <small>Esto puede tardar unos segundos.</small>
+                    </div>
+
+                    <div class="id-progress-bar">
+                        <div class="id-progress-bar-fill"></div>
+                    </div>
+                </div>
+
+                @if($resultadoAcudientes)
+                    <div class="id-summary">
+                        <div class="id-summary-card">
+                            <span>Última importación</span>
+                            <strong>{{ $resultadoAcudientes['fecha'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Filas leídas</span>
+                            <strong>{{ $resultadoAcudientes['filasLeidas'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Relaciones</span>
+                            <strong>{{ $resultadoAcudientes['totalImportados'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Actualizados</span>
+                            <strong>{{ $resultadoAcudientes['actualizados'] }}</strong>
+                        </div>
+
+                        <div class="id-summary-card">
+                            <span>Inconsistencias</span>
+                            <strong>{{ $resultadoAcudientes['totalErrores'] }}</strong>
+                        </div>
+                    </div>
+                @endif
+
+            </div>
+
+            <div class="id-card-footer">
+                
+
+                <div style="display:flex; gap:10px;">
+                    @if(count($erroresAcudientes) > 0)
+                        <button
+                            type="button"
+                            wire:click="$set('mostrarModalErroresAcudientes', true)"
+                            class="id-btn-light"
+                        >
+                            Ver inconsistencias
+                        </button>
+                    @endif
+
+                    <button
+                        type="button"
+                        wire:click="importarAcudientes"
+                        wire:loading.attr="disabled"
+                        wire:target="importarAcudientes"
+                        class="id-btn-primary"
+                        @disabled(! $sedeId || ! $periodoLectivoId || ! $archivoAcudientes)
+                    >
+                        <span wire:loading.remove wire:target="importarAcudientes">
+                            Importar acudientes
+                        </span>
+
+                        <span wire:loading wire:target="importarAcudientes">
+                            Procesando...
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+        @php($historial = $this->historialImportacion('acudientes'))
+                @if($historial)
+                    <small class="id-last-import">Última importación: {{ $historial['fecha'] }}</small>
+                @endif
+            @endif
+
+        </div>
+
+
+
+
+
 
 
 
@@ -1126,6 +1385,49 @@
                     <button
                         type="button"
                         wire:click="$set('mostrarModalErroresAsignaciones', false)"
+                        class="id-btn-light"
+                    >
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
+
+
+
+
+
+    @if($mostrarModalErroresAcudientes ?? false)
+        <div class="id-modal-backdrop">
+            <div class="id-modal">
+                <div class="id-modal-header">
+                    <h3>Inconsistencias de importación - Acudientes</h3>
+
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresAcudientes', false)"
+                        class="id-modal-close"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="id-modal-body">
+                    @foreach($erroresAcudientes as $error)
+                        <div class="id-error-item">
+                            <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
+                            <span>{{ $error }}</span>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="id-modal-footer">
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalErroresAcudientes', false)"
                         class="id-btn-light"
                     >
                         Cerrar

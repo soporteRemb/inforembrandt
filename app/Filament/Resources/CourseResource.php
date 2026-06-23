@@ -16,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use App\Traits\HasRolePermissions;
+use Illuminate\Validation\Rules\Unique;
 
 class CourseResource extends Resource
 {
@@ -28,6 +29,24 @@ class CourseResource extends Resource
     protected static ?string $pluralModelLabel = 'Cursos';
     protected static ?string $navigationGroup = 'Académico';
     protected static ?int $navigationSort = 3;
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $sedeId = session('sede_id');
+        $anio = session('anio');
+
+        if ($sedeId) {
+            $query->where('sede_id', $sedeId);
+        }
+
+        if ($anio) {
+            $query->where('anio', $anio);
+        }
+
+        return $query;
+    }
 
     public static function form(Form $form): Form
     {
@@ -80,7 +99,28 @@ class CourseResource extends Resource
                     TextInput::make('curso')
                         ->label('Curso')
                         ->placeholder('Ej: 901, 902...')
-                        ->required(),
+                        ->required()
+                        ->rule(function (callable $get, ?\App\Models\Course $record) {
+                            return \Illuminate\Validation\Rule::unique('courses', 'curso')
+                                ->where('sede_id', $get('sede_id'))
+                                ->where('anio', $get('anio'))
+                                ->where('grado', strtoupper(trim($get('grado'))))
+                                ->where('descripcion', trim($get('descripcion')))
+                                ->ignore($record?->id);
+                        })
+                        ->validationMessages([
+                            'unique' => 'Ya existe un curso registrado con la misma sede, año, grado, descripción y curso.',
+                        ]),
+
+                        Select::make('jornada')
+                            ->label('Jornada')
+                            ->options(
+                                \App\Models\Jornada::orderBy('nombre')
+                                    ->pluck('nombre', 'nombre')
+                            )
+                            ->default(fn () => \App\Models\Jornada::value('nombre'))
+                            ->searchable()
+                            ->preload(),
                 ])->columns(3),
         ]);
     }

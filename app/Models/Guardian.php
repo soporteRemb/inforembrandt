@@ -25,6 +25,17 @@ class Guardian extends Model
     {
         return $this->belongsTo(Student::class);
     }
+
+    public function students()
+    {
+        return $this->belongsToMany(
+            Student::class,
+            'guardian_student'
+        )
+        ->withPivot('tipo', 'estado')
+        ->withTimestamps();
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

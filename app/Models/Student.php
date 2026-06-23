@@ -111,7 +111,12 @@ class Student extends Model
 
     public function guardians()
     {
-        return $this->hasMany(Guardian::class);
+        return $this->belongsToMany(
+            Guardian::class,
+            'guardian_student'
+        )
+        ->withPivot('tipo', 'estado')
+        ->withTimestamps();
     }
 
     public function course()
