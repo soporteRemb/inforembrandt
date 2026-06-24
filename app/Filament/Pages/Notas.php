@@ -353,7 +353,10 @@ class Notas extends Page implements Forms\Contracts\HasForms
                                 if ($user->hasRole('docente') || $user->hasRole('Docente')) {
                                     $docente = Docente::where('user_id', $user->id)->first();
 
-                                    if (! $docente) {
+                                    if (
+                                        ! $docente ||
+                                        strtolower($docente->estado) !== 'activo'
+                                    ) {
                                         return [];
                                     }
 
@@ -405,7 +408,10 @@ class Notas extends Page implements Forms\Contracts\HasForms
                                if ($user->hasRole('docente') || $user->hasRole('Docente')) {
                                     $docente = Docente::where('user_id', $user->id)->first();
 
-                                    if (! $docente) {
+                                    if (
+                                        ! $docente ||
+                                        strtolower($docente->estado) !== 'activo'
+                                    ) {
                                         return [];
                                     }
 
@@ -514,11 +520,17 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
     public function getEstudiantesFiltradosProperty()
     {
+        $estudiantes = collect($this->estudiantes)
+            ->map(function ($estudiante, $index) {
+                $estudiante['_index'] = $index;
+                return $estudiante;
+            });
+
         if (trim($this->buscarEstudiante) === '') {
-            return $this->estudiantes;
+            return $estudiantes->values()->toArray();
         }
 
-        return collect($this->estudiantes)
+        return $estudiantes
             ->filter(fn ($e) => str_contains(
                 mb_strtolower($e['nombre']),
                 mb_strtolower($this->buscarEstudiante)
@@ -539,7 +551,10 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
         $docente = Docente::where('user_id', $user->id)->first();
 
-        if (! $docente) {
+        if (
+            ! $docente ||
+            strtolower($docente->estado) !== 'activo'
+        ) {
             return false;
         }
 
@@ -550,11 +565,43 @@ class Notas extends Page implements Forms\Contracts\HasForms
             ->exists();
     }
 
+    private function docenteActivo(): bool
+    {
+        $user = Auth::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasAnyRole(['superadmin', 'admin'])) {
+            return true;
+        }
+
+        $docente = Docente::query()
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $docente) {
+            return false;
+        }
+
+        return strtolower($docente->estado) === 'activo';
+    }
+
     private function notificarAsignaturaNoAutorizada(): void
     {
         Notification::make()
             ->title('Acceso no autorizado')
             ->body('No tiene asignado este curso o asignatura. No es posible registrar, importar o modificar estas notas.')
+            ->danger()
+            ->send();
+    }
+
+    private function notificarDocenteInactivo(): void
+    {
+        Notification::make()
+            ->title('Docente inactivo')
+            ->body('Su usuario docente se encuentra inactivo. No tiene autorización para registrar, importar o exportar notas.')
             ->danger()
             ->send();
     }
@@ -589,6 +636,11 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
     public function guardarNotas(): void
     {
+        if (! $this->docenteActivo()) {
+            $this->notificarDocenteInactivo();
+            return;
+        }
+
         $this->verificarPeriodoAcademicoCerrado();
 
         if ($this->periodoAcademicoCerrado) {
@@ -711,6 +763,11 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
     public function importarExcel(): void
     {
+        if (! $this->docenteActivo()) {
+            $this->notificarDocenteInactivo();
+            return;
+        }
+
         if (! $this->archivoExcel) {
             Notification::make()
                 ->title('Seleccione un archivo Excel')
@@ -744,6 +801,24 @@ class Notas extends Page implements Forms\Contracts\HasForms
             $codigoMateria = trim((string) $sheet->getCell('F2')->getValue());
             $nombreMateria = trim((string) $sheet->getCell('G2')->getValue());
             $cursoCodigo = trim((string) $sheet->getCell('F4')->getValue());
+
+            // Si la hoja no tiene estudiantes diligenciados, se ignora sin marcar inconsistencia.
+            // No se revisa toda la hoja porque la plantilla tiene fórmulas como "BAJO".
+            $hojaSinEstudiantes = true;
+
+            for ($filaRevision = 8; $filaRevision <= 80; $filaRevision++) {
+                $codigoEstudianteRevision = trim((string) $sheet->getCell("B{$filaRevision}")->getValue());
+                $nombreEstudianteRevision = trim((string) $sheet->getCell("C{$filaRevision}")->getValue());
+
+                if ($codigoEstudianteRevision !== '' || $nombreEstudianteRevision !== '') {
+                    $hojaSinEstudiantes = false;
+                    break;
+                }
+            }
+
+            if ($hojaSinEstudiantes) {
+                continue;
+            }
 
             if ($codigoMateria === '' || $cursoCodigo === '') {
                 $errores[] = "{$hojaNombre}: No se encontró materia o curso en la cabecera.";
@@ -1019,6 +1094,11 @@ class Notas extends Page implements Forms\Contracts\HasForms
 
     public function exportarExcel()
     {
+        if (! $this->docenteActivo()) {
+            $this->notificarDocenteInactivo();
+            return;
+        }
+
         $user = Auth::user();
         $esAdmin = $user->hasAnyRole(['superadmin', 'admin']);
 

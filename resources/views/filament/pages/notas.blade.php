@@ -704,7 +704,10 @@
                     <tbody>
                         @forelse($this->estudiantesFiltrados as $index => $estudiante)
 
-                            <tr wire:key="fila-nota-{{ $estudiante['student_id'] }}-{{ $this->data['course_id'] ?? 'curso' }}-{{ $this->data['pensum_academico_id'] ?? 'asignatura' }}-{{ $this->data['periodo'] ?? 'periodo' }}">
+                        @php
+                            $realIndex = $estudiante['_index'];
+                        @endphp
+                                <tr wire:key="fila-nota-{{ $estudiante['student_id'] }}-{{ $this->data['course_id'] ?? 'curso' }}-{{ $this->data['pensum_academico_id'] ?? 'asignatura' }}-{{ $this->data['periodo'] ?? 'periodo' }}">
                                 <td class="rn-student-cell">
                                     {{ $estudiante['nombre'] }}
                                 </td>
@@ -713,14 +716,14 @@
                                     <input
                                         type="text"
                                         inputmode="decimal"
-                                        wire:model.live.debounce.300ms="estudiantes.{{ $index }}.nota"
-                                        class="rn-input nota-cell {{ isset($this->erroresNotas[$index]) ? 'rn-input-error' : '' }}"
+                                        wire:model.live.debounce.300ms="estudiantes.{{ $realIndex }}.nota"
+                                        class="rn-input nota-cell {{ isset($this->erroresNotas[$realIndex]) ? 'rn-input-error' : '' }}"
                                         @disabled($periodoCerrado)
                                         @disabled($this->periodoAcademicoCerrado)
                                     >
                                     @if(isset($this->erroresNotas[$index]))
                                         <div class="rn-error-text">
-                                            {{ $this->erroresNotas[$index] }}
+                                            {{ $this->erroresNotas[$realIndex] }}
                                         </div>
                                     @endif
                                 </td>
@@ -732,7 +735,7 @@
 
                                 <td>
                                     <input type="number" min="0"
-                                        wire:model="estudiantes.{{ $index }}.fallas"
+                                        wire:model="estudiantes.{{ $realIndex }}.fallas"
                                         class="rn-input nota-cell"
                                         @disabled($periodoCerrado)
                                         @disabled($this->periodoAcademicoCerrado)>
@@ -741,7 +744,7 @@
                                 @foreach(['01', '02', '03', '04'] as $codigo)
                                     <td>
                                         <input type="text"
-                                            wire:model="estudiantes.{{ $index }}.mejoramientos.{{ $codigo }}"
+                                            wire:model="estudiantes.{{ $realIndex }}.mejoramientos.{{ $codigo }}"
                                             class="rn-input nota-cell"
                                             @disabled($periodoCerrado)
                                             @disabled($this->periodoAcademicoCerrado)>
@@ -750,7 +753,7 @@
 
                                 <td>
                                     <input type="text"
-                                        wire:model="estudiantes.{{ $index }}.pgc"
+                                        wire:model="estudiantes.{{ $realIndex }}.pgc"
                                         class="rn-input nota-cell"
                                         @disabled($periodoCerrado)
                                         @disabled($this->periodoAcademicoCerrado)>

@@ -8,10 +8,10 @@ class BoletinPaginatorService
     private const ALTO_BLOQUE = 12.5;
 
     // Hoja base: solo tabla académica.
-    private const LIMITE_HOJA_BASE = 224;
+    private const LIMITE_HOJA_BASE = 240;
 
     // Hoja final: reserva espacio para observaciones, convenciones y firmas.
-    private const LIMITE_HOJA_FINAL = 190;
+    private const LIMITE_HOJA_FINAL = 210;
 
     public function paginar(array $data): array
     {

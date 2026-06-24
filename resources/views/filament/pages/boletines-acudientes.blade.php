@@ -432,7 +432,7 @@
                             @empty
                                 <tr>
                                     <td colspan="6" class="text-center text-gray-500 py-4">
-                                        Seleccione periodo académico y estudiante para consultar el desempeño académico.
+                                        Seleccione un estudiante y un período académico para visualizar su desempeño escolar.
                                     </td>
                                 </tr>
                             @endforelse
@@ -457,23 +457,35 @@
                         </thead>
 
                         <tbody>
-                            @forelse($actividadesMejoramiento as $actividad)
-                                <tr>
-                                    <td class="font-bold">
-                                        {{ $actividad['asignatura'] }}
-                                    </td>
 
-                                    <td>
-                                        {{ $actividad['descripcion'] }}
-                                    </td>
-                                </tr>
-                            @empty
+                            @if(blank($this->studentId) || blank($this->periodoAcademicoId))
                                 <tr>
                                     <td colspan="2" class="text-center text-gray-500 py-4">
-                                        No hay actividades de mejoramiento registradas para este estudiante.
+                                        Seleccione un estudiante y un período académico para visualizar las actividades de mejoramiento asignadas.
                                     </td>
                                 </tr>
-                            @endforelse
+
+                            @elseif(empty($actividadesMejoramiento))
+                                <tr>
+                                    <td colspan="2" class="text-center text-gray-500 py-4">
+                                        El estudiante no tiene actividades de mejoramiento pendientes para este período.
+                                    </td>
+                                </tr>
+
+                            @else
+                                @foreach($actividadesMejoramiento as $actividad)
+                                    <tr>
+                                        <td class="font-bold">
+                                            {{ $actividad['asignatura'] }}
+                                        </td>
+
+                                        <td>
+                                            {{ $actividad['descripcion'] }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
                         </tbody>
                     </table>
                 </div>

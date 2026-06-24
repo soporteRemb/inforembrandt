@@ -18,14 +18,36 @@ class PdfPainter
          ******************************************************************/
 
         // Nombre estudiante
-        $this->fuenteNegrita($pdf, 10);
+        $nombreCompleto = $estudiante['nombre'] ?? '';
+
+        $longitud = mb_strlen($nombreCompleto);
+
+        if ($longitud > 35) {
+            $tamanoFuente = 8;
+        } elseif ($longitud > 25) {
+            $tamanoFuente = 9;
+        } else {
+            $tamanoFuente = 10;
+        }
+
+        $this->fuenteNegrita($pdf, $tamanoFuente);
+
         [$x, $y, $w] = PdfCoordinates::ENCABEZADO['estudiante_nombre'];
-        $this->multiTexto($pdf, $x, $y, $w, 4, $estudiante['nombre'] ?? '');
+
+        $this->multiTexto(
+            $pdf,
+            $x,
+            $y,
+            $w,
+            4,
+            $nombreCompleto
+        );
 
         // Documento del estudiante
+        // Se baja un poco para dejar dos líneas de espacio cuando el nombre es largo.
         $this->fuenteNormal($pdf, 9);
         [$x, $y, $w] = PdfCoordinates::ENCABEZADO['estudiante_documento'];
-        $this->texto($pdf, $x, $y, $w, $estudiante['documento'] ?? '');
+        $this->texto($pdf, $x, $y + 6, $w, $estudiante['documento'] ?? '');
 
         // Grado + curso. Ejemplo: Octavo - 801
         $this->fuenteNegrita($pdf, 9);
@@ -58,7 +80,7 @@ class PdfPainter
             trim(($periodo['academico_corto'] ?? '') . "\n" . ($periodo['lectivo'] ?? ''))
         );
 
-        // Director de curso: por ahora pendiente de conectar dato real
+        // Director de curso obtenido desde la asignación de dirección de curso del docente.
         $this->fuenteNegrita($pdf, 10);
         [$x, $y, $w] = PdfCoordinates::ENCABEZADO['director_curso'];
         $this->textoCentrado($pdf, $x, $y, $w, $curso['director_curso'] ?? '');
@@ -88,8 +110,19 @@ class PdfPainter
             [$xPgc, $offsetYPgc, $wPgc] = PdfCoordinates::TABLA_ACADEMICA['pgc'];
 
             // Nombre de la asignatura
-            $this->fuenteNegrita($pdf, 6);
-            $this->texto($pdf, $xAsignatura, $y + $offsetYAsignatura, $wAsignatura, mb_strtoupper($nombreAsignatura, 'UTF-8'));
+            $nombreAsignaturaPdf = mb_strtoupper($nombreAsignatura, 'UTF-8');
+            $longitudAsignatura = mb_strlen($nombreAsignaturaPdf, 'UTF-8');
+
+            if ($longitudAsignatura > 38) {
+                $tamanoAsignatura = 5.1;
+            } elseif ($longitudAsignatura > 30) {
+                $tamanoAsignatura = 5.8;
+            } else {
+                $tamanoAsignatura = 6;
+            }
+
+            $this->fuenteNegrita($pdf, $tamanoAsignatura);
+            $this->texto($pdf, $xAsignatura, $y + $offsetYAsignatura, $wAsignatura, $nombreAsignaturaPdf);
 
             // Docente que dicta la asignatura
             $this->fuenteNormal($pdf, 5.5);
