@@ -56,30 +56,59 @@ class CourseResource extends Resource
                     Select::make('sede_id')
                         ->label('Sede')
                         ->options(Sede::where('activa', true)->pluck('nombre', 'id'))
+                        ->default(fn () => session('sede_id'))
                         ->searchable()
                         ->required()
-                        ->reactive(),
+                        ->reactive()
+                        ->afterStateUpdated(function (callable $set, $state) {
+                            $periodo = PeriodoLectivo::query()
+                                ->where('sede_id', $state)
+                                ->where('nombre', session('anio'))
+                                ->value('id');
+
+                            $set('periodo_lectivo_id', $periodo);
+                        }),
 
                     Select::make('periodo_lectivo_id')
                         ->label('Periodo Lectivo')
                         ->options(function (callable $get) {
                             $sedeId = $get('sede_id');
-                            $query  = PeriodoLectivo::query();
+
+                            $query = PeriodoLectivo::query()->with('sede');
+
                             if ($sedeId) {
                                 $query->where('sede_id', $sedeId);
                             }
-                            return $query->orderByDesc('nombre')
+
+                            return $query
+                                ->orderByDesc('nombre')
+                                ->orderBy('sede_id')
                                 ->get()
-                                ->mapWithKeys(fn($p) => [
-                                    $p->id => $p->nombre . ($sedeId ? '' : ' — ' . ($p->sede->nombre ?? ''))
-                                ]);
+                                ->mapWithKeys(fn ($p) => [
+                                    $p->id => $p->nombre . ' — ' . ($p->sede->nombre ?? ''),
+                                ])
+                                ->toArray();
+                        })
+                        ->default(function () {
+                            return PeriodoLectivo::query()
+                                ->where('sede_id', session('sede_id'))
+                                ->where('nombre', session('anio'))
+                                ->value('id');
                         })
                         ->searchable()
-                        ->required(),
+                        ->required()
+                        ->reactive()
+                        ->afterStateUpdated(function (callable $set, $state) {
+                            $periodo = PeriodoLectivo::find($state);
+
+                            if ($periodo) {
+                                $set('anio', $periodo->nombre);
+                            }
+                        }),
 
                     TextInput::make('anio')
                         ->label('Año')
-                        ->default(date('Y'))
+                        ->default(fn () => session('anio') ?? date('Y'))
                         ->required(),
 
                     TextInput::make('grado')

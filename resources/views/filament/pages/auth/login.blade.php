@@ -125,7 +125,7 @@
             <div x-data="{
                     open: false,
                     value: '{{ $this->anio }}',
-                    years: [{{ date('Y') }}, {{ date('Y') - 1 }}, {{ date('Y') - 2 }}]
+                    years: @js($this->getAnios())
                  }"
                  @click.outside="open = false"
                  style="position:relative;">

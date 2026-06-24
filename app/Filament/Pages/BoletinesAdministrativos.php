@@ -8,7 +8,6 @@ use Filament\Pages\Page;
 use ZipArchive;
 
 
-
 use App\Models\PeriodoLectivo;
 use App\Models\PeriodoAcademico;
 use App\Models\Course;
@@ -20,11 +19,11 @@ use App\Models\BoletinDesempeno;
 use App\Models\BoletinRecomendacionEstudiante;
 use App\Models\BoletinRecomendacion;
 use App\Models\BoletinGenerado;
+use App\Models\Docente;
 
 
 use Illuminate\Support\Facades\Storage;
-
-
+use Illuminate\Support\Facades\Auth;
 
 
 use App\Services\Boletines\BoletinDataService;
@@ -331,10 +330,18 @@ class BoletinesAdministrativos extends Page
             return;
         }
 
-        $this->grados = Course::query()
+        $cursoDirectorId = $this->cursoDirectorAsignadoId();
+
+        $query = Course::query()
             ->where('periodo_lectivo_id', $this->periodoLectivoId)
             ->where('sede_id', session('sede_id'))
-            ->where('estado', 'activo')
+            ->where('estado', 'activo');
+
+        if ($this->usuarioEsDirectorGrupoRestringido()) {
+            $query->where('id', $cursoDirectorId);
+        }
+
+        $this->grados = $query
             ->orderBy('grado')
             ->pluck('grado', 'grado')
             ->toArray();
@@ -350,11 +357,19 @@ class BoletinesAdministrativos extends Page
             return;
         }
 
-        $this->cursos = Course::query()
+        $cursoDirectorId = $this->cursoDirectorAsignadoId();
+
+        $query = Course::query()
             ->where('periodo_lectivo_id', $this->periodoLectivoId)
             ->where('sede_id', session('sede_id'))
             ->where('grado', $this->grado)
-            ->where('estado', 'activo')
+            ->where('estado', 'activo');
+
+        if ($this->usuarioEsDirectorGrupoRestringido()) {
+            $query->where('id', $cursoDirectorId);
+        }
+
+        $this->cursos = $query
             ->orderBy('curso')
             ->pluck('curso', 'id')
             ->toArray();
@@ -365,6 +380,15 @@ class BoletinesAdministrativos extends Page
     private function cargarEstudiantes(): void
     {
         if (! $this->periodoLectivoId || ! $this->periodoAcademicoId || ! $this->courseId) {
+            $this->estudiantes = [];
+            $this->studentId = null;
+            return;
+        }
+
+        if (
+            $this->usuarioEsDirectorGrupoRestringido()
+            && (int) $this->courseId !== (int) $this->cursoDirectorAsignadoId()
+        ) {
             $this->estudiantes = [];
             $this->studentId = null;
             return;
@@ -968,6 +992,42 @@ class BoletinesAdministrativos extends Page
         return $texto ?: 'archivo';
     }
     
+
+    private function cursoDirectorAsignadoId(): ?int
+    {
+        $user = Auth::user();
+
+        if (! $user || $user->hasAnyRole(['superadmin', 'admin'])) {
+            return null;
+        }
+
+        if (! $user->hasRole('director_grupo')) {
+            return null;
+        }
+
+        return Docente::query()
+            ->where('user_id', $user->id)
+            ->where('estado', 'activo')
+            ->value('direccion_curso_id');
+    }
+
+    private function usuarioEsDirectorGrupoRestringido(): bool
+    {
+        $user = Auth::user();
+
+        return $user
+            && $user->hasRole('director_grupo')
+            && ! $user->hasAnyRole(['superadmin', 'admin']);
+    }
+
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        return $user
+            && $user->hasAnyRole(['superadmin', 'admin', 'director_grupo']);
+    }
+
 
 
 }

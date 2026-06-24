@@ -6,6 +6,7 @@ use Filament\Pages\Auth\Login as BaseLogin;
 use App\Models\Sede;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Component;
+use App\Models\PeriodoLectivo;
 
 class Login extends BaseLogin
 {
@@ -17,7 +18,9 @@ class Login extends BaseLogin
     public function mount(): void
     {
         parent::mount();
-        $this->anio = date('Y');
+        $this->anio = PeriodoLectivo::query()
+            ->orderByDesc('nombre')
+            ->value('nombre') ?? date('Y');
         $sede = Sede::where('activa', true)->first();
         $this->sede_id = $sede ? (string) $sede->id : '';
     }
@@ -53,5 +56,16 @@ class Login extends BaseLogin
     protected function getAuthenticateFormAction(): \Filament\Actions\Action
     {
         return parent::getAuthenticateFormAction()->label('Iniciar Sesión');
+    }
+
+    public function getAnios()
+    {
+        return PeriodoLectivo::query()
+            ->select('nombre')
+            ->distinct()
+            ->orderByDesc('nombre')
+            ->pluck('nombre')
+            ->values()
+            ->toArray();
     }
 }

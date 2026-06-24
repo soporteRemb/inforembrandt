@@ -46,7 +46,8 @@ class PensumAcademicoResource extends Resource
                             ->label('Periodo lectivo')
                             ->options(fn () => PeriodoLectivo::query()
                                 ->with('sede')
-                                ->orderByDesc('id')
+                                ->orderByDesc('nombre')
+                                ->orderBy('sede_id')
                                 ->get()
                                 ->mapWithKeys(fn ($periodo) => [
                                     $periodo->id => ($periodo->sede?->nombre ?? 'Sin sede') . ' - ' . $periodo->nombre,
