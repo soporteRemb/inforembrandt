@@ -625,8 +625,13 @@
 
             <div class="row-line">
                 <label>Otras deudas</label>
-                <input type="text" name="otras_deudas" class="input-control money-input"
-                    value="{{ number_format($ficha->otras_deudas ?? 0, 0, ',', '.') }}">
+                <input
+                    type="text"
+                    name="otras_deudas"
+                    class="input-control money-input"
+                    value="{{ number_format($ficha->otras_deudas ?? 0, 0, ',', '.') }}"
+                    readonly
+                >
             </div>
 
             <div class="row-line">
@@ -667,7 +672,15 @@
                     @endphp
 
                     <div class="row-line">
-                        <label>{{ $mes }}</label>
+                        <label>
+                            {{ $mes }}
+
+                            @if(in_array($numero, $mesesCausados ?? []))
+                                <span style="color:#047857; font-weight:700;">
+                                    (causado)
+                                </span>
+                            @endif
+                        </label>
                         <input 
                             type="text"
                             name="pensiones[{{ $numero }}]"
@@ -889,8 +902,19 @@
         return total;
     }
 
+    function sincronizarOtrasDeudas() {
+        const totalOtros = totalOtrosCostosActual();
+        const inputOtrasDeudas = document.querySelector('[name="otras_deudas"]');
+
+        if (inputOtrasDeudas) {
+            inputOtrasDeudas.value = formatoCOP(totalOtros);
+        }
+
+        return totalOtros;
+    }
+
     function recalcularTotalOtrosCostos() {
-        const total = totalOtrosCostosActual();
+        const total = sincronizarOtrasDeudas();
         const totalElement = document.getElementById('totalOtrosCostosValor');
 
         if (totalElement) {
@@ -904,8 +928,7 @@
             valorCampo('matricula') +
             valorCampo('costos_academicos') +
             valorCampo('deudas') +
-            valorCampo('otras_deudas') +
-            totalOtrosCostosActual() -
+            valorCampo('otras_deudas') -
             valorCampo('abonos');
 
         const totalVista = document.getElementById('totalDeudaVista');
@@ -921,7 +944,11 @@
 
             input.addEventListener('input', function () {
                 input.value = formatoCOP(input.value);
-                recalcularTotalOtrosCostos();
+
+                if (input.classList.contains('input-otro-costo')) {
+                    recalcularTotalOtrosCostos();
+                }
+
                 recalcularTotalDeuda();
             });
         });

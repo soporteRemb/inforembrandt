@@ -39,4 +39,15 @@ class ConceptoCobro extends Model
     {
         return $this->belongsTo(PeriodoLectivo::class);
     }
+
+public function recibosPago()
+    {
+        return $this->hasMany(ReciboPago::class);
+    }
+
+    public function movimientosCartera()
+    {
+        return $this->hasMany(MovimientoCarteraEstudiante::class);
+    }
+
 }

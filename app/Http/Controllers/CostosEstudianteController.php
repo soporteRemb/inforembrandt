@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
-use Illuminate\Http\Request;
 use App\Models\FichaCostoEstudiante;
 use App\Models\AsignacionConcepto;
 use App\Models\PensionEstudiante;
 use App\Models\OtroCostoEstudiante;
 use App\Models\CostoMoraEstudiante;
+
+
+use App\Services\Financiero\ResumenCuentaEstudianteService;
+
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
 class CostosEstudianteController extends Controller
 {
@@ -38,10 +42,54 @@ class CostosEstudianteController extends Controller
                 'observaciones' => null,
             ]
         );
+        $resumenCausado = app(ResumenCuentaEstudianteService::class)->calcular($student);
+
+        $ficha->update([
+            
+            'costos_academicos' => $resumenCausado['costos_academicos'],
+            'deudas' => $resumenCausado['deudas'],
+            'otras_deudas' => $resumenCausado['otras_deudas'],
+            'total_deuda' => max(
+                ($ficha->saldo_anterior ?? 0)
+                + $resumenCausado['matricula']
+                + $resumenCausado['costos_academicos']
+                + $resumenCausado['deudas']
+                + $resumenCausado['otras_deudas']
+                - ($ficha->abonos ?? 0),
+                0
+            ),
+        ]);
+
+        $ficha->refresh();
+
+        $mesesCausados = \App\Models\MovimientoCarteraEstudiante::query()
+            ->where('student_id', $student->id)
+            ->where('sede_id', $student->sede_id)
+            ->where('periodo_lectivo_id', $student->periodo_lectivo_id)
+            ->where('tipo_movimiento', 'causacion')
+            ->where('estado', 'activo')
+            ->whereNotNull('mes_numero')
+            ->pluck('mes_numero')
+            ->map(fn ($mes) => (int) $mes)
+            ->toArray();
+
+            $ultimoMesCausado = app(ResumenCuentaEstudianteService::class)
+                ->obtenerUltimoMesCausado($student);
+
+            if ($ultimoMesCausado) {
+                $ficha->update([
+                    'mes_causado' => strtoupper($ultimoMesCausado),
+                ]);
+
+                $ficha->refresh();
+            }
+
+
 
         return view('costos-estudiante.index', [
             'student' => $student,
             'ficha' => $ficha,
+            'mesesCausados' => $mesesCausados,
         ]);
     }
 

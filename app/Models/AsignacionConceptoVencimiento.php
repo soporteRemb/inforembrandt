@@ -12,21 +12,19 @@ class AsignacionConceptoVencimiento extends Model
         'asignacion_concepto_id',
         'mes',
         'fecha_vencimiento',
-        'porcentaje',
-        'dias',
+        'tipo_limite_extemporaneo_id',
+        'valor',
     ];
-
-    /*
-    |--------------------------------------------------------------------------
-    | RELACIONES
-    |--------------------------------------------------------------------------
-    */
 
     public function asignacionConcepto()
     {
-        return $this->belongsTo(
-            AsignacionConcepto::class,
-            'asignacion_concepto_id'
-        );
+        return $this->belongsTo(AsignacionConcepto::class, 'asignacion_concepto_id');
+    }
+
+   
+
+    public function tipoLimiteExtemporaneo()
+    {
+        return $this->belongsTo(TipoLimiteExtemporaneo::class, 'tipo_limite_extemporaneo_id');
     }
 }

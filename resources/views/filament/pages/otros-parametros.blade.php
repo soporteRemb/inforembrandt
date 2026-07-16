@@ -191,6 +191,39 @@
         .op-btn-delete:hover {
             background: #ffe4e6;
         }
+
+        .op-card input[type="checkbox"].op-checkbox {
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            width: 17px;
+            height: 17px;
+            margin: 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            background-color: #ffffff;
+            cursor: pointer;
+            display: inline-grid;
+            place-content: center;
+            transition: background-color .15s ease, border-color .15s ease;
+        }
+
+        .op-card input[type="checkbox"].op-checkbox:hover {
+            border-color: #89e2ab;
+        }
+
+        .op-card input[type="checkbox"].op-checkbox:checked {
+            background-color: #89e2ab!important;
+            border-color: #89e2ab !important;
+        }
+
+        .op-card input[type="checkbox"].op-checkbox:checked::before {
+            content: "";
+            width: 9px;
+            height: 5px;
+            border-left: 2px solid #ffffff;
+            border-bottom: 2px solid #ffffff;
+            transform: rotate(-45deg) translateY(-1px);
+        }
     </style>
 
     <div class="op-container">
@@ -378,6 +411,125 @@
 
             <button type="button" wire:click="guardarJornadas" class="op-btn-save">
                 Guardar jornadas
+            </button>
+        </div>
+    </div>
+
+
+
+
+
+
+
+    <div class="op-card">
+        <div class="op-card-header">
+            <h2>Límites de pago extemporáneo</h2>
+            <p>Configure los tipos que se usarán en las tarifas extemporáneas.</p>
+        </div>
+
+        <div class="op-card-body op-list-scroll">
+            @foreach($tiposLimite as $index => $item)
+                <div class="op-row" style="grid-template-columns: 160px 1fr 130px;">
+                    <input
+                        type="text"
+                        wire:model="tiposLimite.{{ $index }}.codigo"
+                        class="op-input-desc"
+                        placeholder="Limite 1"
+                    >
+
+                    <input
+                        type="text"
+                        wire:model="tiposLimite.{{ $index }}.nombre"
+                        class="op-input-desc"
+                        placeholder="Ej.: 30 días"
+                    >
+
+                    
+
+                    <button
+                        type="button"
+                        wire:click="eliminarTipoLimite({{ $index }})"
+                        class="op-btn-delete"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="op-card-footer" style="justify-content: space-between;">
+            <button type="button" wire:click="agregarTipoLimite" class="op-btn-save op-btn-add">
+                Agregar límite
+            </button>
+
+            <button type="button" wire:click="guardarTiposLimite" class="op-btn-save">
+                Guardar límites
+            </button>
+        </div>
+    </div>
+
+
+    <div class="op-card">
+        <div class="op-card-header">
+            <h2>Formas de pago</h2>
+            <p>Configure las opciones disponibles al registrar pagos de estudiantes.</p>
+        </div>
+
+        <div class="op-card-body op-list-scroll">
+            @foreach($formasPago as $index => $item)
+                <div class="op-row" style="grid-template-columns: minmax(180px, 1fr) 150px 175px 100px 120px;">
+                    <input
+                        type="text"
+                        wire:model="formasPago.{{ $index }}.nombre"
+                        class="op-input-desc"
+                        placeholder="Ej.: Efectivo"
+                    >
+
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569;">
+                        <input
+                            type="checkbox"
+                            class="op-checkbox"
+                            wire:model="formasPago.{{ $index }}.requiere_referencia"
+                        >
+                        Referencia
+                    </label>
+
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569;">
+                        <input
+                            type="checkbox"
+                            class="op-checkbox"
+                            wire:model="formasPago.{{ $index }}.requiere_fecha_consignacion"
+                        >
+                        Fecha consignación
+                    </label>
+
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#475569;">
+                        <input
+                            type="checkbox"
+                            class="op-checkbox"
+                            wire:model="formasPago.{{ $index }}.activo"
+                        >
+                        Activa
+                    </label>
+
+                    <button
+                        type="button"
+                        wire:click="eliminarFormaPago({{ $index }})"
+                        class="op-btn-delete"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="op-card-footer" style="justify-content: space-between;">
+            <button type="button" wire:click="agregarFormaPago" class="op-btn-save op-btn-add">
+                Agregar forma
+            </button>
+
+            <button type="button" wire:click="guardarFormasPago" class="op-btn-save">
+                Guardar formas de pago
             </button>
         </div>
     </div>

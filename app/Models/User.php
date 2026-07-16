@@ -64,4 +64,15 @@ class User extends Authenticatable
         return $this->hasMany(Guardian::class);
     }
 
+public function operacionesPagoRegistradas() { return $this->hasMany(OperacionPago::class, 'registrado_por'); }
+    public function operacionesPagoAnuladas() { return $this->hasMany(OperacionPago::class, 'anulado_por'); }
+    public function recibosRecibidos() { return $this->hasMany(ReciboPago::class, 'recibido_por'); }
+    public function recibosAnulados() { return $this->hasMany(ReciboPago::class, 'anulado_por'); }
+    public function movimientosSaldoFavorRegistrados() { return $this->hasMany(MovimientoSaldoFavor::class, 'registrado_por'); }
+    public function acuerdosPagoRegistrados() { return $this->hasMany(AcuerdoPagoEstudiante::class, 'registrado_por'); }
+    public function acuerdosPagoAnulados() { return $this->hasMany(AcuerdoPagoEstudiante::class, 'anulado_por'); }
+    public function evidenciasAcuerdoCargadas() { return $this->hasMany(EvidenciaAcuerdoPago::class, 'cargado_por'); }
+    public function impresionesRecibos() { return $this->hasMany(ImpresionRecibo::class, 'generado_por'); }
+    public function extractosGenerados() { return $this->hasMany(ExtractoEstudiante::class, 'generado_por'); }
+
 }

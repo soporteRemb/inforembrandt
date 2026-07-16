@@ -21,4 +21,12 @@ class Sede extends Model
     {
         return $this->belongsTo(Empresa::class);
     }
+
+public function consecutivosRecibos() { return $this->hasMany(ConsecutivoRecibo::class); }
+    public function operacionesPago() { return $this->hasMany(OperacionPago::class); }
+    public function recibosPago() { return $this->hasMany(ReciboPago::class); }
+    public function saldosFavorEstudiantes() { return $this->hasMany(SaldoFavorEstudiante::class); }
+    public function acuerdosPagoEstudiantes() { return $this->hasMany(AcuerdoPagoEstudiante::class); }
+    public function extractosEstudiantes() { return $this->hasMany(ExtractoEstudiante::class); }
+
 }

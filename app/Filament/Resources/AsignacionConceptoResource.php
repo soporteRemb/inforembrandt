@@ -50,29 +50,39 @@ class AsignacionConceptoResource extends Resource
                             ->options(fn () => Sede::query()->pluck('nombre', 'id'))
                             ->searchable()
                             ->preload()
-                            ->default(fn () => Sede::query()->orderBy('id')->value('id'))
+                            ->default(fn () => session('sede_id'))
                             ->required()
                             ->live(),
 
                         Forms\Components\Select::make('periodo_lectivo_id')
                             ->label('Periodo Lectivo')
-                            ->options(
-                                fn () => PeriodoLectivo::query()
+                            ->options(function (Forms\Get $get) {
+                                $sedeId = session('sede_id') ?? $get('sede_id');
+
+                                return PeriodoLectivo::query()
                                     ->with('sede')
+                                    ->where('sede_id', $sedeId)
                                     ->orderByDesc('nombre')
                                     ->get()
-                                    ->mapWithKeys(function ($periodo) {
-                                        return [
-                                            $periodo->id => $periodo->sede->nombre . ' - ' . $periodo->nombre,
-                                        ];
-                                    })
-                            )
+                                    ->mapWithKeys(fn ($periodo) => [
+                                        $periodo->id => $periodo->sede->nombre . ' - ' . $periodo->nombre,
+                                    ]);
+                            })
                             ->searchable()
                             ->preload()
-                            ->default(fn () => PeriodoLectivo::query()
-                                ->where('estado', 'abierto')
-                                ->orderByDesc('nombre')
-                                ->value('id'))
+                            ->default(function (Forms\Get $get) {
+                                $sedeId = session('sede_id') ?? $get('sede_id');
+
+                                return session('periodo_lectivo_id')
+                                    ?? PeriodoLectivo::query()
+                                        ->where('sede_id', $sedeId)
+                                        ->where('nombre', 'like', '%' . session('anio') . '%')
+                                        ->value('id')
+                                    ?? PeriodoLectivo::query()
+                                        ->where('sede_id', $sedeId)
+                                        ->orderByDesc('nombre')
+                                        ->value('id');
+                            })
                             ->required()
                             ->live(),
                     ]),
@@ -116,6 +126,23 @@ class AsignacionConceptoResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
+                            ->rules([
+                                function (Forms\Get $get, ?AsignacionConcepto $record) {
+                                    return function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                        $existe = AsignacionConcepto::query()
+                                            ->where('sede_id', $get('sede_id'))
+                                            ->where('periodo_lectivo_id', $get('periodo_lectivo_id'))
+                                            ->where('grado', $get('grado'))
+                                            ->where('concepto_cobro_id', $value)
+                                            ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
+                                            ->exists();
+
+                                        if ($existe) {
+                                            $fail('Este concepto ya está asignado para esta sede, periodo lectivo y grado.');
+                                        }
+                                    };
+                                },
+                            ])
                             ->columnSpan(3),
 
                         Forms\Components\TextInput::make('tarifa_ordinaria')
@@ -141,38 +168,11 @@ class AsignacionConceptoResource extends Resource
                             ->required()
                             ->columnSpan(2),
 
-                        Forms\Components\TextInput::make('tarifa_extemporanea')
-                            ->label('Tarifa Extemporánea')
-                            ->prefix('$')
-                            ->inputMode('decimal')
-                            ->formatStateUsing(function ($state) {
-                                if ($state === null) {
-                                    return null;
-                                }
+                        Forms\Components\Hidden::make('tarifa_extemporanea')
+                            ->default(0),
 
-                                return fmod((float) $state, 1) == 0
-                                    ? number_format((float) $state, 0, '', '')
-                                    : str_replace('.', ',', (string) $state);
-                            })
-                            ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
-                            ->rule('regex:/^\d+(,\d{1,2})?$/')
-                            ->validationMessages([
-                                'regex' => 'Ingrese el valor sin puntos ni comas.',
-                            ])
-                            ->minValue(0)
-                            ->default(0)
-                            ->required()
-                            ->columnSpan(2),
-
-                        Forms\Components\TextInput::make('orden')
-                            ->label('Orden')
-                            ->numeric()
-                            ->integer()
-                            ->minValue(0)
-                            ->maxValue(99)
-                            ->default(0)
-                            ->required()
-                            ->columnSpan(1),
+                        Forms\Components\Hidden::make('orden')
+                        ->default(1),
 
                         Forms\Components\Toggle::make('activo')
                             ->label('Activo')
@@ -220,11 +220,8 @@ class AsignacionConceptoResource extends Resource
                     ->alignEnd()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('tarifa_extemporanea')
-                    ->label('Valor Extemp.')
-                    ->money('COP')
-                    ->alignEnd()
-                    ->sortable(),
+                Forms\Components\Hidden::make('tarifa_extemporanea')
+                    ->default(0),
 
                 Tables\Columns\TextColumn::make('orden')
                     ->label('Orden')
@@ -303,12 +300,22 @@ class AsignacionConceptoResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        $sedeId = session('sede_id');
+
+        $periodoLectivoId = session('periodo_lectivo_id')
+            ?? PeriodoLectivo::query()
+                ->where('sede_id', $sedeId)
+                ->where('estado', 'abierto')
+                ->orderByDesc('nombre')
+                ->value('id');
+
         return parent::getEloquentQuery()
+            ->when($sedeId, fn ($query) => $query->where('sede_id', $sedeId))
+            ->when($periodoLectivoId, fn ($query) => $query->where('periodo_lectivo_id', $periodoLectivoId))
             ->with([
                 'sede',
                 'periodoLectivo',
                 'conceptoCobro',
-                
             ]);
     }
 

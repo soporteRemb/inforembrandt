@@ -154,4 +154,34 @@ class Student extends Model
         return $this->hasMany(NotaEstudiante::class);
     }
 
+    public function movimientosCartera()
+    {
+        return $this->hasMany(MovimientoCarteraEstudiante::class);
+    }
+
+    public function operacionesPago()
+    {
+        return $this->hasMany(OperacionPago::class);
+    }
+
+    public function recibosPago()
+    {
+        return $this->hasMany(ReciboPago::class);
+    }
+
+    public function saldoFavor()
+    {
+        return $this->hasOne(SaldoFavorEstudiante::class);
+    }
+
+    public function acuerdosPago()
+    {
+        return $this->hasMany(AcuerdoPagoEstudiante::class);
+    }
+
+    public function extractos()
+    {
+        return $this->hasMany(ExtractoEstudiante::class);
+    }
+
 }

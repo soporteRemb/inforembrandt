@@ -5,6 +5,8 @@ namespace App\Filament\Pages;
 use App\Models\RangoDesempenoNota;
 use App\Models\Eps;
 use App\Models\Jornada;
+use App\Models\TipoLimiteExtemporaneo;
+use App\Models\FormaPago;
 
 
 use Filament\Notifications\Notification;
@@ -28,12 +30,17 @@ class OtrosParametros extends Page
 
     public array $eps = [];
     public array $jornadas = [];
+    public array $tiposLimite = [];
+    public array $formasPago = [];
+
 
     public function mount(): void
     {
         $this->cargarRangos();
         $this->cargarEps();
         $this->cargarJornadas();
+        $this->cargarTiposLimite();
+        $this->cargarFormasPago();
     }
 
     public function cargarRangos(): void
@@ -240,5 +247,175 @@ class OtrosParametros extends Page
     }
 
     
-    
+    public function cargarTiposLimite(): void
+    {
+        if (TipoLimiteExtemporaneo::count() === 0) {
+            TipoLimiteExtemporaneo::insert([
+                ['codigo' => 'Limite 1', 'nombre' => '30 días', 'orden' => 1, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+                ['codigo' => 'Limite 2', 'nombre' => '60 días', 'orden' => 2, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+                ['codigo' => 'Limite 3', 'nombre' => '90 días', 'orden' => 3, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        $this->tiposLimite = TipoLimiteExtemporaneo::query()
+            ->orderBy('orden')
+            ->get()
+            ->map(fn ($item) => [
+                'id' => $item->id,
+                'codigo' => $item->codigo,
+                'nombre' => $item->nombre,
+                'orden' => $item->orden,
+                'activo' => (bool) $item->activo,
+            ])
+            ->toArray();
+    }
+
+    public function agregarTipoLimite(): void
+    {
+        $siguienteOrden = count($this->tiposLimite) + 1;
+
+        $this->tiposLimite[] = [
+            'id' => null,
+            'codigo' => 'Limite ' . $siguienteOrden,
+            'nombre' => '',
+            'orden' => $siguienteOrden,
+            'activo' => true,
+        ];
+    }
+
+    public function guardarTiposLimite(): void
+    {
+        foreach ($this->tiposLimite as $index => $item) {
+            $codigo = trim($item['codigo'] ?? '');
+            $nombre = trim($item['nombre'] ?? '');
+
+            if ($codigo === '' || $nombre === '') {
+                continue;
+            }
+
+            TipoLimiteExtemporaneo::updateOrCreate(
+                ['id' => $item['id'] ?? null],
+                [
+                    'codigo' => $codigo,
+                    'nombre' => $nombre,
+                    'orden' => $index + 1,
+                    'activo' => (bool) ($item['activo'] ?? true),
+                ]
+            );
+        }
+
+        $this->cargarTiposLimite();
+
+        Notification::make()
+            ->title('Límites extemporáneos guardados correctamente')
+            ->success()
+            ->send();
+    }
+
+    public function eliminarTipoLimite(int $index): void
+    {
+        if (!empty($this->tiposLimite[$index]['id'])) {
+            TipoLimiteExtemporaneo::where('id', $this->tiposLimite[$index]['id'])->delete();
+        }
+
+        unset($this->tiposLimite[$index]);
+
+        $this->tiposLimite = array_values($this->tiposLimite);
+    }
+
+
+    public function cargarFormasPago(): void
+    {
+        if (FormaPago::count() === 0) {
+            FormaPago::insert([
+                ['nombre' => 'Efectivo', 'requiere_referencia' => false, 'requiere_fecha_consignacion' => false, 'orden' => 1, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+                ['nombre' => 'Transferencia', 'requiere_referencia' => true, 'requiere_fecha_consignacion' => true, 'orden' => 2, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+                ['nombre' => 'Consignación', 'requiere_referencia' => true, 'requiere_fecha_consignacion' => true, 'orden' => 3, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+                ['nombre' => 'Nequi', 'requiere_referencia' => true, 'requiere_fecha_consignacion' => false, 'orden' => 4, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+                ['nombre' => 'Daviplata', 'requiere_referencia' => true, 'requiere_fecha_consignacion' => false, 'orden' => 5, 'activo' => true, 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        $this->formasPago = FormaPago::query()
+            ->orderBy('orden')
+            ->orderBy('nombre')
+            ->get()
+            ->map(fn (FormaPago $forma) => [
+                'id' => $forma->id,
+                'nombre' => $forma->nombre,
+                'requiere_referencia' => (bool) $forma->requiere_referencia,
+                'requiere_fecha_consignacion' => (bool) $forma->requiere_fecha_consignacion,
+                'orden' => $forma->orden,
+                'activo' => (bool) $forma->activo,
+            ])
+            ->toArray();
+    }
+
+    public function agregarFormaPago(): void
+    {
+        $this->formasPago[] = [
+            'id' => null,
+            'nombre' => '',
+            'requiere_referencia' => false,
+            'requiere_fecha_consignacion' => false,
+            'orden' => count($this->formasPago) + 1,
+            'activo' => true,
+        ];
+    }
+
+    public function guardarFormasPago(): void
+    {
+        $nombres = [];
+
+        foreach ($this->formasPago as $index => $item) {
+            $nombre = trim($item['nombre'] ?? '');
+
+            if ($nombre === '') {
+                continue;
+            }
+
+            $clave = mb_strtolower($nombre);
+            if (in_array($clave, $nombres, true)) {
+                Notification::make()->title('No puede repetir una forma de pago.')->danger()->send();
+                return;
+            }
+            $nombres[] = $clave;
+
+            FormaPago::updateOrCreate(
+                ['id' => $item['id'] ?? null],
+                [
+                    'nombre' => $nombre,
+                    'requiere_referencia' => (bool) ($item['requiere_referencia'] ?? false),
+                    'requiere_fecha_consignacion' => (bool) ($item['requiere_fecha_consignacion'] ?? false),
+                    'orden' => $index + 1,
+                    'activo' => (bool) ($item['activo'] ?? true),
+                ]
+            );
+        }
+
+        $this->cargarFormasPago();
+        Notification::make()->title('Formas de pago guardadas correctamente')->success()->send();
+    }
+
+    public function eliminarFormaPago(int $index): void
+    {
+        $id = $this->formasPago[$index]['id'] ?? null;
+
+        if ($id) {
+            $forma = FormaPago::find($id);
+            if ($forma?->recibosFormasPago()->exists()) {
+                Notification::make()
+                    ->title('La forma de pago ya tiene movimientos y no puede eliminarse.')
+                    ->body('Puedes desactivarla para que no aparezca en nuevos pagos.')
+                    ->warning()
+                    ->send();
+                return;
+            }
+            $forma?->delete();
+        }
+
+        unset($this->formasPago[$index]);
+        $this->formasPago = array_values($this->formasPago);
+    }
+
 }
