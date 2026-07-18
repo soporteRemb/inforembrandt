@@ -3,8 +3,19 @@
 namespace App\Filament\Pages;
 
 use App\Models\PeriodoLectivo;
+
 use App\Services\Financiero\Pagos\PagosService;
+use App\Services\Financiero\Pagos\RegistrarPagoService;
+use App\Services\Financiero\Pagos\HistorialPagosService;
+use App\Services\Financiero\Pagos\DetalleReciboService;
+use App\Services\Financiero\Pagos\ImpresionReciboService;
+
 use Filament\Pages\Page;
+use Filament\Notifications\Notification;
+
+use Illuminate\Validation\ValidationException;
+
+use Throwable;
 
 class Pagos extends Page
 {
@@ -56,6 +67,67 @@ class Pagos extends Page
         'cantidad_obligaciones' => 0,
     ];
 
+    public array $obligaciones = [];
+
+
+    public string $tipoObligacionActiva = 'obligatorio';
+
+    public array $formasPago = [];
+
+    public ?int $movimientoSeleccionadoId = null;
+
+    public string $mesPeriodoPago = '';
+
+    public string $valorPago = '';
+
+    public string $descuentoPago = '0';
+
+    public ?int $formaPagoId = null;
+
+    public string $referenciaPago = '';
+
+    public ?string $fechaConsignacion = null;
+
+    public string $recibiDe = '';
+
+    public string $detallePago = '';
+
+    public array $colaPagos = [];
+
+    public int $secuenciaCola = 0;
+
+    public ?int $ultimoNumeroRecibo = null;
+
+    public ?int $ultimaOperacionPagoId = null;
+
+    public array $historialPagos = [];
+
+    public array $resumenHistorial = [
+        'pagos' => 0,
+        'descuentos' => 0,
+        'total_pagado' => 0,
+        'cantidad_filas' => 0,
+    ];
+
+    public string $filtroHistorialRecibo = '';
+
+    public ?string $filtroHistorialDesde = null;
+
+    public ?string $filtroHistorialHasta = null;
+
+    public string $filtroHistorialEstado = '';
+    public string $filtroHistorialConcepto = '';
+
+    public bool $mostrarDetalleRecibo = false;
+
+    public ?int $operacionDetalleReciboId = null;
+
+    public array $detalleRecibo = [];
+
+    public bool $mostrarModalReimpresion = false;
+
+    public string $motivoReimpresion = '';
+
     /*
     |--------------------------------------------------------------------------
     | CARGA INICIAL
@@ -65,7 +137,6 @@ class Pagos extends Page
     public function mount(): void
     {
         $this->sede_id = session('sede_id');
-
         $this->periodo_lectivo_id = session('periodo_lectivo_id');
 
         if ($this->sede_id && ! $this->periodo_lectivo_id) {
@@ -74,6 +145,19 @@ class Pagos extends Page
                 ->orderByDesc('nombre')
                 ->value('id');
         }
+
+        $this->formasPago = app(PagosService::class)
+            ->obtenerFormasPagoActivas()
+            ->map(fn ($forma) => [
+                'id' => $forma->id,
+                'nombre' => $forma->nombre,
+                'requiere_referencia' => (bool) $forma->requiere_referencia,
+                'requiere_fecha_consignacion' => (bool) $forma->requiere_fecha_consignacion,
+            ])
+            ->values()
+            ->toArray();
+
+        $this->formaPagoId = $this->formasPago[0]['id'] ?? null;
     }
 
     /*
@@ -143,6 +227,8 @@ class Pagos extends Page
             return;
         }
 
+        $this->colaPagos = [];
+
         $student = app(PagosService::class)
             ->cartera()
             ->obtenerEstudiante(
@@ -197,6 +283,8 @@ class Pagos extends Page
                 ?? '',
         ];
 
+        $this->limpiarFormularioPago();
+
         $this->resumenFinanciero = app(PagosService::class)
             ->cartera()
             ->obtenerResumen(
@@ -204,11 +292,157 @@ class Pagos extends Page
                 sedeId: $this->sede_id,
                 periodoLectivoId: $this->periodo_lectivo_id,
             );
+
+        $obligaciones = app(PagosService::class)
+            ->cartera()
+            ->obtenerObligaciones(
+                studentId: $student->id,
+                sedeId: $this->sede_id,
+                periodoLectivoId: $this->periodo_lectivo_id,
+            );
+
+        $this->obligaciones = $obligaciones
+            ->map(function (array $obligacion) {
+                return [
+                    ...$obligacion,
+
+                    'fecha_vencimiento_formateada' => $obligacion['fecha_vencimiento']
+                        ? \Carbon\Carbon::parse($obligacion['fecha_vencimiento'])->format('d/m/Y')
+                        : 'Sin definir',
+
+                    'mes_mostrado' => $obligacion['mes'] ?? '',
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        $this->tipoObligacionActiva = 'obligatorio';
         $this->buscarEstudiante = $nombreCompleto;
 
         $this->resultadosBusqueda = [];
+
+        $this->cargarHistorialPagos(
+            app(HistorialPagosService::class)
+        );
     }
 
+
+
+    public function updatedMovimientoSeleccionadoId($movimientoId): void
+    {
+        if (! $movimientoId) {
+            $this->limpiarFormularioPago();
+
+            return;
+        }
+
+        $obligacion = collect($this->obligaciones)
+            ->firstWhere('id', (int) $movimientoId);
+
+        if (! $obligacion) {
+            $this->limpiarFormularioPago();
+
+            return;
+        }
+
+        $this->movimientoSeleccionadoId = (int) $movimientoId;
+
+        $this->mesPeriodoPago = $obligacion['mes'] ?? '';
+
+        $this->valorPago = $this->formatearMonedaVisual(
+            $obligacion['saldo_pendiente'] ?? 0
+        );
+
+        $this->descuentoPago = '0';
+    }
+
+    public function getObligacionSeleccionadaProperty(): ?array
+    {
+        if (! $this->movimientoSeleccionadoId) {
+            return null;
+        }
+
+        return collect($this->obligaciones)
+            ->firstWhere('id', $this->movimientoSeleccionadoId);
+    }
+
+    public function getFormaPagoSeleccionadaProperty(): ?array
+    {
+        if (! $this->formaPagoId) {
+            return null;
+        }
+
+        return collect($this->formasPago)
+            ->firstWhere('id', $this->formaPagoId);
+    }
+
+    public function getTotalTransaccionProperty(): float
+    {
+        $valor = $this->convertirMonedaAFloat($this->valorPago);
+        $descuento = $this->convertirMonedaAFloat($this->descuentoPago);
+
+        return max(0, round($valor - $descuento, 2));
+    }
+
+    private function convertirMonedaAFloat(string|int|float|null $valor): float
+    {
+        if ($valor === null || $valor === '') {
+            return 0;
+        }
+
+        $limpio = preg_replace('/[^\d]/', '', (string) $valor);
+
+        return (float) ($limpio ?: 0);
+    }
+
+    private function limpiarFormularioPago(): void
+    {
+        $this->movimientoSeleccionadoId = null;
+        $this->mesPeriodoPago = '';
+        $this->valorPago = '';
+        $this->descuentoPago = '0';
+        $this->referenciaPago = '';
+        $this->fechaConsignacion = null;
+        $this->detallePago = '';
+    }
+
+    public function cambiarTipoObligacion(string $tipo): void
+    {
+        if (! in_array($tipo, ['obligatorio', 'no_obligatorio'], true)) {
+            return;
+        }
+
+        $this->tipoObligacionActiva = $tipo;
+    }
+
+    public function getObligacionesObligatoriasProperty(): array
+    {
+        return collect($this->obligaciones)
+            ->where('obligatorio', true)
+            ->values()
+            ->toArray();
+    }
+
+    public function getObligacionesNoObligatoriasProperty(): array
+    {
+        return collect($this->obligaciones)
+            ->where('obligatorio', false)
+            ->values()
+            ->toArray();
+    }
+
+    public function getObligacionesVisiblesProperty(): array
+    {
+        return $this->tipoObligacionActiva === 'obligatorio'
+            ? $this->obligacionesObligatorias
+            : $this->obligacionesNoObligatorias;
+    }
+
+    public function getTotalObligacionesVisiblesProperty(): float
+    {
+        return (float) collect($this->obligacionesVisibles)
+            ->sum('saldo_pendiente');
+    }
     /*
     |--------------------------------------------------------------------------
     | LIMPIAR ESTUDIANTE
@@ -218,13 +452,21 @@ class Pagos extends Page
     public function limpiarEstudiante(): void
     {
         $this->student_id = null;
-
         $this->estudianteSeleccionado = [];
-
         $this->buscarEstudiante = '';
-
         $this->resultadosBusqueda = [];
-        
+        $this->obligaciones = [];
+        $this->tipoObligacionActiva = 'obligatorio';
+
+        $this->colaPagos = [];
+        $this->secuenciaCola = 0;
+
+        $this->ultimoNumeroRecibo = null;
+        $this->ultimaOperacionPagoId = null;
+        $this->filtroHistorialConcepto = '';
+
+        $this->limpiarFormularioPago();
+
         $this->resumenFinanciero = [
             'deuda_obligatoria' => 0,
             'penalizaciones' => 0,
@@ -234,10 +476,740 @@ class Pagos extends Page
             'total_neto' => 0,
             'cantidad_obligaciones' => 0,
         ];
+
+        $this->historialPagos = [];
+
+        $this->resumenHistorial = [
+            'pagos' => 0,
+            'descuentos' => 0,
+            'total_pagado' => 0,
+            'cantidad_filas' => 0,
+        ];
+
+        $this->filtroHistorialRecibo = '';
+        $this->filtroHistorialDesde = null;
+        $this->filtroHistorialHasta = null;
+        $this->filtroHistorialEstado = '';
+    }
+
+    public function getSubtotalColaProperty(): float
+    {
+        return (float) collect($this->colaPagos)
+            ->sum('valor_recibido');
+    }
+
+    public function getDescuentosColaProperty(): float
+    {
+        return (float) collect($this->colaPagos)
+            ->sum('descuento');
+    }
+
+    public function getTotalAplicadoColaProperty(): float
+    {
+        return (float) collect($this->colaPagos)
+            ->sum('valor_aplicado');
+    }
+
+    public function getSaldoFavorGeneradoColaProperty(): float
+    {
+        return (float) collect($this->colaPagos)
+            ->sum('saldo_favor_generado');
+    }
+
+    public function getPuedeConfirmarColaProperty(): bool
+    {
+        return $this->student_id !== null
+            && count($this->colaPagos) > 0
+            && $this->subtotalCola > 0;
     }
 
     public function getHeading(): string
     {
         return '';
+    }
+
+    public function getValorPagoNumericoProperty(): float
+    {
+        return $this->convertirMonedaAFloat($this->valorPago);
+    }
+
+    public function getDescuentoPagoNumericoProperty(): float
+    {
+        return $this->convertirMonedaAFloat($this->descuentoPago);
+    }
+
+    public function updatedValorPago($valor): void
+    {
+        $this->valorPago = $this->formatearMonedaVisual($valor);
+    }
+
+    public function updatedDescuentoPago($valor): void
+    {
+        $this->descuentoPago = $this->formatearMonedaVisual($valor);
+    }
+
+    private function formatearMonedaVisual(string|int|float|null $valor): string
+    {
+        $numero = $this->convertirMonedaAFloat($valor);
+
+        return number_format($numero, 0, ',', '.');
+    }
+
+    public function getPuedeAdicionarPagoProperty(): bool
+    {
+        if (! $this->student_id) {
+            return false;
+        }
+
+        if (! $this->movimientoSeleccionadoId) {
+            return false;
+        }
+
+        if (! $this->formaPagoId) {
+            return false;
+        }
+
+        if (trim($this->recibiDe) === '') {
+            return false;
+        }
+
+        if ($this->valorPagoNumerico <= 0) {
+            return false;
+        }
+
+        if ($this->descuentoPagoNumerico < 0) {
+            return false;
+        }
+
+        if ($this->totalTransaccion <= 0) {
+            return false;
+        }
+
+        $formaPago = $this->formaPagoSeleccionada;
+
+        if (! $formaPago) {
+            return false;
+        }
+
+        /*
+        Por decisión funcional de la primera versión, la referencia de
+        consignación y la fecha NO bloquean el registro del pago.
+    
+        
+        if (
+            ($formaPago['requiere_referencia'] ?? false)
+            && trim($this->referenciaPago) === ''
+        ) {
+            return false;
+        }
+
+        if (
+            ($formaPago['requiere_fecha_consignacion'] ?? false)
+            && empty($this->fechaConsignacion)
+        ) {
+            return false;
+        }*/
+
+        return true;
+    }
+
+    public function adicionarPagoCola(): void
+    {
+        if (! $this->puedeAdicionarPago) {
+            Notification::make()
+                ->title('Información incompleta.')
+                ->body('Complete los datos requeridos antes de adicionar el pago.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $obligacion = $this->obligacionSeleccionada;
+
+        if (! $obligacion) {
+            Notification::make()
+                ->title('Seleccione una obligación válida.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $saldoOriginal = (float) ($obligacion['saldo_pendiente'] ?? 0);
+
+        /*
+        * Descontamos lo que ya se haya aplicado a esta misma obligación
+        * dentro de la cola actual.
+        */
+        $cubiertoEnCola = (float) collect($this->colaPagos)
+            ->where('movimiento_id', (int) $obligacion['id'])
+            ->sum('valor_aplicado');
+
+        $saldoDisponible = max(
+            0,
+            round($saldoOriginal - $cubiertoEnCola, 2)
+        );
+
+        if ($saldoDisponible <= 0) {
+            Notification::make()
+                ->title('La obligación ya está cubierta en la cola.')
+                ->body('Elimine o edite el pago existente antes de adicionar otro.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $valorRecibido = $this->totalTransaccion;
+        $descuento = $this->descuentoPagoNumerico;
+
+        if ($descuento > $saldoDisponible) {
+            Notification::make()
+                ->title('Descuento no válido.')
+                ->body('El descuento no puede superar el saldo pendiente de la obligación.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        /*
+        * El descuento también reduce la deuda, aunque no es dinero recibido.
+        */
+        $valorCubierto = $valorRecibido + $descuento;
+
+        $valorAplicado = min(
+            $saldoDisponible,
+            $valorCubierto
+        );
+
+        /*
+        * El dinero que exceda lo necesario queda como saldo a favor general.
+        */
+        $dineroNecesario = max(
+            0,
+            $saldoDisponible - $descuento
+        );
+
+        $saldoFavorGenerado = max(
+            0,
+            round($valorRecibido - $dineroNecesario, 2)
+        );
+
+        $formaPago = $this->formaPagoSeleccionada;
+
+        $this->secuenciaCola++;
+
+        $this->colaPagos[] = [
+            'fila_id' => $this->secuenciaCola,
+            'movimiento_id' => (int) $obligacion['id'],
+            'concepto_cobro_id' => $obligacion['concepto_cobro_id'] ?? null,
+
+            'concepto' => $obligacion['concepto'],
+            'mes' => $obligacion['mes'] ?? '',
+            'mes_numero' => $obligacion['mes_numero'] ?? null,
+
+            'saldo_anterior' => $saldoDisponible,
+            'descuento' => $descuento,
+            'valor_recibido' => $valorRecibido,
+            'valor_aplicado' => $valorAplicado,
+            'saldo_posterior' => max(
+                0,
+                round($saldoDisponible - $valorAplicado, 2)
+            ),
+            'saldo_favor_generado' => $saldoFavorGenerado,
+
+            'forma_pago_id' => $this->formaPagoId,
+            'forma_pago' => $formaPago['nombre'] ?? 'Sin definir',
+            'numero_referencia' => trim($this->referenciaPago),
+            'fecha_consignacion' => $this->fechaConsignacion,
+
+            'recibido_de' => trim($this->recibiDe),
+            'detalle' => trim($this->detallePago),
+        ];
+
+        $this->limpiarTransaccionDespuesDeAdicionar();
+
+        Notification::make()
+            ->title('Pago adicionado a la cola.')
+            ->success()
+            ->send();
+    }
+
+    private function limpiarTransaccionDespuesDeAdicionar(): void
+    {
+        $this->movimientoSeleccionadoId = null;
+        $this->mesPeriodoPago = '';
+        $this->valorPago = '';
+        $this->descuentoPago = '0';
+        $this->referenciaPago = '';
+        $this->fechaConsignacion = null;
+        $this->detallePago = '';
+    }
+
+    public function eliminarPagoCola(int $filaId): void
+    {
+        $this->colaPagos = collect($this->colaPagos)
+            ->reject(fn (array $fila) => $fila['fila_id'] === $filaId)
+            ->values()
+            ->toArray();
+    }
+
+    public function limpiarColaPagos(): void
+    {
+        $this->colaPagos = [];
+    }
+
+    public function confirmarPagos(
+        RegistrarPagoService $registrarPagoService
+    ): void {
+        if (! $this->puedeConfirmarCola) {
+            Notification::make()
+                ->title('No hay pagos para confirmar.')
+                ->body('Adicione al menos un pago válido a la cola.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $this->student_id) {
+            Notification::make()
+                ->title('Seleccione un estudiante.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $usuarioId = auth()->id();
+
+        if (! $usuarioId) {
+            Notification::make()
+                ->title('No se encontró el usuario de la sesión.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $resultado = $registrarPagoService->registrar(
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+                studentId: (int) $this->student_id,
+                colaPagos: $this->colaPagos,
+                recibidoDe: $this->recibiDe,
+                registradoPor: (int) $usuarioId,
+                fechaPago: now(),
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Guardar referencias antes de limpiar la atención
+            |--------------------------------------------------------------------------
+            */
+            $operacionPagoId = (int) $resultado['operacion_id'];
+            $numeroRecibo = (int) $resultado['numero_recibo'];
+            $studentId = (int) $this->student_id;
+
+            $this->ultimoNumeroRecibo = $numeroRecibo;
+            $this->ultimaOperacionPagoId = $operacionPagoId;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Limpiar la atención confirmada
+            |--------------------------------------------------------------------------
+            */
+            $this->colaPagos = [];
+            $this->secuenciaCola = 0;
+
+            $this->resetValidation();
+
+            unset(
+                $this->subtotalCola,
+                $this->descuentosCola,
+                $this->totalAplicadoCola,
+                $this->saldoFavorGeneradoCola,
+                $this->puedeConfirmarCola,
+            );
+
+            $this->limpiarFormularioPago();
+
+            /*
+            * Recibí de también se limpia porque la operación ya fue confirmada.
+            */
+            $this->recibiDe = '';
+
+            /*
+            |--------------------------------------------------------------------------
+            | Recargar cartera del estudiante
+            |--------------------------------------------------------------------------
+            | Al volver a consultar:
+            | - las obligaciones pagadas completamente desaparecen;
+            | - los abonos parciales permanecen con su nuevo saldo;
+            | - los saldos a favor generados aparecen en el resumen;
+            | - el historial incluye el recibo recién registrado.
+            */
+            $this->seleccionarEstudiante($studentId);
+
+            /*
+            * seleccionarEstudiante() puede limpiar propiedades de la atención.
+            * Restauramos la referencia del recibo recién confirmado.
+            */
+            $this->ultimoNumeroRecibo = $numeroRecibo;
+            $this->ultimaOperacionPagoId = $operacionPagoId;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Abrir automáticamente el detalle del recibo recién generado
+            |--------------------------------------------------------------------------
+            */
+            $this->abrirDetalleRecibo(
+                $operacionPagoId,
+                app(DetalleReciboService::class),
+            );
+
+            Notification::make()
+                ->title('Pagos registrados correctamente.')
+                ->body(
+                    'Recibo N.º '
+                    . $numeroRecibo
+                    . ' · Total recibido: $'
+                    . number_format(
+                        $resultado['total_recibido'],
+                        0,
+                        ',',
+                        '.'
+                    )
+                )
+                ->success()
+                ->send();
+        } catch (ValidationException $exception) {
+            $mensaje = collect($exception->errors())
+                ->flatten()
+                ->first();
+
+            Notification::make()
+                ->title('No fue posible registrar los pagos.')
+                ->body($mensaje ?: 'Revise la información de la cola.')
+                ->warning()
+                ->send();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('Ocurrió un error al registrar los pagos.')
+                ->body(
+                    'No se guardó ninguna parte de la operación. '
+                    . 'Revise el registro del sistema.'
+                )
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function pendienteObligacionEnCola(int $movimientoId): float
+    {
+        $obligacion = collect($this->obligaciones)
+            ->firstWhere('id', $movimientoId);
+
+        if (! $obligacion) {
+            return 0;
+        }
+
+        $saldoOriginal = (float) ($obligacion['saldo_pendiente'] ?? 0);
+
+        $totalCubiertoEnCola = (float) collect($this->colaPagos)
+            ->where('movimiento_id', $movimientoId)
+            ->sum('valor_aplicado');
+
+        return max(
+            0,
+            round($saldoOriginal - $totalCubiertoEnCola, 2)
+        );
+    }
+
+    public function esUltimaFilaDeObligacion(int $filaId, int $movimientoId): bool
+    {
+        $ultimaFila = collect($this->colaPagos)
+            ->where('movimiento_id', $movimientoId)
+            ->last();
+
+        return (int) ($ultimaFila['fila_id'] ?? 0) === $filaId;
+    }
+
+    public function cargarHistorialPagos(
+        HistorialPagosService $historialPagosService
+    ): void {
+        if (
+            ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            $this->historialPagos = [];
+
+            $this->resumenHistorial = [
+                'pagos' => 0,
+                'descuentos' => 0,
+                'total_pagado' => 0,
+                'cantidad_filas' => 0,
+            ];
+
+            return;
+        }
+
+        $resultado = $historialPagosService->consultar(
+            studentId: (int) $this->student_id,
+            sedeId: (int) $this->sede_id,
+            periodoLectivoId: (int) $this->periodo_lectivo_id,
+            numeroRecibo: $this->filtroHistorialRecibo,
+            concepto: $this->filtroHistorialConcepto,
+            fechaDesde: $this->filtroHistorialDesde,
+            fechaHasta: $this->filtroHistorialHasta,
+            estado: $this->filtroHistorialEstado,
+        );
+
+        $this->historialPagos = $resultado['filas'];
+
+        $this->resumenHistorial = $resultado['resumen'];
+    }
+
+    public function updatedFiltroHistorialRecibo(): void
+    {
+        $this->cargarHistorialPagos(
+            app(HistorialPagosService::class)
+        );
+    }
+
+    public function updatedFiltroHistorialDesde(): void
+    {
+        $this->cargarHistorialPagos(
+            app(HistorialPagosService::class)
+        );
+    }
+
+    public function updatedFiltroHistorialHasta(): void
+    {
+        $this->cargarHistorialPagos(
+            app(HistorialPagosService::class)
+        );
+    }
+
+    public function updatedFiltroHistorialEstado(): void
+    {
+        $this->cargarHistorialPagos(
+            app(HistorialPagosService::class)
+        );
+    }
+
+    public function updatedFiltroHistorialConcepto(): void
+    {
+        $this->cargarHistorialPagos(
+            app(HistorialPagosService::class)
+        );
+    }
+
+    public function abrirDetalleRecibo(
+        int $operacionPagoId,
+        DetalleReciboService $detalleReciboService,
+    ): void {
+        if (
+            ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            return;
+        }
+
+        try {
+            $this->detalleRecibo = $detalleReciboService->consultar(
+                operacionPagoId: $operacionPagoId,
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+            );
+
+            $this->operacionDetalleReciboId = $operacionPagoId;
+            $this->mostrarDetalleRecibo = true;
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('No fue posible abrir el recibo.')
+                ->body('La información del recibo no está disponible.')
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function cerrarDetalleRecibo(): void
+    {
+        $this->mostrarDetalleRecibo = false;
+        $this->operacionDetalleReciboId = null;
+        $this->detalleRecibo = [];
+    }
+
+
+    public function imprimirRecibo(
+        ImpresionReciboService $impresionReciboService,
+        DetalleReciboService $detalleReciboService,
+    ): void {
+        if (
+            ! $this->operacionDetalleReciboId
+            || ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            return;
+        }
+
+        $usuarioId = auth()->id();
+
+        if (! $usuarioId) {
+            Notification::make()
+                ->title('No se encontró el usuario de la sesión.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $impresionReciboService->registrarOriginal(
+                operacionPagoId: (int) $this->operacionDetalleReciboId,
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+                generadoPor: (int) $usuarioId,
+            );
+
+            $this->detalleRecibo = $detalleReciboService->consultar(
+                operacionPagoId: (int) $this->operacionDetalleReciboId,
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+            );
+
+            Notification::make()
+                ->title('Impresión original registrada.')
+                ->success()
+                ->send();
+
+            /*
+            * Más adelante aquí se abrirá el PDF real.
+            */
+        } catch (ValidationException $exception) {
+            $mensaje = collect($exception->errors())
+                ->flatten()
+                ->first();
+
+            Notification::make()
+                ->title('No fue posible imprimir el recibo.')
+                ->body($mensaje ?: 'Revise la información del recibo.')
+                ->warning()
+                ->send();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('Ocurrió un error al imprimir el recibo.')
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function abrirModalReimpresion(): void
+    {
+        $this->motivoReimpresion = '';
+        $this->mostrarModalReimpresion = true;
+    }
+
+    public function cerrarModalReimpresion(): void
+    {
+        $this->mostrarModalReimpresion = false;
+        $this->motivoReimpresion = '';
+    }
+
+    public function reimprimirRecibo(
+        ImpresionReciboService $impresionReciboService,
+        DetalleReciboService $detalleReciboService,
+    ): void {
+        if (
+            ! $this->operacionDetalleReciboId
+            || ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            return;
+        }
+
+        $usuarioId = auth()->id();
+
+        if (! $usuarioId) {
+            Notification::make()
+                ->title('No se encontró el usuario de la sesión.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $impresion = $impresionReciboService->registrarReimpresion(
+                operacionPagoId: (int) $this->operacionDetalleReciboId,
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+                generadoPor: (int) $usuarioId,
+                motivo: $this->motivoReimpresion,
+            );
+
+            $numeroRecibo = (int) (
+                $this->detalleRecibo['numero_recibo'] ?? 0
+            );
+
+            $identificador = $impresionReciboService->identificadorVisual(
+                numeroRecibo: $numeroRecibo,
+                impresion: $impresion,
+            );
+
+            $this->detalleRecibo = $detalleReciboService->consultar(
+                operacionPagoId: (int) $this->operacionDetalleReciboId,
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+            );
+
+            $this->cerrarModalReimpresion();
+
+            Notification::make()
+                ->title('Reimpresión registrada.')
+                ->body('Documento ' . $identificador)
+                ->success()
+                ->send();
+
+            /*
+            * Más adelante aquí se abrirá el PDF real marcado como reimpresión.
+            */
+        } catch (ValidationException $exception) {
+            $mensaje = collect($exception->errors())
+                ->flatten()
+                ->first();
+
+            Notification::make()
+                ->title('No fue posible reimprimir el recibo.')
+                ->body($mensaje ?: 'Revise la información del recibo.')
+                ->warning()
+                ->send();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('Ocurrió un error al reimprimir el recibo.')
+                ->danger()
+                ->send();
+        }
     }
 }

@@ -45,4 +45,9 @@ class OperacionPago extends Model
     public function registradoPor(): BelongsTo { return $this->belongsTo(User::class, 'registrado_por'); }
     public function anuladoPor(): BelongsTo { return $this->belongsTo(User::class, 'anulado_por'); }
     public function recibos(): HasMany { return $this->hasMany(ReciboPago::class); }
+
+    public function impresiones(): HasMany
+    {
+        return $this->hasMany(ImpresionRecibo::class);
+    }
 }

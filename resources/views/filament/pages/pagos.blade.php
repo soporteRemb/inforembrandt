@@ -16,11 +16,18 @@
         }
 
         /* Obligaciones + historial */
-        .pagos-info-grid {
-            display: grid;
-            grid-template-columns: minmax(620px, 1.2fr) minmax(520px, 1fr);
-            gap: 14px;
-            align-items: stretch;
+        .pagos-info-grid{
+            display:grid;
+            grid-template-columns: 0.78fr 1.42fr;
+            gap:14px;
+            width:100%;
+            grid-column:1 / -1;
+            align-items:stretch;
+        }
+
+        .pagos-info-grid > .pagos-info-card {
+            width: 100%;
+            min-width: 0;
         }
 
         /* Altura y scroll de las tarjetas informativas */
@@ -40,6 +47,11 @@
             min-width: 0;
             display: flex;
             flex-direction: column;
+        }
+
+        .pagos-agreements-card {
+            width: 100%;
+            grid-column: 1 / -1;
         }
 
         .pagos-placeholder {
@@ -1475,14 +1487,13 @@
         .pagos-history-filters {
             display: grid;
             grid-template-columns:
-                minmax(130px, .9fr)
-                minmax(125px, .8fr)
-                minmax(125px, .8fr)
-                minmax(130px, .9fr);
-            gap: 8px;
+                minmax(120px, 0.8fr)
+                minmax(170px, 1.2fr)
+                minmax(135px, 1fr)
+                minmax(135px, 1fr)
+                minmax(135px, 1fr);
+            gap: 10px;
             padding: 10px 12px;
-            border-bottom: 1px solid #e5eaf0;
-            background: #fbfcfd;
         }
 
         .pagos-history-filters .pagos-field label {
@@ -2153,6 +2164,740 @@
             }
         }
 
+        .pagos-btn-add-queue:disabled {
+            background: #cbd5e1;
+            color: #64748b;
+            cursor: not-allowed;
+            transform: none;
+            opacity: .8;
+        }
+
+        .pagos-btn-add-queue:disabled:hover {
+            background: #cbd5e1;
+            transform: none;
+        }
+
+        .pagos-history-receipt-group td {
+            padding: 9px 12px;
+            background: #f8fafc;
+            border-top: 2px solid #dbe2ea;
+            border-bottom: 1px solid #dbe2ea;
+        }
+
+        .pagos-history-receipt-group:first-child td {
+            border-top: none;
+        }
+
+        .pagos-history-receipt-group-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .pagos-history-receipt-group-content > div {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px 14px;
+        }
+
+        .pagos-history-receipt-group-content strong {
+            color: #991b1b;
+            font-size: 12px;
+        }
+
+        .pagos-history-receipt-group-content span:not(.pagos-status) {
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .pagos-history-concept {
+            display: flex;
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .pagos-concept-badge {
+            display: inline-flex;
+            align-items: center;
+            width: max-content;
+            padding: 1px 5px;
+            border-radius: 999px;
+            font-size: 8px;
+            font-weight: 700;
+            line-height: 1.15;
+        }
+
+        .pagos-concept-badge-required {
+            color: #b91c1c;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+
+        
+
+        .pagos-history-reference {
+            display: block;
+            margin-top: 3px;
+            color: #64748b;
+            font-size: 9px;
+        }
+
+
+        .pagos-history-receipt-button {
+            display: block;
+            width: 100%;
+            padding: 0;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .pagos-history-receipt-button:hover {
+            background: #f1f5f9;
+        }
+
+        .pagos-history-receipt-button:focus-visible {
+            outline: 2px solid #93c5fd;
+            outline-offset: -2px;
+        }
+
+        .pagos-history-receipt-group-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagos-history-receipt-group-right svg {
+            width: 15px;
+            height: 15px;
+            color: #64748b;
+        }
+
+        .pagos-slideover-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            background: rgba(15, 23, 42, 0.38);
+        }
+
+        .pagos-slideover {
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 100;
+            width: min(520px, 92vw);
+            height: 100dvh;
+            max-height: 100dvh;
+            background: #ffffff;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -12px 0 30px rgba(15, 23, 42, 0.16);
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: hidden;
+        }
+
+        .pagos-slideover-header {
+            flex: 0 0 auto;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+
+            padding: 16px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .pagos-slideover-eyebrow {
+            display: block;
+            color: #64748b;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .pagos-slideover-header h2 {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .pagos-slideover-close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            cursor: pointer;
+        }
+
+        .pagos-slideover-close svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .pagos-slideover-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 16px 18px;
+        }
+
+        .pagos-slideover-loading {
+            padding: 30px 10px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+
+        /* =========================================================
+        DETALLE DEL RECIBO
+        ========================================================= */
+
+        .pagos-receipt-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pagos-receipt-detail-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .pagos-receipt-detail-summary > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .pagos-receipt-detail-summary span:not(.pagos-status),
+        .pagos-receipt-detail-grid span,
+        .pagos-receipt-detail-line-grid span,
+        .pagos-receipt-detail-totals span {
+            color: #64748b;
+            font-size: 11px;
+            line-height: 1.25;
+        }
+
+        .pagos-receipt-detail-summary strong {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-receipt-detail-section {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .pagos-receipt-detail-section > h3 {
+            margin: 0;
+            padding: 11px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .pagos-receipt-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px 16px;
+            padding: 14px;
+        }
+
+        .pagos-receipt-detail-grid > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .pagos-receipt-detail-grid strong {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-receipt-detail-lines {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pagos-receipt-detail-line {
+            padding: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .pagos-receipt-detail-line:last-child {
+            border-bottom: 0;
+        }
+
+        .pagos-receipt-detail-line-heading {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .pagos-receipt-detail-line-heading > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .pagos-receipt-detail-line-heading strong {
+            color: #0f172a;
+            font-size: 14px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-receipt-detail-line-heading > div > span {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .pagos-receipt-detail-line-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 14px;
+        }
+
+        .pagos-receipt-detail-line-grid > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .pagos-receipt-detail-line-grid strong {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 750;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-receipt-detail-line-grid small {
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-receipt-detail-note {
+            margin-top: 11px;
+            padding: 9px 10px;
+            border-radius: 7px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 11px;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-receipt-detail-totals {
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #ffffff;
+            overflow: hidden;
+        }
+
+        .pagos-receipt-detail-totals > div {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .pagos-receipt-detail-totals > div:last-child {
+            border-bottom: 0;
+        }
+
+        .pagos-receipt-detail-totals strong {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .pagos-receipt-detail-total {
+            background: #f8fafc;
+        }
+
+        .pagos-receipt-detail-total span {
+            color: #0f172a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .pagos-receipt-detail-total strong {
+            color: #008c45;
+            font-size: 19px;
+            font-weight: 900;
+        }
+
+        .pagos-text-warning {
+            color: #b45309 !important;
+        }
+
+        .pagos-text-green {
+            color: #008c45 !important;
+        }
+
+        /* =========================================================
+        PIE DEL SLIDEOVER
+        ========================================================= */
+
+        
+
+        .pagos-slideover-footer-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            min-height: 38px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .pagos-slideover-footer-button svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .pagos-slideover-footer-button-secondary {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #334155;
+        }
+
+        .pagos-slideover-footer-button-secondary:hover {
+            background: #f8fafc;
+        }
+
+        .pagos-slideover-footer-button-primary {
+            border: 1px solid #b91c1c;
+            background: #b91c1c;
+            color: #ffffff;
+        }
+
+        .pagos-slideover-footer-button-primary:hover {
+            background: #991b1b;
+        }
+
+
+        .pagos-slideover-wrapper {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+        }
+
+        .pagos-slideover-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.38);
+        }
+
+        .pagos-slideover {
+            position: absolute;
+            top: 0;
+            right: 0;
+
+            width: min(520px, 92vw);
+            height: 100vh;
+            height: 100dvh;
+            max-height: 100dvh;
+
+            display: grid;
+            grid-template-rows:
+                auto
+                minmax(0, 1fr)
+                auto;
+
+            overflow: hidden;
+
+            background: #ffffff;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -12px 0 30px rgba(15, 23, 42, 0.16);
+        }
+
+        .pagos-slideover-header {
+            grid-row: 1;
+
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+
+            padding: 16px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .pagos-slideover-body {
+            grid-row: 2;
+
+            min-width: 0;
+            min-height: 0;
+
+            overflow-x: hidden;
+            overflow-y: auto;
+
+            padding: 16px 18px;
+
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .pagos-slideover-footer {
+            grid-row: 3;
+
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+
+            padding: 12px 18px;
+            border-top: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        /* =========================================================
+        RESPONSIVE
+        ========================================================= */
+
+        @media (max-width: 700px) {
+            .pagos-receipt-detail-summary {
+                grid-template-columns: 1fr;
+            }
+
+            .pagos-receipt-detail-grid,
+            .pagos-receipt-detail-line-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pagos-slideover-footer {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+
+            .pagos-slideover-footer-button {
+                width: 100%;
+            }
+
+            .pagos-print-history-item {
+                grid-template-columns: 1fr;
+            }
+
+            .pagos-modal-footer {
+                flex-direction: column-reverse;
+                align-items: stretch;
+            }
+        }
+
+
+        /* =========================================================
+        MODAL DE REIMPRESIÓN
+        ========================================================= */
+
+        .pagos-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.52);
+        }
+
+        .pagos-modal-card {
+            width: min(520px, 94vw);
+            max-height: 90vh;
+            overflow: hidden;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: #ffffff;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.26);
+        }
+
+        .pagos-modal-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 18px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .pagos-modal-header span {
+            display: block;
+            margin-bottom: 3px;
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .pagos-modal-header h3 {
+            margin: 0;
+            color: #0f172a;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .pagos-modal-body {
+            min-height: 0;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .pagos-modal-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 14px 20px;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .pagos-textarea {
+            width: 100%;
+            min-height: 110px;
+            resize: vertical;
+            padding: 10px 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #0f172a;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .pagos-textarea:focus {
+            outline: none;
+            border-color: #94a3b8;
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.18);
+        }
+
+        .pagos-reprint-preview {
+            margin-top: 14px;
+            padding: 11px 12px;
+            border: 1px solid #dbeafe;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #475569;
+            font-size: 11px;
+        }
+
+        .pagos-reprint-preview strong {
+            display: inline-block;
+            margin-left: 5px;
+            color: #1d4ed8;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        /* =========================================================
+        HISTORIAL DE IMPRESIÓN
+        ========================================================= */
+
+        .pagos-print-history {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pagos-print-history-item {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px 14px;
+            padding: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .pagos-print-history-item > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .pagos-print-history-item span,
+        .pagos-print-history-total span {
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .pagos-print-history-item strong,
+        .pagos-print-history-total strong {
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: 700;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-print-history-reason {
+            grid-column: 1 / -1;
+        }
+
+        .pagos-print-history-total {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #f8fafc;
+        }
+
+        .pagos-print-history-total strong {
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .pagos-print-history-empty {
+            padding: 18px 14px;
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+        }
+
+
+
     </style>
 
 
@@ -2473,26 +3218,42 @@
                                     <span class="pagos-required">*</span>
                                 </label>
 
-                                <select class="pagos-select">
+                                <select
+                                    class="pagos-select"
+                                    wire:model.live="movimientoSeleccionadoId"
+                                    @disabled(empty($estudianteSeleccionado))
+                                >
                                     <option value="">Seleccione una obligación</option>
-                                    <option value="pension-febrero">Pensión - Febrero</option>
-                                    <option value="matricula">Matrícula</option>
-                                    <option value="salida-pedagogica">Salida pedagógica</option>
-                                    <option value="anticipo-general">Anticipo general</option>
+
+                                    @foreach($obligaciones as $obligacion)
+                                        <option value="{{ $obligacion['id'] }}">
+                                            {{ $obligacion['concepto'] }}
+                                            {{ $obligacion['mes'] ? ' - ' . $obligacion['mes'] : '' }}
+                                            — Saldo ${{ number_format($obligacion['saldo_pendiente'], 0, ',', '.') }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
 
                             {{-- Mes o periodo --}}
                             <div class="pagos-field">
-                                <label>Mes / Periodo</label>
+                                <label>Mes asociado</label>
 
-                                <select class="pagos-select">
-                                    <option value="">Seleccione</option>
-                                    <option value="febrero">Febrero</option>
-                                    <option value="marzo">Marzo</option>
-                                    <option value="abril">Abril</option>
-                                    <option value="anual">Anual</option>
-                                </select>
+                                <input
+                                    type="text"
+                                    class="pagos-input"
+                                    wire:model="mesPeriodoPago"
+                                    readonly
+                                >
+
+                                <small style="
+                                    display:block;
+                                    margin-top:5px;
+                                    font-size:10px;
+                                    color:#94a3b8;
+                                ">
+                                    Solo aplica para obligaciones mensuales.
+                                </small>
                             </div>
 
                             {{-- Valor y descuento --}}
@@ -2506,8 +3267,11 @@
 
                                     <input
                                         type="text"
+                                        inputmode="numeric"
                                         class="pagos-input pagos-input-money"
-                                        value="$ 120.000"
+                                        wire:model.blur="valorPago"
+                                        placeholder="0"
+                                        @disabled(! $movimientoSeleccionadoId)
                                     >
                                 </div>
 
@@ -2516,8 +3280,11 @@
 
                                     <input
                                         type="text"
+                                        inputmode="numeric"
                                         class="pagos-input pagos-input-money"
-                                        value="$ 0"
+                                        wire:model.blur="descuentoPago"
+                                        placeholder="0"
+                                        @disabled(! $movimientoSeleccionadoId)
                                     >
                                 </div>
 
@@ -2532,12 +3299,18 @@
                                         <span class="pagos-required">*</span>
                                     </label>
 
-                                    <select class="pagos-select">
-                                        <option value="efectivo">Efectivo</option>
-                                        <option value="transferencia">Transferencia</option>
-                                        <option value="consignacion">Consignación</option>
-                                        <option value="nequi">Nequi</option>
-                                        <option value="daviplata">Daviplata</option>
+                                    <select
+                                        class="pagos-select"
+                                        wire:model.live="formaPagoId"
+                                        @disabled(empty($formasPago))
+                                    >
+                                        <option value="">Seleccione</option>
+
+                                        @foreach($formasPago as $forma)
+                                            <option value="{{ $forma['id'] }}">
+                                                {{ $forma['nombre'] }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
 
@@ -2547,7 +3320,9 @@
                                     <input
                                         type="text"
                                         class="pagos-input"
+                                        wire:model="referenciaPago"
                                         placeholder="-"
+                                        @disabled(! ($this->formaPagoSeleccionada['requiere_referencia'] ?? false))
                                     >
                                 </div>
 
@@ -2557,6 +3332,8 @@
                                     <input
                                         type="date"
                                         class="pagos-input"
+                                        wire:model="fechaConsignacion"
+                                        @disabled(! ($this->formaPagoSeleccionada['requiere_fecha_consignacion'] ?? false))
                                     >
                                 </div>
 
@@ -2578,12 +3355,12 @@
 
                                     <div class="pagos-received-by-line">
                                         <span>Recibido por:</span>
-                                        <strong>Ana López</strong>
+                                        <strong>{{ auth()->user()?->name ?? 'Usuario' }}</strong>
                                         
                                     </div>
 
                                     <span class="pagos-received-date">
-                                        14/07/2026 · 02:33 p. m.
+                                        {{ now()->format('d/m/Y · h:i a') }}
                                     </span>
 
                                 </div>
@@ -2598,6 +3375,7 @@
                                     <input
                                         type="text"
                                         class="pagos-input"
+                                        wire:model.live.debounce.300ms="recibiDe"
                                         placeholder="Ej.: María Pérez (Madre)"
                                     >
                                 </div>
@@ -2611,6 +3389,7 @@
                                 <input
                                     type="text"
                                     class="pagos-input"
+                                    wire:model.live.debounce.300ms="detallePago"
                                     placeholder="Ej.: Abono, acuerdo verbal, anticipo, etc."
                                 >
                             </div>
@@ -2620,24 +3399,62 @@
 
                                 <div class="pagos-transaction-summary-row">
                                     <span>Valor a pagar</span>
-                                    <strong>$ 120.000</strong>
+
+                                    <strong>
+                                        $ {{ number_format(
+                                            $this->valorPagoNumerico,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </strong>
                                 </div>
 
                                 <div class="pagos-transaction-summary-row">
                                     <span>Descuento</span>
-                                    <strong>$ 0</strong>
+
+                                    <strong>
+                                        $ {{ number_format(
+                                            $this->descuentoPagoNumerico,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </strong>
                                 </div>
 
                                 <div class="pagos-transaction-summary-row pagos-transaction-total">
                                     <span>Total recibido</span>
-                                    <strong>$ 120.000</strong>
+
+                                    <strong>
+                                        $ {{ number_format(
+                                            $this->totalTransaccion,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </strong>
                                 </div>
 
                             </div>
 
-                            <button type="button" class="pagos-btn-add-queue">
+                            <button
+                                type="button"
+                                class="pagos-btn-add-queue"
+                                wire:click="adicionarPagoCola"
+                                wire:loading.attr="disabled"
+                                wire:target="adicionarPagoCola"
+                                @disabled(! $this->puedeAdicionarPago)
+                            >
                                 <x-heroicon-o-shopping-cart />
-                                Adicionar este pago a la cola
+
+                                <span wire:loading.remove wire:target="adicionarPagoCola">
+                                    Adicionar este pago a la cola
+                                </span>
+
+                                <span wire:loading wire:target="adicionarPagoCola">
+                                    Adicionando...
+                                </span>
                             </button>
 
                         </div>
@@ -2660,16 +3477,27 @@
                     <div class="pagos-queue-heading">
                         <h2 class="pagos-panel-title">
                             2. Cola de pagos
-                            
                         </h2>
 
                         <span class="pagos-receipt-reference">
                             <span>Recibo N.º</span>
-                            <strong>1258</strong>
+
+                            <strong>
+                                @if($ultimoNumeroRecibo)
+                                    {{ $ultimoNumeroRecibo }}
+                                @else
+                                    Se asigna al confirmar
+                                @endif
+                            </strong>
                         </span>
                     </div>
 
-                    <button type="button" class="pagos-clear-button">
+                    <button
+                        type="button"
+                        class="pagos-clear-button"
+                        wire:click="limpiarColaPagos"
+                        @disabled(empty($colaPagos))
+                    >
                         <x-heroicon-o-trash />
                         Limpiar cola
                     </button>
@@ -2680,10 +3508,8 @@
                     <table class="pagos-table">
                         <thead>
                             <tr>
-                                
                                 <th>Concepto</th>
                                 <th>Mes</th>
-                                
                                 <th>Desc.</th>
                                 <th>Valor paga</th>
                                 <th>Forma de pago</th>
@@ -2692,115 +3518,193 @@
                         </thead>
 
                         <tbody>
-                            <tr>
-                                
-                                <td>Pensión</td>
-                                <td>Febrero</td>
-                                
-                                <td>$ 0</td>
-                                <td>$ 120.000</td>
-                                <td>Efectivo (1)</td>
-                                <td>
-                                    <div class="pagos-table-actions">
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-edit"
-                                        >
-                                            <x-heroicon-o-pencil-square />
-                                        </button>
+                            @forelse($colaPagos as $fila)
+                                <tr wire:key="pago-cola-{{ $fila['fila_id'] }}">
+                                    <td>
+                                        {{ $fila['concepto'] }}
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-danger"
-                                        >
-                                            <x-heroicon-o-trash />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                    <td>
+                                        {{ $fila['mes'] }}
+                                    </td>
 
-                            <tr>
-                                
-                                <td>Guías</td>
-                                <td>Anual</td>
-                                
-                                <td>$ 0</td>
-                                <td>$ 80.000</td>
-                                <td>Nequi (1)</td>
-                                <td>
-                                    <div class="pagos-table-actions">
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-edit"
-                                        >
-                                            <x-heroicon-o-pencil-square />
-                                        </button>
+                                    <td>
+                                        $ {{ number_format(
+                                            $fila['descuento'] ?? 0,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-danger"
-                                        >
-                                            <x-heroicon-o-trash />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                    <td>
+                                        $ {{ number_format(
+                                            $fila['valor_recibido'] ?? 0,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
 
-                            <tr>
-                               
-                                <td>Salida pedagógica</td>
-                                <td>Junio</td>
-                                
-                                <td>$ 0</td>
-                                <td>$ 100.000</td>
-                                <td>Transferencia (1)</td>
-                                <td>
-                                    <div class="pagos-table-actions">
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-edit"
-                                        >
-                                            <x-heroicon-o-pencil-square />
-                                        </button>
+                                        @php
+                                            $pendienteEnCola = $this->pendienteObligacionEnCola(
+                                                (int) $fila['movimiento_id']
+                                            );
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-danger"
-                                        >
-                                            <x-heroicon-o-trash />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                                            $esUltimaFila = $this->esUltimaFilaDeObligacion(
+                                                (int) $fila['fila_id'],
+                                                (int) $fila['movimiento_id']
+                                            );
+                                        @endphp
+
+                                        @if($esUltimaFila && $pendienteEnCola > 0)
+                                            <div style="
+                                                margin-top:3px;
+                                                font-size:10px;
+                                                color:#b45309;
+                                                font-weight:700;
+                                            ">
+                                                Pendiente:
+                                                $ {{ number_format(
+                                                    $pendienteEnCola,
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+                                            </div>
+                                        @endif
+
+                                        @if(($fila['saldo_favor_generado'] ?? 0) > 0)
+                                            <div style="
+                                                margin-top:3px;
+                                                font-size:10px;
+                                                color:#15803d;
+                                                font-weight:700;
+                                            ">
+                                                Saldo a favor:
+                                                $ {{ number_format(
+                                                    $fila['saldo_favor_generado'],
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        {{ $fila['forma_pago'] }}
+                                    </td>
+
+                                    <td>
+                                        <div class="pagos-table-actions">
+                                            <button
+                                                type="button"
+                                                class="pagos-icon-button pagos-icon-button-danger"
+                                                wire:click="eliminarPagoCola({{ $fila['fila_id'] }})"
+                                                title="Eliminar de la cola"
+                                            >
+                                                <x-heroicon-o-trash />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td
+                                        colspan="6"
+                                        style="
+                                            height:150px;
+                                            text-align:center;
+                                            color:#94a3b8;
+                                        "
+                                    >
+                                        No hay pagos pendientes por confirmar.
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
 
                 </div>
 
                 <div class="pagos-queue-summary">
+
                     <div class="pagos-queue-summary-row">
-                        <span>Subtotal</span>
-                        <strong>$ 300.000</strong>
+                        <span>Subtotal recibido</span>
+
+                        <strong>
+                            $ {{ number_format(
+                                $this->subtotalCola,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+                        </strong>
                     </div>
 
                     <div class="pagos-queue-summary-row">
                         <span>Descuentos</span>
-                        <strong>$ 0</strong>
+
+                        <strong>
+                            $ {{ number_format(
+                                $this->descuentosCola,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+                        </strong>
                     </div>
+
+                    @if($this->saldoFavorGeneradoCola > 0)
+                        <div class="pagos-queue-summary-row">
+                            <span>Saldo a favor generado</span>
+
+                            <strong class="pagos-text-green">
+                                $ {{ number_format(
+                                    $this->saldoFavorGeneradoCola,
+                                    0,
+                                    ',',
+                                    '.'
+                                ) }}
+                            </strong>
+                        </div>
+                    @endif
 
                     <div class="pagos-queue-total">
                         <span>Total a recibir</span>
-                        <strong>$ 300.000</strong>
+
+                        <strong>
+                            $ {{ number_format(
+                                $this->subtotalCola,
+                                0,
+                                ',',
+                                '.'
+                            ) }}
+                        </strong>
                     </div>
 
-                    <button type="button" class="pagos-confirm-button">
+                    <button
+                        type="button"
+                        class="pagos-confirm-button"
+                        wire:click="confirmarPagos"
+                        wire:loading.attr="disabled"
+                        wire:target="confirmarPagos"
+                        @disabled(! $this->puedeConfirmarCola)
+                    >
                         <x-heroicon-o-check />
-                        Confirmar y registrar pagos
+
+                        <span wire:loading.remove wire:target="confirmarPagos">
+                            Confirmar y registrar pagos
+                        </span>
+
+                        <span wire:loading wire:target="confirmarPagos">
+                            Registrando pagos...
+                        </span>
                     </button>
+
                 </div>
 
             </section>
-            </div>
 
 
             {{-- =========================================================
@@ -2825,15 +3729,23 @@
                 </div>
 
                 <div class="pagos-tabs">
-                    <button type="button" class="pagos-tab pagos-tab-active">
-                        Obligatorios (5)
+
+                    <button
+                        type="button"
+                        wire:click="cambiarTipoObligacion('obligatorio')"
+                        class="pagos-tab {{ $tipoObligacionActiva === 'obligatorio' ? 'pagos-tab-active' : '' }}"
+                    >
+                        Obligatorios ({{ count($this->obligacionesObligatorias) }})
                     </button>
 
-                    <button type="button" class="pagos-tab">
-                        No obligatorios (3)
+                    <button
+                        type="button"
+                        wire:click="cambiarTipoObligacion('no_obligatorio')"
+                        class="pagos-tab {{ $tipoObligacionActiva === 'no_obligatorio' ? 'pagos-tab-active' : '' }}"
+                    >
+                        No obligatorios ({{ count($this->obligacionesNoObligatorias) }})
                     </button>
 
-                    
                 </div>
 
                 <div class="pagos-obligations-table-wrap">
@@ -2849,45 +3761,76 @@
                         </thead>
 
                         <tbody>
-                            <tr>
-                                <td>Pensión</td>
-                                <td>Febrero</td>
-                                <td>10/02/2026</td>
-                                <td>$ 120.000</td>
-                            </tr>
+                            @forelse($this->obligacionesVisibles as $obligacion)
+                                <tr wire:key="obligacion-{{ $obligacion['id'] }}">
+                                    <td>
+                                        {{ $obligacion['concepto'] }}
+                                    </td>
 
-                            <tr>
-                                <td>Pensión</td>
-                                <td>Marzo</td>
-                                <td>10/03/2026</td>
-                                <td>$ 120.000</td>
-                            </tr>
+                                    <td>
+                                        {{ $obligacion['mes_mostrado'] }}
+                                    </td>
 
-                            <tr>
-                                <td>Pensión</td>
-                                <td>Abril</td>
-                                <td>10/04/2026</td>
-                                <td>$ 130.000</td>
-                            </tr>
+                                    <td>
+                                        {{ $obligacion['fecha_vencimiento_formateada'] }}
+                                    </td>
 
-                            <tr>
-                                <td>Matrícula</td>
-                                <td>Anual</td>
-                                <td>31/01/2026</td>
-                                <td>$ 250.000</td>
-                            </tr>
+                                    <td class="pagos-table-number">
+                                        $ {{ number_format(
+                                            $obligacion['saldo_pendiente'] ?? 0,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
 
-                            <tr>
-                                <td>Guías</td>
-                                <td>Anual</td>
-                                <td>31/03/2026</td>
-                                <td>$ 80.000</td>
-                            </tr>
+                                        @if(($obligacion['valor_aplicado'] ?? 0) > 0)
+                                            <div style="margin-top:3px; font-size:10px; font-weight:500; color:#64748b;">
+                                                Abonado:
+                                                $ {{ number_format(
+                                                    $obligacion['valor_aplicado'],
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td
+                                        colspan="4"
+                                        style="height:120px; text-align:center; color:#94a3b8;"
+                                    >
+                                        @if(empty($estudianteSeleccionado))
+                                            Seleccione un estudiante para consultar sus obligaciones.
+                                        @elseif($tipoObligacionActiva === 'obligatorio')
+                                            El estudiante no tiene obligaciones obligatorias pendientes.
+                                        @else
+                                            El estudiante no tiene conceptos no obligatorios pendientes.
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforelse
 
-                            <tr class="pagos-obligations-total">
-                                <td colspan="3">Total obligatorios</td>
-                                <td>$ 700.000</td>
-                            </tr>
+                            @if(count($this->obligacionesVisibles) > 0)
+                                <tr class="pagos-obligations-total">
+                                    <td colspan="3">
+                                        {{ $tipoObligacionActiva === 'obligatorio'
+                                            ? 'Total obligatorios'
+                                            : 'Total no obligatorios' }}
+                                    </td>
+
+                                    <td>
+                                        $ {{ number_format(
+                                            $this->totalObligacionesVisibles,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
 
@@ -2923,6 +3866,18 @@
                             type="text"
                             class="pagos-input"
                             placeholder="N.º de recibo"
+                            wire:model.live.debounce.400ms="filtroHistorialRecibo"
+                        >
+                    </div>
+
+                    <div class="pagos-field">
+                        <label>Buscar concepto</label>
+
+                        <input
+                            type="text"
+                            class="pagos-input"
+                            placeholder="Ej.: Pensión, matrícula..."
+                            wire:model.live.debounce.400ms="filtroHistorialConcepto"
                         >
                     </div>
 
@@ -2932,6 +3887,7 @@
                         <input
                             type="date"
                             class="pagos-input"
+                            wire:model.live="filtroHistorialDesde"
                         >
                     </div>
 
@@ -2941,13 +3897,17 @@
                         <input
                             type="date"
                             class="pagos-input"
+                            wire:model.live="filtroHistorialHasta"
                         >
                     </div>
 
                     <div class="pagos-field">
                         <label>Estado</label>
 
-                        <select class="pagos-select pagos-history-select">
+                        <select
+                            class="pagos-select pagos-history-select"
+                            wire:model.live="filtroHistorialEstado"
+                        >
                             <option value="">Todos</option>
                             <option value="confirmado">Confirmado</option>
                             <option value="anulado">Anulado</option>
@@ -2976,195 +3936,177 @@
                         </thead>
 
                         <tbody>
+                            @php
+                                $grupoReciboAnterior = null;
+                            @endphp
 
-                            <tr>
-                                <td>14/07/2026 02:33 p. m.</td>
-                                <td>
-                                    <strong class="pagos-history-receipt">
-                                        1258
-                                    </strong>
-                                </td>
-                                <td>Pensión</td>
-                                <td>Febrero</td>
-                                <td>Efectivo</td>
-                                <td>$ 120.000</td>
-                                <td>$ 0</td>
-                                <td>Ana López</td>
-                                <td>
-                                    <span class="pagos-status pagos-status-confirmed">
-                                        Confirmado
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="pagos-table-actions">
+                            @forelse($historialPagos as $fila)
+                                @php
+                                    $esNuevoRecibo =
+                                        $grupoReciboAnterior !== $fila['grupo_recibo'];
+                                @endphp
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-view"
-                                            title="Ver detalle"
-                                        >
-                                            <x-heroicon-o-eye />
-                                        </button>
+                                @if($esNuevoRecibo)
+                                    <tr class="pagos-history-receipt-group">
+                                        <td colspan="10">
+                                            <button
+                                                type="button"
+                                                class="pagos-history-receipt-button"
+                                                wire:click="abrirDetalleRecibo({{ $fila['operacion_pago_id'] }})"
+                                                title="Ver detalle completo del recibo"
+                                            >
+                                                <div class="pagos-history-receipt-group-content">
+                                                    <div>
+                                                        <strong>
+                                                            Recibo N.º {{ $fila['numero_recibo'] }}
+                                                        </strong>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-print"
-                                            title="Imprimir o reimprimir"
-                                        >
-                                            <x-heroicon-o-printer />
-                                        </button>
+                                                        <span>
+                                                            {{ $fila['fecha_pago'] }}
+                                                        </span>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-danger"
-                                            title="Anular recibo"
-                                        >
-                                            <x-heroicon-o-no-symbol />
-                                        </button>
+                                                        <span>
+                                                            Recibido por: {{ $fila['recibido_por'] }}
+                                                        </span>
+                                                    </div>
 
-                                    </div>
-                                </td>
-                            </tr>
+                                                    <div class="pagos-history-receipt-group-right">
+                                                        @if($fila['estado'] === 'confirmado')
+                                                            <span class="pagos-status pagos-status-confirmed">
+                                                                Confirmado
+                                                            </span>
+                                                        @else
+                                                            <span class="pagos-status pagos-status-cancelled">
+                                                                Anulado
+                                                            </span>
+                                                        @endif
 
-                            <tr>
-                                <td>25/06/2026 03:40 p. m.</td>
-                                <td>
-                                    <strong class="pagos-history-receipt">
-                                        1221
-                                    </strong>
-                                </td>
-                                <td>Matrícula</td>
-                                <td>Anual</td>
-                                <td>Transferencia</td>
-                                <td>$ 230.000</td>
-                                <td>$ 20.000</td>
-                                <td>Juan Pérez</td>
-                                <td>
-                                    <span class="pagos-status pagos-status-confirmed">
-                                        Confirmado
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="pagos-table-actions">
+                                                        <x-heroicon-o-chevron-right />
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                        
+                                @endif
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-view"
-                                            title="Ver detalle"
-                                        >
-                                            <x-heroicon-o-eye />
-                                        </button>
+                                <tr
+                                    wire:key="historial-pago-{{ $fila['id'] }}"
+                                    @class([
+                                        'pagos-history-row-cancelled' =>
+                                            $fila['estado'] === 'anulado',
+                                    ])
+                                >
+                                    <td>
+                                        {{-- Fecha visible en el encabezado del recibo --}}
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-print"
-                                            title="Imprimir o reimprimir"
-                                        >
-                                            <x-heroicon-o-printer />
-                                        </button>
+                                    <td>
+                                        {{-- Número visible en el encabezado del recibo --}}
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-danger"
-                                            title="Anular recibo"
-                                        >
-                                            <x-heroicon-o-no-symbol />
-                                        </button>
+                                    <td>
+                                        <div class="pagos-history-concept">
+                                            <span>
+                                                {{ $fila['concepto'] }}
+                                            </span>
 
-                                    </div>
-                                </td>
-                            </tr>
+                                            @if($fila['es_obligatorio'])
+                                                <span class="pagos-concept-badge pagos-concept-badge-required">
+                                                    Obligatorio
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </td>
 
-                            <tr>
-                                <td>18/06/2026 09:20 a. m.</td>
-                                <td>
-                                    <strong class="pagos-history-receipt">
-                                        1198
-                                    </strong>
-                                </td>
-                                <td>Salida pedagógica</td>
-                                <td>Mayo</td>
-                                <td>Nequi</td>
-                                <td>$ 90.000</td>
-                                <td>$ 0</td>
-                                <td>Ana López</td>
-                                <td>
-                                    <span class="pagos-status pagos-status-confirmed">
-                                        Confirmado
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="pagos-table-actions">
+                                    <td>
+                                        {{ $fila['mes'] }}
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-view"
-                                            title="Ver detalle"
-                                        >
-                                            <x-heroicon-o-eye />
-                                        </button>
+                                    <td>
+                                        <div>
+                                            {{ $fila['forma_pago'] }}
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-print"
-                                            title="Imprimir o reimprimir"
-                                        >
-                                            <x-heroicon-o-printer />
-                                        </button>
+                                            @if(filled($fila['numero_referencia']))
+                                                <small class="pagos-history-reference">
+                                                    Ref: {{ $fila['numero_referencia'] }}
+                                                </small>
+                                            @endif
+                                        </div>
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-danger"
-                                            title="Anular recibo"
-                                        >
-                                            <x-heroicon-o-no-symbol />
-                                        </button>
+                                    <td>
+                                        $ {{ number_format(
+                                            $fila['valor_pagado'] ?? 0,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </td>
 
-                                    </div>
-                                </td>
-                            </tr>
+                                    <td>
+                                        $ {{ number_format(
+                                            $fila['descuento'] ?? 0,
+                                            0,
+                                            ',',
+                                            '.'
+                                        ) }}
+                                    </td>
 
-                            <tr class="pagos-history-row-cancelled">
-                                <td>05/06/2026 11:05 a. m.</td>
-                                <td>
-                                    <strong class="pagos-history-receipt">
-                                        1175
-                                    </strong>
-                                </td>
-                                <td>Pensión</td>
-                                <td>Enero</td>
-                                <td>Efectivo</td>
-                                <td>$ 120.000</td>
-                                <td>$ 0</td>
-                                <td>Ana López</td>
-                                <td>
-                                    <span class="pagos-status pagos-status-cancelled">
-                                        Anulado
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="pagos-table-actions">
+                                    <td>
+                                        {{ $fila['recibido_de'] }}
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-view"
-                                            title="Ver detalle"
-                                        >
-                                            <x-heroicon-o-eye />
-                                        </button>
+                                    <td>
+                                        {{-- Estado visible en el encabezado --}}
+                                    </td>
 
-                                        <button
-                                            type="button"
-                                            class="pagos-icon-button pagos-icon-button-print"
-                                            title="Imprimir comprobante"
-                                        >
-                                            <x-heroicon-o-printer />
-                                        </button>
+                                    <td>
+                                        <div class="pagos-table-actions">
+                                            
 
-                                    </div>
-                                </td>
-                            </tr>
+                                            <button
+                                                type="button"
+                                                class="pagos-icon-button pagos-icon-button-print"
+                                                title="Imprimir o reimprimir"
+                                            >
+                                                <x-heroicon-o-printer />
+                                            </button>
 
+                                            @if($fila['estado'] === 'confirmado')
+                                                <button
+                                                    type="button"
+                                                    class="pagos-icon-button pagos-icon-button-danger"
+                                                    title="Anular recibo"
+                                                >
+                                                    <x-heroicon-o-no-symbol />
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+
+                                @php
+                                    $grupoReciboAnterior = $fila['grupo_recibo'];
+                                @endphp
+                            @empty
+                                <tr>
+                                    <td
+                                        colspan="10"
+                                        style="
+                                            height: 155px;
+                                            text-align: center;
+                                            color: #94a3b8;
+                                        "
+                                    >
+                                        @if($student_id)
+                                            No se encontraron pagos para los filtros seleccionados.
+                                        @else
+                                            Seleccione un estudiante para consultar su historial de pagos.
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
 
@@ -3174,17 +4116,41 @@
 
                 <div class="pagos-history-summary-row">
                     <span>Pagos</span>
-                    <strong>$ 4.150.000</strong>
+
+                    <strong>
+                        $ {{ number_format(
+                            $resumenHistorial['pagos'] ?? 0,
+                            0,
+                            ',',
+                            '.'
+                        ) }}
+                    </strong>
                 </div>
 
                 <div class="pagos-history-summary-row">
                     <span>Descuentos</span>
-                    <strong>$ 180.000</strong>
+
+                    <strong>
+                        $ {{ number_format(
+                            $resumenHistorial['descuentos'] ?? 0,
+                            0,
+                            ',',
+                            '.'
+                        ) }}
+                    </strong>
                 </div>
 
                 <div class="pagos-history-summary-total">
                     <span>Total pagado</span>
-                    <strong>$ 3.970.000</strong>
+
+                    <strong>
+                        $ {{ number_format(
+                            $resumenHistorial['total_pagado'] ?? 0,
+                            0,
+                            ',',
+                            '.'
+                        ) }}
+                    </strong>
                 </div>
 
             
@@ -3197,7 +4163,7 @@
         {{-- =========================================================
             7. ACUERDOS DE PAGO
         ========================================================== --}}
-        <section class="pagos-card pagos-panel pagos-info-card">
+        <section class="pagos-card pagos-panel pagos-info-card pagos-agreements-card">
 
             <div class="pagos-panel-header">
                 <h2 class="pagos-panel-title">
@@ -3385,6 +4351,589 @@
         {{-- =========================================================
             8. MODALES
         ========================================================== --}}
+
+        @if($mostrarDetalleRecibo)
+            <div class="pagos-slideover-wrapper">
+
+                <div
+                    class="pagos-slideover-backdrop"
+                    wire:click="cerrarDetalleRecibo"
+                ></div>
+
+                <aside class="pagos-slideover">
+
+                    {{-- ENCABEZADO FIJO --}}
+                    <div class="pagos-slideover-header">
+                        <div>
+                            <span class="pagos-slideover-eyebrow">
+                                Detalle del recibo
+                            </span>
+
+                            <h2>Recibo</h2>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="pagos-slideover-close"
+                            wire:click="cerrarDetalleRecibo"
+                            title="Cerrar"
+                        >
+                            <x-heroicon-o-x-mark />
+                        </button>
+                    </div>
+
+                    {{-- ÚNICA ZONA CON SCROLL --}}
+                    <div class="pagos-slideover-body">
+
+                        @if(! empty($detalleRecibo))
+                            <div class="pagos-receipt-detail">
+
+                                {{-- RESUMEN GENERAL --}}
+                                <section class="pagos-receipt-detail-summary">
+                                    <div>
+                                        <span>Recibo N.º</span>
+                                        <strong>
+                                            {{ $detalleRecibo['numero_recibo'] ?? '—' }}
+                                        </strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Fecha</span>
+                                        <strong>
+                                            {{ $detalleRecibo['fecha'] ?? '—' }}
+                                        </strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Estado</span>
+
+                                        @if(($detalleRecibo['estado'] ?? '') === 'confirmada')
+                                            <span class="pagos-status pagos-status-confirmed">
+                                                Confirmado
+                                            </span>
+                                        @else
+                                            <span class="pagos-status pagos-status-cancelled">
+                                                {{ $detalleRecibo['estado_texto'] ?? 'Anulado' }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </section>
+
+                                {{-- ESTUDIANTE --}}
+                                <section class="pagos-receipt-detail-section">
+                                    <h3>Estudiante</h3>
+
+                                    <div class="pagos-receipt-detail-grid">
+                                        <div>
+                                            <span>Nombre</span>
+                                            <strong>
+                                                {{ $detalleRecibo['estudiante']['nombre'] ?? '—' }}
+                                            </strong>
+                                        </div>
+
+                                        <div>
+                                            <span>Código</span>
+                                            <strong>
+                                                {{ $detalleRecibo['estudiante']['codigo'] ?? '—' }}
+                                            </strong>
+                                        </div>
+
+                                        <div>
+                                            <span>Documento</span>
+                                            <strong>
+                                                {{ $detalleRecibo['estudiante']['documento'] ?? '—' }}
+                                            </strong>
+                                        </div>
+
+                                        <div>
+                                            <span>Curso</span>
+                                            <strong>
+                                                {{ $detalleRecibo['estudiante']['curso'] ?? '—' }}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {{-- INFORMACIÓN DEL RECAUDO --}}
+                                <section class="pagos-receipt-detail-section">
+                                    <h3>Información del recaudo</h3>
+
+                                    <div class="pagos-receipt-detail-grid">
+                                        <div>
+                                            <span>Recibido de</span>
+                                            <strong>
+                                                {{ $detalleRecibo['recibido_de'] ?? '—' }}
+                                            </strong>
+                                        </div>
+
+                                        <div>
+                                            <span>Registrado por</span>
+                                            <strong>
+                                                {{ $detalleRecibo['registrado_por'] ?? '—' }}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </section>
+
+
+                                
+
+
+
+                                {{-- DETALLE DEL PAGO --}}
+                                <section class="pagos-receipt-detail-section">
+                                    <h3>Detalle del pago</h3>
+
+                                    <div class="pagos-receipt-detail-lines">
+                                        @foreach($detalleRecibo['lineas'] ?? [] as $linea)
+                                            <article class="pagos-receipt-detail-line">
+
+                                                <div class="pagos-receipt-detail-line-heading">
+                                                    <div>
+                                                        <strong>
+                                                            {{ $linea['concepto'] }}
+                                                        </strong>
+
+                                                        @if(filled($linea['mes']))
+                                                            <span>
+                                                                {{ $linea['mes'] }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+
+                                                    @if($linea['es_obligatorio'])
+                                                        <span class="pagos-concept-badge pagos-concept-badge-required">
+                                                            Obligatorio
+                                                        </span>
+                                                    @endif
+                                                </div>
+
+                                                <div class="pagos-receipt-detail-line-grid">
+                                                    <div>
+                                                        <span>Forma de pago</span>
+
+                                                        <strong>
+                                                            {{ $linea['forma_pago'] }}
+                                                        </strong>
+
+                                                        @if(filled($linea['numero_referencia']))
+                                                            <small>
+                                                                Ref. {{ $linea['numero_referencia'] }}
+                                                            </small>
+                                                        @endif
+
+                                                        @if(filled($linea['fecha_consignacion']))
+                                                            <small>
+                                                                Fecha: {{ $linea['fecha_consignacion'] }}
+                                                            </small>
+                                                        @endif
+                                                    </div>
+
+                                                    <div>
+                                                        <span>Valor recibido</span>
+                                                        <strong>
+                                                            $ {{ number_format(
+                                                                $linea['valor_recibido'],
+                                                                0,
+                                                                ',',
+                                                                '.'
+                                                            ) }}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div>
+                                                        <span>Descuento</span>
+                                                        <strong>
+                                                            $ {{ number_format(
+                                                                $linea['descuento'],
+                                                                0,
+                                                                ',',
+                                                                '.'
+                                                            ) }}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div>
+                                                        <span>Valor aplicado</span>
+                                                        <strong>
+                                                            $ {{ number_format(
+                                                                $linea['valor_aplicado'],
+                                                                0,
+                                                                ',',
+                                                                '.'
+                                                            ) }}
+                                                        </strong>
+                                                    </div>
+
+                                                    @if($linea['mostrar_saldo_pendiente'] ?? false)
+                                                        <div>
+                                                            <span>Saldo pendiente</span>
+                                                            <strong class="pagos-text-warning">
+                                                                $ {{ number_format(
+                                                                    $linea['saldo_posterior'],
+                                                                    0,
+                                                                    ',',
+                                                                    '.'
+                                                                ) }}
+                                                            </strong>
+                                                        </div>
+                                                    @endif
+
+                                                    @if(($linea['saldo_favor_generado'] ?? 0) > 0)
+                                                        <div>
+                                                            <span>Saldo a favor</span>
+                                                            <strong class="pagos-text-green">
+                                                                $ {{ number_format(
+                                                                    $linea['saldo_favor_generado'],
+                                                                    0,
+                                                                    ',',
+                                                                    '.'
+                                                                ) }}
+                                                            </strong>
+                                                        </div>
+                                                    @endif
+                                                </div>
+
+                                                @if(filled($linea['detalle']))
+                                                    <div class="pagos-receipt-detail-note">
+                                                        {{ $linea['detalle'] }}
+                                                    </div>
+                                                @endif
+
+                                            </article>
+                                        @endforeach
+                                    </div>
+                                </section>
+
+                                {{-- TOTALES --}}
+                                <section class="pagos-receipt-detail-totals">
+                                    <div>
+                                        <span>Pagos recibidos</span>
+                                        <strong>
+                                            $ {{ number_format(
+                                                $detalleRecibo['total_recibido'] ?? 0,
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}
+                                        </strong>
+                                    </div>
+
+                                    <div>
+                                        <span>Descuentos</span>
+                                        <strong>
+                                            $ {{ number_format(
+                                                $detalleRecibo['total_descuentos'] ?? 0,
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}
+                                        </strong>
+                                    </div>
+
+                                    @if(($detalleRecibo['saldo_favor_generado'] ?? 0) > 0)
+                                        <div>
+                                            <span>Saldo a favor generado</span>
+                                            <strong class="pagos-text-green">
+                                                $ {{ number_format(
+                                                    $detalleRecibo['saldo_favor_generado'],
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+                                            </strong>
+                                        </div>
+                                    @endif
+
+                                    <div class="pagos-receipt-detail-total">
+                                        <span>Total recibido</span>
+                                        <strong>
+                                            $ {{ number_format(
+                                                $detalleRecibo['total_recibido'] ?? 0,
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}
+                                        </strong>
+                                    </div>
+                                </section>
+
+                                <section class="pagos-receipt-detail-section">
+                                    <h3>Historial de impresión</h3>
+
+                                    <div class="pagos-print-history">
+
+                                        @if(
+                                            $detalleRecibo['impresion']['ha_sido_impreso']
+                                            ?? false
+                                        )
+                                            <div class="pagos-print-history-item">
+                                                <div>
+                                                    <span>Impresión original</span>
+                                                    <strong>
+                                                        Recibo N.º
+                                                        {{ $detalleRecibo['numero_recibo'] }}
+                                                    </strong>
+                                                </div>
+
+                                                <div>
+                                                    <span>Fecha y hora</span>
+                                                    <strong>
+                                                        {{
+                                                            $detalleRecibo['impresion']['original']['fecha']
+                                                            ?? '—'
+                                                        }}
+                                                    </strong>
+                                                </div>
+
+                                                <div>
+                                                    <span>Usuario</span>
+                                                    <strong>
+                                                        {{
+                                                            $detalleRecibo['impresion']['original']['usuario']
+                                                            ?? '—'
+                                                        }}
+                                                    </strong>
+                                                </div>
+                                            </div>
+
+                                            @if(
+                                                ($detalleRecibo['impresion']['cantidad_reimpresiones']
+                                                    ?? 0) > 0
+                                            )
+                                                @php
+                                                    $ultimaReimpresion =
+                                                        $detalleRecibo['impresion']['ultima_reimpresion'];
+
+                                                    $identificadorUltima =
+                                                        ($detalleRecibo['numero_recibo'] ?? '')
+                                                        . '-R'
+                                                        . ($ultimaReimpresion['numero_reimpresion'] ?? '');
+                                                @endphp
+
+                                                <div class="pagos-print-history-item">
+                                                    <div>
+                                                        <span>Última reimpresión</span>
+                                                        <strong>
+                                                            {{ $identificadorUltima }}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div>
+                                                        <span>Fecha y hora</span>
+                                                        <strong>
+                                                            {{ $ultimaReimpresion['fecha'] ?? '—' }}
+                                                        </strong>
+                                                    </div>
+
+                                                    <div>
+                                                        <span>Usuario</span>
+                                                        <strong>
+                                                            {{ $ultimaReimpresion['usuario'] ?? '—' }}
+                                                        </strong>
+                                                    </div>
+
+                                                    @if(filled($ultimaReimpresion['motivo'] ?? null))
+                                                        <div class="pagos-print-history-reason">
+                                                            <span>Motivo</span>
+                                                            <strong>
+                                                                {{ $ultimaReimpresion['motivo'] }}
+                                                            </strong>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+
+                                            <div class="pagos-print-history-total">
+                                                <span>Total de reimpresiones</span>
+
+                                                <strong>
+                                                    {{
+                                                        $detalleRecibo['impresion']['cantidad_reimpresiones']
+                                                        ?? 0
+                                                    }}
+                                                </strong>
+                                            </div>
+                                        @else
+                                            <div class="pagos-print-history-empty">
+                                                Este recibo todavía no tiene una impresión original registrada.
+                                            </div>
+                                        @endif
+
+                                    </div>
+                                </section>
+
+                            </div>
+                        @else
+                            <div class="pagos-slideover-loading">
+                                No se encontró información del recibo.
+                            </div>
+                        @endif
+
+                    </div>
+                    {{-- FIN pagos-slideover-body --}}
+
+                    {{-- PIE FIJO: debe estar fuera del body --}}
+                    <div class="pagos-slideover-footer">
+
+                        <button
+                            type="button"
+                            class="
+                                pagos-slideover-footer-button
+                                pagos-slideover-footer-button-secondary
+                            "
+                            wire:click="cerrarDetalleRecibo"
+                        >
+                            Cerrar
+                        </button>
+
+                        @if(
+                            ! ($detalleRecibo['impresion']['ha_sido_impreso'] ?? false)
+                        )
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="imprimirRecibo"
+                                wire:loading.attr="disabled"
+                                wire:target="imprimirRecibo"
+                            >
+                                <x-heroicon-o-printer />
+
+                                <span wire:loading.remove wire:target="imprimirRecibo">
+                                    Imprimir recibo
+                                </span>
+
+                                <span wire:loading wire:target="imprimirRecibo">
+                                    Registrando...
+                                </span>
+                            </button>
+                        @else
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="abrirModalReimpresion"
+                            >
+                                <x-heroicon-o-printer />
+                                Reimprimir recibo
+                            </button>
+                        @endif
+
+                    </div>
+
+                </aside>
+            </div>
+        @endif
+
+
+
+
+
+
+
+
+
+
+
+        @if($mostrarModalReimpresion)
+            <div class="pagos-modal-backdrop">
+
+                <div
+                    class="pagos-modal-card"
+                    wire:click.stop
+                >
+                    <div class="pagos-modal-header">
+                        <div>
+                            <span>Reimpresión</span>
+
+                            <h3>
+                                Recibo N.º
+                                {{ $detalleRecibo['numero_recibo'] ?? '—' }}
+                            </h3>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="pagos-slideover-close"
+                            wire:click="cerrarModalReimpresion"
+                        >
+                            <x-heroicon-o-x-mark />
+                        </button>
+                    </div>
+
+                    <div class="pagos-modal-body">
+                        <div class="pagos-field">
+                            <label>Motivo de la reimpresión (opcional)</label>
+
+                            <textarea
+                                class="pagos-textarea"
+                                rows="4"
+                                wire:model="motivoReimpresion"
+                                placeholder="Ej.: Recibo extraviado por el acudiente."
+                            ></textarea>
+                        </div>
+
+                        <div class="pagos-reprint-preview">
+                            La copia se identificará como:
+
+                            <strong>
+                                {{ $detalleRecibo['numero_recibo'] ?? '' }}-R{{
+                                    ($detalleRecibo['impresion']['cantidad_reimpresiones']
+                                        ?? 0) + 1
+                                }}
+                            </strong>
+                        </div>
+                    </div>
+
+                    <div class="pagos-modal-footer">
+                        <button
+                            type="button"
+                            class="
+                                pagos-slideover-footer-button
+                                pagos-slideover-footer-button-secondary
+                            "
+                            wire:click="cerrarModalReimpresion"
+                        >
+                            Cancelar
+                        </button>
+
+                        <button
+                            type="button"
+                            class="
+                                pagos-slideover-footer-button
+                                pagos-slideover-footer-button-primary
+                            "
+                            wire:click="reimprimirRecibo"
+                            wire:loading.attr="disabled"
+                            wire:target="reimprimirRecibo"
+                        >
+                            <x-heroicon-o-printer />
+
+                            <span
+                                wire:loading.remove
+                                wire:target="reimprimirRecibo"
+                            >
+                                Generar reimpresión
+                            </span>
+
+                            <span
+                                wire:loading
+                                wire:target="reimprimirRecibo"
+                            >
+                                Registrando...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        @endif
+
 
     </div>
 

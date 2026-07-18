@@ -11,6 +11,7 @@ use App\Models\CostoMoraEstudiante;
 
 
 use App\Services\Financiero\ResumenCuentaEstudianteService;
+use App\Services\Financiero\Pagos\SincronizacionCarteraEstudianteService;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -140,7 +141,6 @@ class CostosEstudianteController extends Controller
             + (float) $data['costos_academicos']
             + (float) $data['deudas']
             + (float) $data['otras_deudas']
-            + (float) $totalOtrosCostos
             - (float) $data['abonos'];
 
         $ficha = FichaCostoEstudiante::updateOrCreate(
@@ -165,6 +165,20 @@ class CostosEstudianteController extends Controller
             ]
         );
 
+        $sincronizador = app(SincronizacionCarteraEstudianteService::class);
+
+        $sincronizador->sincronizarConceptoPorDescripcion(
+            student: $student,
+            descripcionBuscada: 'MATRICULA',
+            nuevoValor: (float) $data['matricula'],
+        );
+
+        $sincronizador->sincronizarConceptoPorDescripcion(
+            student: $student,
+            descripcionBuscada: 'COSTOS ACADEMICOS',
+            nuevoValor: (float) $data['costos_academicos'],
+        );
+
         if ($ficha && $request->filled('pensiones')) {
             foreach ($request->pensiones as $mesNumero => $valor) {
                 $valorLimpio = preg_replace('/\D/', '', $valor ?? '0');
@@ -179,6 +193,11 @@ class CostosEstudianteController extends Controller
                         'valor_personalizado' => $valorDecimal,
                         'modificado_manual' => (float) $valorDecimal != (float) $pension->valor_base,
                     ]);
+                    $sincronizador->sincronizarPension(
+                        student: $student,
+                        mesNumero: (int) $mesNumero,
+                        nuevoValor: (float) $valorDecimal,
+                    );
                 }
             }
         }
@@ -196,6 +215,12 @@ class CostosEstudianteController extends Controller
                         'valor_personalizado' => $valorDecimal,
                         'modificado_manual' => (float) $valorDecimal != (float) $otroCosto->valor_base,
                     ]);
+
+                    $sincronizador->sincronizarConcepto(
+                        student: $student,
+                        conceptoCobroId: (int) $otroCosto->concepto_cobro_id,
+                        nuevoValor: (float) $valorDecimal,
+                    );
                 }
             }
         }
