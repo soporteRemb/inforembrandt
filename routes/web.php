@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StudentPdfController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CostosEstudianteController;
+use App\Http\Controllers\ReciboPdfController;
 
 Route::redirect('/', '/admin/login');
 
@@ -39,5 +40,15 @@ Route::post(
     '/admin/estudiantes/{student}/costos/asignar',
     [CostosEstudianteController::class, 'asignarCostos']
 )->name('costos.estudiante.asignar');
+
+Route::post(
+    '/pagos/recibos/{operacionPagoId}/original',
+    [ReciboPdfController::class, 'original']
+)->name('pagos.recibos.original');
+
+Route::post(
+    '/pagos/recibos/{operacionPagoId}/reimpresion',
+    [ReciboPdfController::class, 'reimpresion']
+)->name('pagos.recibos.reimpresion');
 
 require __DIR__.'/auth.php';

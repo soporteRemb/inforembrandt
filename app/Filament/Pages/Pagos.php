@@ -9,16 +9,31 @@ use App\Services\Financiero\Pagos\RegistrarPagoService;
 use App\Services\Financiero\Pagos\HistorialPagosService;
 use App\Services\Financiero\Pagos\DetalleReciboService;
 use App\Services\Financiero\Pagos\ImpresionReciboService;
+use App\Services\Financiero\Pagos\AnularOperacionPagoService;
+use App\Services\Financiero\Pagos\AcuerdosPagoService;
+use App\Services\Financiero\Pagos\CrearAcuerdoPagoService;
+use App\Services\Financiero\Pagos\ActualizarEstadoAcuerdoPagoService;
+use App\Services\Financiero\Pagos\ActualizarAcuerdoPagoService;
+
+use App\Services\Financiero\Pagos\Pdf\ReciboPdfService;
 
 use Filament\Pages\Page;
+
 use Filament\Notifications\Notification;
 
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
+
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 use Throwable;
 
+
 class Pagos extends Page
 {
+    use WithFileUploads;
+
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $navigationGroup = 'Financiero';
@@ -127,6 +142,56 @@ class Pagos extends Page
     public bool $mostrarModalReimpresion = false;
 
     public string $motivoReimpresion = '';
+
+    public bool $mostrarModalAnulacion = false;
+
+    public ?int $operacionAnularId = null;
+
+    public string $motivoAnulacion = '';
+
+    public array $acuerdosPago = [];
+
+
+    public bool $mostrarModalAcuerdoPago = false;
+
+    public string $acuerdoPersona = '';
+
+    public string $acuerdoParentesco = '';
+
+    public ?string $acuerdoFechaCompromiso = null;
+
+    
+
+    public string $acuerdoTexto = '';
+
+    public array $acuerdoEvidencias = [];
+
+    public array $acuerdoEvidenciasNuevas = [];
+
+    public ?string $mensajeEvidencias = null;
+
+    public string $modoModalAcuerdoPago = 'crear';
+
+    public ?int $acuerdoPagoSeleccionadoId = null;
+
+    public array $acuerdoEvidenciasGuardadas = [];
+
+    public string $acuerdoEstado = 'vigente';
+
+    public ?string $acuerdoEstadoModificadoPor = null;
+
+    public ?string $acuerdoEstadoModificadoEn = null;
+
+    public string $filtroAcuerdoTexto = '';
+
+    public string $filtroAcuerdoEstado = '';
+
+    public ?string $filtroAcuerdoDesde = null;
+
+    public ?string $filtroAcuerdoHasta = null;
+
+    public array $acuerdosPagoOriginales = [];
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -324,6 +389,10 @@ class Pagos extends Page
         $this->cargarHistorialPagos(
             app(HistorialPagosService::class)
         );
+
+        $this->cargarAcuerdosPago(
+            app(AcuerdosPagoService::class)
+        );
     }
 
 
@@ -490,6 +559,13 @@ class Pagos extends Page
         $this->filtroHistorialDesde = null;
         $this->filtroHistorialHasta = null;
         $this->filtroHistorialEstado = '';
+        $this->acuerdosPago = [];
+        $this->acuerdosPagoOriginales = [];
+
+        $this->filtroAcuerdoTexto = '';
+        $this->filtroAcuerdoEstado = '';
+        $this->filtroAcuerdoDesde = null;
+        $this->filtroAcuerdoHasta = null;
     }
 
     public function getSubtotalColaProperty(): float
@@ -1053,7 +1129,7 @@ class Pagos extends Page
 
 
     public function imprimirRecibo(
-        ImpresionReciboService $impresionReciboService,
+        ReciboPdfService $reciboPdfService,
         DetalleReciboService $detalleReciboService,
     ): void {
         if (
@@ -1062,6 +1138,11 @@ class Pagos extends Page
             || ! $this->sede_id
             || ! $this->periodo_lectivo_id
         ) {
+            Notification::make()
+                ->title('No se encontró el recibo.')
+                ->warning()
+                ->send();
+
             return;
         }
 
@@ -1077,7 +1158,12 @@ class Pagos extends Page
         }
 
         try {
-            $impresionReciboService->registrarOriginal(
+            /*
+            |--------------------------------------------------------------------------
+            | Generar PDF y registrar impresión original
+            |--------------------------------------------------------------------------
+            */
+            $resultado = $reciboPdfService->generarOriginal(
                 operacionPagoId: (int) $this->operacionDetalleReciboId,
                 studentId: (int) $this->student_id,
                 sedeId: (int) $this->sede_id,
@@ -1085,6 +1171,16 @@ class Pagos extends Page
                 generadoPor: (int) $usuarioId,
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Recargar el detalle
+            |--------------------------------------------------------------------------
+            | Esto actualiza:
+            | - historial de impresión;
+            | - usuario;
+            | - fecha y hora;
+            | - botón Imprimir → Reimprimir.
+            */
             $this->detalleRecibo = $detalleReciboService->consultar(
                 operacionPagoId: (int) $this->operacionDetalleReciboId,
                 studentId: (int) $this->student_id,
@@ -1092,14 +1188,24 @@ class Pagos extends Page
                 periodoLectivoId: (int) $this->periodo_lectivo_id,
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Abrir PDF en una pestaña nueva
+            |--------------------------------------------------------------------------
+            */
+            $this->dispatch(
+                'abrir-pdf-recibo',
+                url: $resultado['url'],
+            );
+
             Notification::make()
-                ->title('Impresión original registrada.')
+                ->title('Recibo generado correctamente.')
+                ->body(
+                    'Impresión original del recibo N.º '
+                    . $resultado['identificador']
+                )
                 ->success()
                 ->send();
-
-            /*
-            * Más adelante aquí se abrirá el PDF real.
-            */
         } catch (ValidationException $exception) {
             $mensaje = collect($exception->errors())
                 ->flatten()
@@ -1107,14 +1213,21 @@ class Pagos extends Page
 
             Notification::make()
                 ->title('No fue posible imprimir el recibo.')
-                ->body($mensaje ?: 'Revise la información del recibo.')
+                ->body(
+                    $mensaje
+                        ?: 'Revise la información del recibo.'
+                )
                 ->warning()
                 ->send();
         } catch (Throwable $exception) {
             report($exception);
 
             Notification::make()
-                ->title('Ocurrió un error al imprimir el recibo.')
+                ->title('Ocurrió un error al generar el recibo.')
+                ->body(
+                    'No se registró la impresión. '
+                    . 'Revise el registro del sistema.'
+                )
                 ->danger()
                 ->send();
         }
@@ -1133,7 +1246,7 @@ class Pagos extends Page
     }
 
     public function reimprimirRecibo(
-        ImpresionReciboService $impresionReciboService,
+        ReciboPdfService $reciboPdfService,
         DetalleReciboService $detalleReciboService,
     ): void {
         if (
@@ -1142,6 +1255,11 @@ class Pagos extends Page
             || ! $this->sede_id
             || ! $this->periodo_lectivo_id
         ) {
+            Notification::make()
+                ->title('No se encontró el recibo.')
+                ->warning()
+                ->send();
+
             return;
         }
 
@@ -1157,7 +1275,12 @@ class Pagos extends Page
         }
 
         try {
-            $impresion = $impresionReciboService->registrarReimpresion(
+            /*
+            |--------------------------------------------------------------------------
+            | Generar PDF de reimpresión y registrar R#
+            |--------------------------------------------------------------------------
+            */
+            $resultado = $reciboPdfService->generarReimpresion(
                 operacionPagoId: (int) $this->operacionDetalleReciboId,
                 studentId: (int) $this->student_id,
                 sedeId: (int) $this->sede_id,
@@ -1166,15 +1289,11 @@ class Pagos extends Page
                 motivo: $this->motivoReimpresion,
             );
 
-            $numeroRecibo = (int) (
-                $this->detalleRecibo['numero_recibo'] ?? 0
-            );
-
-            $identificador = $impresionReciboService->identificadorVisual(
-                numeroRecibo: $numeroRecibo,
-                impresion: $impresion,
-            );
-
+            /*
+            |--------------------------------------------------------------------------
+            | Recargar detalle e historial
+            |--------------------------------------------------------------------------
+            */
             $this->detalleRecibo = $detalleReciboService->consultar(
                 operacionPagoId: (int) $this->operacionDetalleReciboId,
                 studentId: (int) $this->student_id,
@@ -1182,17 +1301,31 @@ class Pagos extends Page
                 periodoLectivoId: (int) $this->periodo_lectivo_id,
             );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Cerrar modal
+            |--------------------------------------------------------------------------
+            */
             $this->cerrarModalReimpresion();
 
+            /*
+            |--------------------------------------------------------------------------
+            | Abrir PDF generado
+            |--------------------------------------------------------------------------
+            */
+            $this->dispatch(
+                'abrir-pdf-recibo',
+                url: $resultado['url'],
+            );
+
             Notification::make()
-                ->title('Reimpresión registrada.')
-                ->body('Documento ' . $identificador)
+                ->title('Reimpresión generada correctamente.')
+                ->body(
+                    'Documento '
+                    . $resultado['identificador']
+                )
                 ->success()
                 ->send();
-
-            /*
-            * Más adelante aquí se abrirá el PDF real marcado como reimpresión.
-            */
         } catch (ValidationException $exception) {
             $mensaje = collect($exception->errors())
                 ->flatten()
@@ -1200,16 +1333,944 @@ class Pagos extends Page
 
             Notification::make()
                 ->title('No fue posible reimprimir el recibo.')
-                ->body($mensaje ?: 'Revise la información del recibo.')
+                ->body(
+                    $mensaje
+                        ?: 'Revise la información del recibo.'
+                )
                 ->warning()
                 ->send();
         } catch (Throwable $exception) {
             report($exception);
 
             Notification::make()
-                ->title('Ocurrió un error al reimprimir el recibo.')
+                ->title('Ocurrió un error al generar la reimpresión.')
+                ->body(
+                    'No se registró la reimpresión. '
+                    . 'Revise el registro del sistema.'
+                )
                 ->danger()
                 ->send();
         }
     }
+
+
+    public function actualizarDetalleReciboDespuesDeImpresion(
+        DetalleReciboService $detalleReciboService,
+    ): void {
+        if (
+            ! $this->mostrarDetalleRecibo
+            || ! $this->operacionDetalleReciboId
+            || ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            return;
+        }
+
+        try {
+            $this->detalleRecibo = $detalleReciboService->consultar(
+                operacionPagoId: (int) $this->operacionDetalleReciboId,
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+            );
+
+            /*
+            * Si la reimpresión fue generada desde el modal,
+            * lo cerramos al regresar desde el PDF.
+            */
+            $this->mostrarModalReimpresion = false;
+            $this->motivoReimpresion = '';
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
+    }
+
+   
+
+
+    public function abrirModalAnulacion(
+        int $operacionPagoId
+    ): void {
+        if ($operacionPagoId <= 0) {
+            return;
+        }
+
+        $this->operacionAnularId = $operacionPagoId;
+        $this->motivoAnulacion = '';
+        $this->mostrarModalAnulacion = true;
+    }
+
+
+
+    public function cerrarModalAnulacion(): void
+    {
+        $this->mostrarModalAnulacion = false;
+        $this->operacionAnularId = null;
+        $this->motivoAnulacion = '';
+
+        $this->resetValidation([
+            'motivoAnulacion',
+        ]);
+    }
+
+
+
+    public function anularOperacionPago(
+        AnularOperacionPagoService $anularOperacionPagoService,
+        DetalleReciboService $detalleReciboService,
+    ): void {
+        if (
+            ! $this->operacionAnularId
+            || ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            Notification::make()
+                ->title('No se encontró la operación.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $usuarioId = auth()->id();
+
+        if (! $usuarioId) {
+            Notification::make()
+                ->title('No se encontró el usuario de la sesión.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $resultado = $anularOperacionPagoService->anular(
+                operacionPagoId: (int) $this->operacionAnularId,
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+                anuladoPor: (int) $usuarioId,
+                motivo: $this->motivoAnulacion,
+            );
+
+            $operacionAnuladaId =
+                (int) $resultado['operacion_id'];
+
+            /*
+            |--------------------------------------------------------------------------
+            | Recordar si el detalle de esta operación estaba abierto
+            |--------------------------------------------------------------------------
+            */
+            $detalleEstabaAbierto =
+                $this->mostrarDetalleRecibo
+                && (int) $this->operacionDetalleReciboId
+                    === $operacionAnuladaId;
+
+            $this->cerrarModalAnulacion();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Recargar cartera, obligaciones e historial
+            |--------------------------------------------------------------------------
+            */
+            $studentId = (int) $this->student_id;
+
+            $this->seleccionarEstudiante($studentId);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Restaurar y actualizar el detalle anulado
+            |--------------------------------------------------------------------------
+            */
+            if ($detalleEstabaAbierto) {
+                $this->operacionDetalleReciboId =
+                    $operacionAnuladaId;
+
+                $this->detalleRecibo =
+                    $detalleReciboService->consultar(
+                        operacionPagoId:
+                            $operacionAnuladaId,
+
+                        studentId:
+                            (int) $this->student_id,
+
+                        sedeId:
+                            (int) $this->sede_id,
+
+                        periodoLectivoId:
+                            (int) $this->periodo_lectivo_id,
+                    );
+
+                $this->mostrarDetalleRecibo = true;
+            }
+
+            Notification::make()
+                ->title('Pago anulado correctamente.')
+                ->body(
+                    'Recibo N.º '
+                    . $resultado['numero_recibo']
+                    . '. La cartera del estudiante fue actualizada.'
+                )
+                ->success()
+                ->send();
+        } catch (ValidationException $exception) {
+            $mensaje = collect($exception->errors())
+                ->flatten()
+                ->first();
+
+            Notification::make()
+                ->title('No fue posible anular el pago.')
+                ->body(
+                    $mensaje
+                        ?: 'Revise la información de la operación.'
+                )
+                ->warning()
+                ->persistent()
+                ->send();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('Ocurrió un error al anular el pago.')
+                ->body(
+                    'No se modificó ninguna parte de la operación. '
+                    . 'Revise el registro del sistema.'
+                )
+                ->danger()
+                ->send();
+        }
+    }
+
+
+
+    public function cargarAcuerdosPago(
+        AcuerdosPagoService $acuerdosPagoService
+    ): void {
+        if (
+            ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            $this->acuerdosPagoOriginales = [];
+            $this->acuerdosPago = [];
+
+            return;
+        }
+
+        $this->acuerdosPagoOriginales =
+            $acuerdosPagoService
+                ->listar(
+                    studentId:
+                        (int) $this->student_id,
+
+                    sedeId:
+                        (int) $this->sede_id,
+
+                    periodoLectivoId:
+                        (int) $this->periodo_lectivo_id,
+                )
+                ->values()
+                ->toArray();
+
+        $this->aplicarFiltrosAcuerdos();
+    }
+
+
+    public function abrirModalAcuerdoPago(): void
+    {
+        if (! $this->student_id) {
+            Notification::make()
+                ->title('Seleccione un estudiante.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->limpiarFormularioAcuerdo();
+
+        $this->modoModalAcuerdoPago = 'crear';
+        $this->acuerdoPagoSeleccionadoId = null;
+        $this->acuerdoEvidenciasGuardadas = [];
+
+        $this->acuerdoPersona = trim(
+            (string) (
+                $this->estudianteSeleccionado['acudiente']
+                ?? ''
+            )
+        );
+
+        $this->acuerdoParentesco = trim(
+            (string) (
+                $this->estudianteSeleccionado['parentesco']
+                ?? ''
+            )
+        );
+
+        $this->mostrarModalAcuerdoPago = true;
+        $this->acuerdoEstado = 'vigente';
+        $this->acuerdoEstadoModificadoPor = null;
+        $this->acuerdoEstadoModificadoEn = null;
+    }
+
+    public function cerrarModalAcuerdoPago(): void
+    {
+        $this->mostrarModalAcuerdoPago = false;
+
+        $this->limpiarFormularioAcuerdo();
+    }
+
+    private function limpiarFormularioAcuerdo(): void
+    {
+        $this->acuerdoPersona = '';
+        $this->acuerdoParentesco = '';
+        $this->acuerdoFechaCompromiso = null;
+        
+        $this->acuerdoTexto = '';
+        $this->acuerdoEvidencias = [];
+        $this->acuerdoEvidenciasNuevas = [];
+
+        $this->modoModalAcuerdoPago = 'crear';
+        $this->acuerdoPagoSeleccionadoId = null;
+        $this->acuerdoEvidenciasGuardadas = [];
+        $this->mensajeEvidencias = null;
+        $this->acuerdoEstado = 'vigente';
+
+        $this->resetValidation([
+            'acuerdoPersona',
+            'acuerdoParentesco',
+            'acuerdoFechaCompromiso',
+            'acuerdoValorComprometido',
+            'acuerdoTexto',
+            'acuerdoEvidencias',
+            'acuerdoEvidencias.*',
+        ]);
+    }
+
+    public function guardarAcuerdoPago(
+        CrearAcuerdoPagoService $crearAcuerdoPagoService,
+        AcuerdosPagoService $acuerdosPagoService,
+    ): void {
+        if (
+            ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            Notification::make()
+                ->title('No se encontró el contexto del estudiante.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $datos = $this->validate([
+            'acuerdoPersona' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'acuerdoParentesco' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'acuerdoFechaCompromiso' => [
+                'required',
+                'date',
+            ],
+
+            
+
+            'acuerdoTexto' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+
+            'acuerdoEvidencias' => [
+                'array',
+                'max:3',
+            ],
+
+            'acuerdoEvidencias.*' => [
+                'file',
+                'max:10240',
+                'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx',
+            ],
+        ], [
+            'acuerdoPersona.required' =>
+                'Indique la persona que realiza el acuerdo.',
+
+            'acuerdoFechaCompromiso.required' =>
+                'Seleccione la fecha de compromiso.',
+
+            'acuerdoTexto.required' =>
+                'Escriba el contenido del acuerdo.',
+
+            'acuerdoEvidencias.max' =>
+                'Puede adjuntar máximo 3 evidencias.',
+
+            'acuerdoEvidencias.*.max' =>
+                'Cada archivo puede pesar máximo 10 MB.',
+
+            'acuerdoEvidencias.*.mimes' =>
+                'Formato de evidencia no permitido.',
+        ]);
+
+        $usuarioId = auth()->id();
+
+        if (! $usuarioId) {
+            Notification::make()
+                ->title('No se encontró el usuario de la sesión.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $crearAcuerdoPagoService->crear(
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId:
+                    (int) $this->periodo_lectivo_id,
+
+                personaAcuerdo:
+                    $datos['acuerdoPersona'],
+
+                parentesco:
+                    $datos['acuerdoParentesco'] ?: null,
+
+                fechaCompromiso:
+                    $datos['acuerdoFechaCompromiso'],
+
+                valorComprometido: null,
+
+                textoAcuerdo:
+                    $datos['acuerdoTexto'],
+
+                registradoPor:
+                    (int) $usuarioId,
+
+                evidencias:
+                    $datos['acuerdoEvidencias'] ?? [],
+            );
+
+            $this->cerrarModalAcuerdoPago();
+
+            $this->cargarAcuerdosPago(
+                $acuerdosPagoService
+            );
+
+            Notification::make()
+                ->title('Acuerdo registrado correctamente.')
+                ->success()
+                ->send();
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('No fue posible registrar el acuerdo.')
+                ->body(
+                    'No se guardó ninguna información. '
+                    . 'Revise el registro del sistema.'
+                )
+                ->danger()
+                ->send();
+        }
+    }
+
+
+    public function agregarEvidenciasAcuerdo(
+        array $archivos
+    ): void {
+        $actuales = collect($this->acuerdoEvidencias);
+
+        $nuevos = collect($archivos)
+            ->filter()
+            ->reject(function ($archivo) use ($actuales) {
+                return $actuales->contains(function ($actual) use ($archivo) {
+                    return $actual->getClientOriginalName()
+                        === $archivo->getClientOriginalName()
+                        && $actual->getSize()
+                        === $archivo->getSize();
+                });
+            });
+
+        $this->acuerdoEvidencias = $actuales
+            ->concat($nuevos)
+            ->take(3)
+            ->values()
+            ->all();
+    }
+
+    public function updatedAcuerdoEvidenciasNuevas(): void
+    {
+        $this->mensajeEvidencias = null;
+
+        $actuales = collect($this->acuerdoEvidencias);
+
+        $nuevos = collect($this->acuerdoEvidenciasNuevas)
+            ->filter()
+            ->reject(function ($archivo) use ($actuales) {
+                return $actuales->contains(function ($actual) use ($archivo) {
+                    return $actual->getClientOriginalName()
+                            === $archivo->getClientOriginalName()
+                        && $actual->getSize()
+                            === $archivo->getSize();
+                });
+            });
+
+        $cantidadDisponible = max(
+            0,
+            3 - $actuales->count()
+        );
+
+        $this->mensajeEvidencias = null;
+
+        if ($nuevos->count() > $cantidadDisponible) {
+
+            $this->mensajeEvidencias =
+                'Máximo 3 evidencias por acuerdo.';
+
+            $nuevos = $nuevos->take(
+                $cantidadDisponible
+            );
+
+        }
+
+        $this->acuerdoEvidencias = $actuales
+            ->concat($nuevos)
+            ->take(3)
+            ->values()
+            ->all();
+
+        $this->acuerdoEvidenciasNuevas = [];
+    }
+
+    public function eliminarEvidenciaTemporal(int $indice): void
+    {
+        unset($this->acuerdoEvidencias[$indice]);
+
+        $this->acuerdoEvidencias = array_values(
+            $this->acuerdoEvidencias
+        );
+
+        // Si vuelve a haber espacio disponible, desaparece el aviso.
+        if (count($this->acuerdoEvidencias) < 3) {
+            $this->mensajeEvidencias = null;
+        }
+    }
+
+    public function verAcuerdoPago(int $acuerdoId): void
+    {
+        $acuerdo = collect($this->acuerdosPago)
+            ->firstWhere('id', $acuerdoId);
+
+        if (! $acuerdo) {
+            Notification::make()
+                ->title('No se encontró el acuerdo.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->limpiarFormularioAcuerdo();
+
+        $this->modoModalAcuerdoPago = 'ver';
+        $this->acuerdoPagoSeleccionadoId = $acuerdoId;
+
+        $this->acuerdoPersona =
+            (string) ($acuerdo['persona_acuerdo'] ?? '');
+
+        $this->acuerdoParentesco =
+            (string) ($acuerdo['parentesco'] ?? '');
+
+        $this->acuerdoFechaCompromiso =
+            $acuerdo['fecha_iso'] ?? null;
+
+        $this->acuerdoTexto =
+            (string) ($acuerdo['texto_acuerdo'] ?? '');
+
+        $this->acuerdoEvidenciasGuardadas =
+            $acuerdo['evidencias'] ?? [];
+
+        
+
+        $this->acuerdoEstado =
+            (string) ($acuerdo['estado'] ?? 'vigente');
+
+        $this->acuerdoEstadoModificadoPor =
+            $acuerdo['estado_modificado_por'] ?? null;
+
+        $this->acuerdoEstadoModificadoEn =
+            $acuerdo['estado_modificado_en'] ?? null;
+
+
+        $this->mostrarModalAcuerdoPago = true;
+    }
+
+
+    
+    public function guardarEstadoAcuerdoPago(
+        ActualizarEstadoAcuerdoPagoService $servicio,
+        AcuerdosPagoService $acuerdosPagoService,
+    ): void {
+        if (
+            ! $this->acuerdoPagoSeleccionadoId
+            || ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            Notification::make()
+                ->title('No se encontró el acuerdo.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $estadoValido = in_array(
+            $this->acuerdoEstado,
+            [
+                'vigente',
+                'cumplido',
+                'incumplido',
+                'vencido',
+                'anulado',
+            ],
+            true
+        );
+
+        if (! $estadoValido) {
+            Notification::make()
+                ->title('Seleccione un estado válido.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $usuarioId = auth()->id();
+
+        if (! $usuarioId) {
+            Notification::make()
+                ->title('No se encontró el usuario de la sesión.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $servicio->actualizar(
+                acuerdoId:
+                    (int) $this->acuerdoPagoSeleccionadoId,
+
+                studentId:
+                    (int) $this->student_id,
+
+                sedeId:
+                    (int) $this->sede_id,
+
+                periodoLectivoId:
+                    (int) $this->periodo_lectivo_id,
+
+                estado:
+                    $this->acuerdoEstado,
+
+                modificadoPor:
+                    (int) $usuarioId,
+            );
+
+            $acuerdoId =
+                (int) $this->acuerdoPagoSeleccionadoId;
+
+            $this->cargarAcuerdosPago(
+                $acuerdosPagoService
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Volver a cargar el acuerdo actualizado en el mismo modal
+            |--------------------------------------------------------------------------
+            */
+            $this->verAcuerdoPago($acuerdoId);
+
+            Notification::make()
+                ->title('Estado actualizado correctamente.')
+                ->success()
+                ->send();
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $mensaje = collect($exception->errors())
+                ->flatten()
+                ->first();
+
+            Notification::make()
+                ->title('No fue posible actualizar el estado.')
+                ->body(
+                    $mensaje
+                        ?: 'Revise la información del acuerdo.'
+                )
+                ->warning()
+                ->send();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('Ocurrió un error al actualizar el estado.')
+                ->danger()
+                ->send();
+        }
+    }
+
+
+
+
+    public function abrirModalEditarAcuerdoPago(
+        int $acuerdoId
+    ): void {
+        $acuerdo = collect($this->acuerdosPago)
+            ->firstWhere('id', $acuerdoId);
+
+        if (! $acuerdo) {
+            Notification::make()
+                ->title('No se encontró el acuerdo.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (($acuerdo['estado'] ?? '') !== 'vigente') {
+            Notification::make()
+                ->title('El acuerdo ya no se puede editar.')
+                ->body(
+                    'Solo los acuerdos vigentes permiten modificaciones.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $this->limpiarFormularioAcuerdo();
+
+        $this->modoModalAcuerdoPago = 'editar';
+        $this->acuerdoPagoSeleccionadoId = $acuerdoId;
+
+        $this->acuerdoPersona =
+            (string) ($acuerdo['persona_acuerdo'] ?? '');
+
+        $this->acuerdoParentesco =
+            (string) ($acuerdo['parentesco'] ?? '');
+
+        $this->acuerdoFechaCompromiso =
+            $acuerdo['fecha_iso'] ?? null;
+
+        $this->acuerdoTexto =
+            (string) ($acuerdo['texto_acuerdo'] ?? '');
+
+        $this->acuerdoEstado =
+            (string) ($acuerdo['estado'] ?? 'vigente');
+
+        $this->acuerdoEstadoModificadoPor =
+            $acuerdo['estado_modificado_por'] ?? null;
+
+        $this->acuerdoEstadoModificadoEn =
+            $acuerdo['estado_modificado_en'] ?? null;
+
+        $this->acuerdoEvidenciasGuardadas =
+            $acuerdo['evidencias'] ?? [];
+
+        $this->mostrarModalAcuerdoPago = true;
+    }
+
+
+
+    public function actualizarAcuerdoPago(
+        ActualizarAcuerdoPagoService $servicio,
+        AcuerdosPagoService $acuerdosPagoService,
+    ): void {
+        if (
+            ! $this->acuerdoPagoSeleccionadoId
+            || ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            return;
+        }
+
+        $datos = $this->validate([
+            'acuerdoPersona' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'acuerdoParentesco' => [
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'acuerdoFechaCompromiso' => [
+                'required',
+                'date',
+            ],
+
+            'acuerdoTexto' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        try {
+            $servicio->actualizar(
+                acuerdoId:
+                    (int) $this->acuerdoPagoSeleccionadoId,
+
+                studentId:
+                    (int) $this->student_id,
+
+                sedeId:
+                    (int) $this->sede_id,
+
+                periodoLectivoId:
+                    (int) $this->periodo_lectivo_id,
+
+                personaAcuerdo:
+                    $datos['acuerdoPersona'],
+
+                parentesco:
+                    $datos['acuerdoParentesco'] ?: null,
+
+                fechaCompromiso:
+                    $datos['acuerdoFechaCompromiso'],
+
+                textoAcuerdo:
+                    $datos['acuerdoTexto'],
+            );
+
+            $this->cargarAcuerdosPago(
+                $acuerdosPagoService
+            );
+
+            $this->cerrarModalAcuerdoPago();
+
+            Notification::make()
+                ->title('Acuerdo actualizado correctamente.')
+                ->success()
+                ->send();
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            throw $exception;
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('No fue posible actualizar el acuerdo.')
+                ->danger()
+                ->send();
+        }
+    }
+
+    public function aplicarFiltrosAcuerdos(): void
+    {
+        $texto = mb_strtolower(
+            trim($this->filtroAcuerdoTexto)
+        );
+
+        $this->acuerdosPago = collect(
+            $this->acuerdosPagoOriginales
+        )
+            ->filter(function (array $acuerdo) use ($texto) {
+                if ($texto === '') {
+                    return true;
+                }
+
+                $contenido = mb_strtolower(
+                    implode(' ', [
+                        $acuerdo['persona_acuerdo'] ?? '',
+                        $acuerdo['texto_acuerdo'] ?? '',
+                        $acuerdo['parentesco'] ?? '',
+                    ])
+                );
+
+                return str_contains(
+                    $contenido,
+                    $texto
+                );
+            })
+            ->when(
+                $this->filtroAcuerdoEstado !== '',
+                fn ($coleccion) =>
+                    $coleccion->where(
+                        'estado',
+                        $this->filtroAcuerdoEstado
+                    )
+            )
+            ->filter(function (array $acuerdo) {
+                $fecha = $acuerdo['fecha_iso'] ?? null;
+
+                if (! $fecha) {
+                    return true;
+                }
+
+                if (
+                    $this->filtroAcuerdoDesde
+                    && $fecha < $this->filtroAcuerdoDesde
+                ) {
+                    return false;
+                }
+
+                if (
+                    $this->filtroAcuerdoHasta
+                    && $fecha > $this->filtroAcuerdoHasta
+                ) {
+                    return false;
+                }
+
+                return true;
+            })
+            ->sortByDesc(
+                fn (array $acuerdo) =>
+                    sprintf(
+                        '%s-%010d',
+                        $acuerdo['fecha_iso'] ?? '0000-00-00',
+                        $acuerdo['id'] ?? 0
+                    )
+            )
+            ->values()
+            ->all();
+    }
+    public function updatedFiltroAcuerdoTexto(): void
+    {
+        $this->aplicarFiltrosAcuerdos();
+    }
+
+    public function updatedFiltroAcuerdoEstado(): void
+    {
+        $this->aplicarFiltrosAcuerdos();
+    }
+
+    public function updatedFiltroAcuerdoDesde(): void
+    {
+        $this->aplicarFiltrosAcuerdos();
+    }
+
+    public function updatedFiltroAcuerdoHasta(): void
+    {
+        $this->aplicarFiltrosAcuerdos();
+    }
+
+
 }

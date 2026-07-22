@@ -2748,12 +2748,16 @@
             width: min(520px, 94vw);
             max-height: 90vh;
             overflow: hidden;
-            display: grid;
-            grid-template-rows: auto minmax(0, 1fr) auto;
             border: 1px solid #e2e8f0;
             border-radius: 14px;
             background: #ffffff;
             box-shadow: 0 24px 60px rgba(15, 23, 42, 0.26);
+        }
+
+        .pagos-modal-card > form {
+            min-height: 0;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
         }
 
         .pagos-modal-header {
@@ -2897,11 +2901,633 @@
         }
 
 
+        .pagos-receipt-cancelled {
+            overflow: hidden;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            background: #fff7f7;
+        }
+
+        .pagos-receipt-cancelled-heading {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            border-bottom: 1px solid #fecaca;
+            background: #fef2f2;
+        }
+
+        .pagos-receipt-cancelled-heading > svg {
+            flex: 0 0 auto;
+            width: 19px;
+            height: 19px;
+            color: #b91c1c;
+        }
+
+        .pagos-receipt-cancelled-heading > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .pagos-receipt-cancelled-heading strong {
+            color: #7f1d1d;
+            font-size: 12px;
+            font-weight: 850;
+        }
+
+        .pagos-receipt-cancelled-heading span {
+            color: #991b1b;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        .pagos-receipt-cancelled-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 14px;
+            padding: 12px 14px;
+        }
+
+        .pagos-receipt-cancelled-grid > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .pagos-receipt-cancelled-grid span {
+            color: #991b1b;
+            font-size: 9px;
+        }
+
+        .pagos-receipt-cancelled-grid strong {
+            color: #7f1d1d;
+            font-size: 11px;
+            font-weight: 750;
+            overflow-wrap: anywhere;
+        }
+
+        .pagos-receipt-cancelled-reason {
+            grid-column: 1 / -1;
+        }
+
+
+        .pagos-anulacion-warning {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            background: #fef2f2;
+        }
+
+        .pagos-anulacion-warning-icon {
+            flex: 0 0 20px;
+            width: 20px !important;
+            height: 20px !important;
+            min-width: 20px;
+            color: #b91c1c;
+        }
+
+        .pagos-anulacion-warning > div {
+            min-width: 0;
+        }
+
+        .pagos-anulacion-warning strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #7f1d1d;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .pagos-anulacion-warning p {
+            margin: 0;
+            color: #991b1b;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+
+
+        .pagos-agreement-modal {
+            width: min(100%, 720px);
+        }
+
+        .pagos-agreement-modal-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .pagos-agreement-full {
+            grid-column: 1 / -1;
+        }
+
+        .pagos-agreement-files {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .pagos-agreement-file {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 9px;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 11px;
+        }
+
+        .pagos-agreement-file svg {
+            width: 15px;
+            height: 15px;
+            flex: 0 0 auto;
+        }
+
+        .pagos-file-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .pagos-field-error {
+            color: #b91c1c;
+            font-size: 10px;
+        }
+
+        .pagos-field-help {
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        @media (max-width: 700px) {
+            .pagos-agreement-modal-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pagos-agreement-full {
+                grid-column: auto;
+            }
+        }
+
+        .pagos-agreement-new-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+
+            min-height: 34px;
+            padding: 7px 12px;
+
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            background: #eff6ff;
+
+            color: #03339b;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1;
+
+            cursor: pointer;
+        }
+
+        .pagos-agreement-new-button:hover {
+            border-color: #93c5fd;
+            background: #dbeafe;
+        }
+
+        .pagos-agreement-new-button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .pagos-agreement-new-button-icon {
+            width: 15px !important;
+            height: 15px !important;
+            min-width: 15px;
+            flex: 0 0 15px;
+        }
+
+        .pagos-agreement-user-info {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 11px;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            background: #f8fafc;
+        }
+
+        .pagos-agreement-user-info > svg {
+            width: 17px;
+            height: 17px;
+            flex: 0 0 17px;
+            color: #64748b;
+        }
+
+        .pagos-agreement-user-info > div {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .pagos-agreement-user-info strong {
+            color: #0f172a;
+            font-size: 11px;
+            font-weight: 750;
+        }
+
+        .pagos-agreement-user-info span {
+            color: #64748b;
+            font-size: 9px;
+        }
+
+
+
+
+        .pagos-agreement-dropzone {
+            position: relative;
+            width: 100%;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            background: #f8fafc;
+            transition:
+                border-color 0.18s ease,
+                background-color 0.18s ease,
+                box-shadow 0.18s ease;
+        }
+
+        .pagos-agreement-dropzone:hover,
+        .pagos-agreement-dropzone.is-dragging {
+            border-color: #93c5fd;
+            background: #eff6ff;
+            box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.18);
+        }
+
+        .pagos-agreement-dropzone-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .pagos-agreement-dropzone-content {
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            cursor: pointer;
+        }
+
+        .pagos-agreement-dropzone-icon {
+            width: 38px;
+            height: 38px;
+            flex: 0 0 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dbe4ee;
+            border-radius: 9px;
+            background: #ffffff;
+            color: #64748b;
+        }
+
+        .pagos-agreement-dropzone-icon svg {
+            width: 19px !important;
+            height: 19px !important;
+        }
+
+        .pagos-agreement-dropzone-text {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .pagos-agreement-dropzone-text strong {
+            color: #1e293b;
+            font-size: 12px;
+            font-weight: 750;
+        }
+
+        .pagos-agreement-dropzone-text small {
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .pagos-agreement-uploading {
+            margin-top: 6px;
+            color: #2563eb;
+            font-size: 10px;
+        }
+
+        .pagos-agreement-files {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 9px;
+        }
+
+        .pagos-agreement-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 9px;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            background: #ffffff;
+        }
+
+        .pagos-agreement-file svg {
+            width: 15px !important;
+            height: 15px !important;
+            flex: 0 0 15px;
+            color: #64748b;
+        }
+
+        .pagos-agreement-file span {
+            min-width: 0;
+            overflow: hidden;
+            color: #334155;
+            font-size: 10px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pagos-upload-warning{
+            display:flex;
+            align-items:center;
+            gap:.45rem;
+
+            margin-top:.65rem;
+            margin-bottom:.55rem;
+
+            padding:.65rem .8rem;
+
+            border-radius:8px;
+
+            background:#FEF2F2;
+            border:1px solid #FECACA;
+
+            color:#B91C1C;
+
+            font-size:.83rem;
+            font-weight:600;
+        }
+
+        .pagos-upload-warning svg{
+            width:16px;
+            height:16px;
+            flex:none;
+        }
+
+        .pagos-agreement-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pagos-agreement-file-name {
+            min-width: 0;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pagos-agreement-file-remove {
+            width: 24px;
+            height: 24px;
+            flex: 0 0 24px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: #94a3b8;
+
+            cursor: pointer;
+        }
+
+        .pagos-agreement-file-remove:hover {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .pagos-agreement-file-remove svg {
+            width: 14px !important;
+            height: 14px !important;
+        }
+
+        .pagos-agreement-row {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .pagos-agreement-row:hover {
+            background: #f8fafc;
+        }
+
+
+        .pagos-agreement-saved-files {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .pagos-agreement-saved-file {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 9px;
+            background: #f8fafc;
+        }
+
+
+        .pagos-agreement-image-preview,
+        .pagos-agreement-document-preview {
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #64748b;
+        }
+        .pagos-agreement-image-preview {
+            display: block;
+            height: 105px;
+            overflow: hidden;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .pagos-agreement-image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .pagos-agreement-document-preview svg {
+            width: 34px !important;
+            height: 34px !important;
+        }
+
+        .pagos-agreement-file-icon {
+            height: 105px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #64748b;
+        }
+
+        .pagos-agreement-file-icon svg {
+            width: 34px !important;
+            height: 34px !important;
+        }
+
+        .pagos-agreement-saved-file-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 9px;
+        }
+
+        .pagos-agreement-saved-file-info strong {
+            overflow: hidden;
+            color: #334155;
+            font-size: 10px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pagos-agreement-saved-file-info a {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #2563eb;
+            font-size: 10px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .pagos-agreement-saved-file-info a:hover {
+            text-decoration: underline;
+        }
+
+        .pagos-agreement-saved-file-info a svg {
+            width: 13px !important;
+            height: 13px !important;
+        }
+
+
+        .pagos-select-estado{
+            appearance: auto !important;
+            -webkit-appearance: menulist !important;
+            -moz-appearance: auto !important;
+
+            background: white !important;
+            background-image: none !important;
+
+            padding-right: 12px !important;
+        }
+        /* Select de estado dentro del modal de acuerdos */
+        .pagos-agreement-modal .pagos-select {
+            width: 100%;
+
+            appearance: auto !important;
+            -webkit-appearance: menulist !important;
+            -moz-appearance: auto !important;
+
+            background-image: none !important;
+            background-repeat: no-repeat !important;
+
+            padding-right: 8px !important;
+        }
+
+        .pagos-agreement-filters {
+            display: grid;
+            grid-template-columns:
+                minmax(220px, 1fr)
+                150px
+                150px
+                160px;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #ffffff;
+        }
+
+        .pagos-agreement-filters > div {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .pagos-agreement-filters label {
+            color: #334155;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        @media (max-width: 900px) {
+            .pagos-agreement-filters {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        /* =========================================================
+        SELECTS CON FLECHA NATIVA
+        ========================================================= */
+
+        .pagos-register-layout .pagos-select,
+        .pagos-agreement-modal .pagos-select,
+        .pagos-agreement-filters .pagos-select {
+            appearance: auto !important;
+            -webkit-appearance: menulist !important;
+            -moz-appearance: auto !important;
+
+            background-image: none !important;
+            background-repeat: no-repeat !important;
+
+            padding-right: 8px !important;
+        }
+
 
     </style>
 
 
-    <div class="pagos-page">
+    <div
+        class="pagos-page"
+        x-data="{ reciboPendienteDeActualizar: false }"
+        x-on:focus.window="
+            if (reciboPendienteDeActualizar) {
+                $wire.actualizarDetalleReciboDespuesDeImpresion();
+                reciboPendienteDeActualizar = false;
+            }
+        "
+    >
 
         {{-- =========================================================
             2. ENCABEZADO DE LA PANTALLA
@@ -4065,19 +4691,14 @@
                                         <div class="pagos-table-actions">
                                             
 
-                                            <button
-                                                type="button"
-                                                class="pagos-icon-button pagos-icon-button-print"
-                                                title="Imprimir o reimprimir"
-                                            >
-                                                <x-heroicon-o-printer />
-                                            </button>
+                                            
 
                                             @if($fila['estado'] === 'confirmado')
                                                 <button
                                                     type="button"
                                                     class="pagos-icon-button pagos-icon-button-danger"
-                                                    title="Anular recibo"
+                                                    wire:click="abrirModalAnulacion({{ (int) $fila['operacion_pago_id'] }})"
+                                                    title="Anular pago"
                                                 >
                                                     <x-heroicon-o-no-symbol />
                                                 </button>
@@ -4170,10 +4791,64 @@
                     5. Acuerdos de pago
                 </h2>
 
-                <button type="button" class="pagos-agreement-add-button">
-                    <x-heroicon-o-plus />
-                    Nuevo acuerdo
+                <button
+                    type="button"
+                    class="pagos-agreement-new-button"
+                    wire:click="abrirModalAcuerdoPago"
+                    @disabled(! $student_id)
+                >
+                    <x-heroicon-o-plus class="pagos-agreement-new-button-icon" />
+
+                    <span>Nuevo acuerdo</span>
                 </button>
+            </div>
+            <div class="pagos-agreement-filters">
+                <div>
+                    <label>Buscar</label>
+
+                    <input
+                        type="text"
+                        class="pagos-input"
+                        wire:model.live.debounce.350ms="filtroAcuerdoTexto"
+                        placeholder="Persona o texto del acuerdo"
+                    >
+                </div>
+
+                <div>
+                    <label>Desde</label>
+
+                    <input
+                        type="date"
+                        class="pagos-input"
+                        wire:model.live="filtroAcuerdoDesde"
+                    >
+                </div>
+
+                <div>
+                    <label>Hasta</label>
+
+                    <input
+                        type="date"
+                        class="pagos-input"
+                        wire:model.live="filtroAcuerdoHasta"
+                    >
+                </div>
+
+                <div>
+                    <label>Estado</label>
+
+                    <select
+                        class="pagos-select"
+                        wire:model.live="filtroAcuerdoEstado"
+                    >
+                        <option value="">Todos</option>
+                        <option value="vigente">Vigente</option>
+                        <option value="cumplido">Cumplido</option>
+                        <option value="incumplido">Incumplido</option>
+                        <option value="vencido">Vencido</option>
+                        <option value="anulado">Anulado</option>
+                    </select>
+                </div>
             </div>
 
             <div class="pagos-agreements-scroll">
@@ -4182,7 +4857,7 @@
                     <thead>
                         <tr>
                             <th>Fecha</th>
-                            <th>Realizado por</th>
+                            <th>Realizado por (acudiente)</th>
                             <th>Resumen del acuerdo</th>
                             <th>Evidencias</th>
                             <th>Acc.</th>
@@ -4190,154 +4865,116 @@
                     </thead>
 
                     <tbody>
+                        @forelse($acuerdosPago as $acuerdo)
+                            <tr
+                                wire:key="acuerdo-pago-{{ $acuerdo['id'] }}"
+                                class="pagos-agreement-row"
+                                wire:click="verAcuerdoPago({{ $acuerdo['id'] }})"
+                            >
+                                <td>
+                                    {{ $acuerdo['fecha'] ?? '—' }}
+                                </td>
 
-                        <tr>
-                            <td>01/07/2026</td>
-                            <td>Ana López</td>
-                            <td>
-                                <span class="pagos-agreement-summary">
-                                    El acudiente se compromete a pagar la totalidad de la deuda al finalizar el mes...
-                                </span>
-                            </td>
-                            <td>
-                                <span class="pagos-evidence-badge">
-                                    <x-heroicon-o-paper-clip />
-                                    2 archivos
-                                </span>
-                            </td>
-                            <td>
-                                <div class="pagos-table-actions">
+                                <td>
+                                    <strong>
+                                        {{ $acuerdo['persona_acuerdo'] ?? 'No registrada' }}
+                                    </strong>
+                                </td>
 
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-view"
-                                        title="Ver acuerdo"
-                                    >
-                                        <x-heroicon-o-eye />
-                                    </button>
+                                <td>
+                                    <div class="pagos-agreement-summary">
+                                        <span>
+                                            {{ $acuerdo['texto_acuerdo'] ?? 'Sin descripción.' }}
+                                        </span>
 
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-edit"
-                                        title="Editar acuerdo"
-                                    >
-                                        <x-heroicon-o-pencil-square />
-                                    </button>
+                                        @if(($acuerdo['valor_comprometido'] ?? 0) > 0)
+                                            <small>
+                                                Valor comprometido:
+                                                $ {{ number_format(
+                                                    $acuerdo['valor_comprometido'],
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+                                            </small>
+                                        @endif
+                                    </div>
+                                </td>
 
-                                </div>
-                            </td>
-                        </tr>
+                                <td>
+                                    @if(($acuerdo['cantidad_evidencias'] ?? 0) > 0)
+                                        <span class="pagos-agreement-evidence">
+                                            {{ $acuerdo['cantidad_evidencias'] }}
+                                            {{ $acuerdo['cantidad_evidencias'] === 1
+                                                ? 'archivo'
+                                                : 'archivos' }}
+                                        </span>
+                                    @else
+                                        <span class="pagos-muted-text">
+                                            Sin evidencia
+                                        </span>
+                                    @endif
+                                </td>
 
-                        <tr>
-                            <td>15/06/2026</td>
-                            <td>Juan Pérez</td>
-                            <td>
-                                <span class="pagos-agreement-summary">
-                                    Se acuerda condonar los intereses de mora si el pago se realiza antes del 30 de junio...
-                                </span>
-                            </td>
-                            <td>
-                                <span class="pagos-evidence-badge">
-                                    <x-heroicon-o-paper-clip />
-                                    1 archivo
-                                </span>
-                            </td>
-                            <td>
-                                <div class="pagos-table-actions">
+                                <td>
+                                    @php
+                                        $claseEstado = match ($acuerdo['estado'] ?? '') {
+                                            'vigente' => 'pagos-status-confirmed',
+                                            'cumplido' => 'pagos-status-success',
+                                            'incumplido' => 'pagos-status-cancelled',
+                                            'vencido' => 'pagos-status-warning',
+                                            'anulado' => 'pagos-status-cancelled',
+                                            default => '',
+                                        };
+                                    @endphp
 
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-view"
-                                        title="Ver acuerdo"
-                                    >
-                                        <x-heroicon-o-eye />
-                                    </button>
+                                    <span class="pagos-status {{ $claseEstado }}">
+                                        {{ $acuerdo['estado_texto'] ?? '—' }}
+                                    </span>
+                                </td>
 
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-edit"
-                                        title="Editar acuerdo"
-                                    >
-                                        <x-heroicon-o-pencil-square />
-                                    </button>
+                                <td>
+                                    <div class="pagos-table-actions">
+                                        <button
+                                            type="button"
+                                            class="pagos-icon-button"
+                                            wire:click.stop="verAcuerdoPago({{ $acuerdo['id'] }})"
+                                            title="Ver acuerdo"
+                                        >
+                                            <x-heroicon-o-eye />
+                                        </button>
 
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>20/05/2026</td>
-                            <td>Ana López</td>
-                            <td>
-                                <span class="pagos-agreement-summary">
-                                    Acuerdo de pago en dos cuotas para la salida pedagógica y los derechos de grado...
-                                </span>
-                            </td>
-                            <td>
-                                <span class="pagos-evidence-empty">
-                                    Sin archivos
-                                </span>
-                            </td>
-                            <td>
-                                <div class="pagos-table-actions">
-
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-view"
-                                        title="Ver acuerdo"
-                                    >
-                                        <x-heroicon-o-eye />
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-edit"
-                                        title="Editar acuerdo"
-                                    >
-                                        <x-heroicon-o-pencil-square />
-                                    </button>
-
-                                </div>
-                            </td>
-                        </tr>
-
-                        <tr>
-                            <td>10/04/2026</td>
-                            <td>Carlos Gómez</td>
-                            <td>
-                                <span class="pagos-agreement-summary">
-                                    El acudiente solicita prórroga hasta el día 15 de abril para cancelar la pensión...
-                                </span>
-                            </td>
-                            <td>
-                                <span class="pagos-evidence-badge">
-                                    <x-heroicon-o-paper-clip />
-                                    3 archivos
-                                </span>
-                            </td>
-                            <td>
-                                <div class="pagos-table-actions">
-
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-view"
-                                        title="Ver acuerdo"
-                                    >
-                                        <x-heroicon-o-eye />
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        class="pagos-icon-button pagos-icon-button-edit"
-                                        title="Editar acuerdo"
-                                    >
-                                        <x-heroicon-o-pencil-square />
-                                    </button>
-
-                                </div>
-                            </td>
-                        </tr>
-
+                                        @if(($acuerdo['estado'] ?? '') === 'vigente')
+                                            <button
+                                                type="button"
+                                                class="pagos-icon-button"
+                                                wire:click.stop="abrirModalEditarAcuerdoPago({{ $acuerdo['id'] }})"
+                                                title="Editar acuerdo"
+                                            >
+                                                <x-heroicon-o-pencil-square />
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td
+                                    colspan="6"
+                                    style="
+                                        height: 135px;
+                                        text-align: center;
+                                        color: #94a3b8;
+                                    "
+                                >
+                                    @if($student_id)
+                                        El estudiante no tiene acuerdos de pago registrados.
+                                    @else
+                                        Seleccione un estudiante para consultar sus acuerdos de pago.
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
 
@@ -4418,6 +5055,54 @@
                                         @endif
                                     </div>
                                 </section>
+
+                                {{-- INFORMACIÓN DE ANULACIÓN --}}
+                                @if($detalleRecibo['anulacion']['esta_anulado'] ?? false)
+                                    <section class="pagos-receipt-cancelled">
+                                        <div class="pagos-receipt-cancelled-heading">
+                                            <x-heroicon-o-x-circle />
+
+                                            <div>
+                                                <strong>Pago anulado</strong>
+
+                                                <span>
+                                                    Esta operación se conserva únicamente como
+                                                    registro histórico.
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div class="pagos-receipt-cancelled-grid">
+                                            <div>
+                                                <span>Anulado por</span>
+
+                                                <strong>
+                                                    {{ $detalleRecibo['anulacion']['anulado_por']
+                                                        ?? 'Usuario no disponible' }}
+                                                </strong>
+                                            </div>
+
+                                            <div>
+                                                <span>Fecha y hora</span>
+
+                                                <strong>
+                                                    {{ $detalleRecibo['anulacion']['anulado_en']
+                                                        ?? 'No disponible' }}
+                                                </strong>
+                                            </div>
+
+                                            @if(filled($detalleRecibo['anulacion']['motivo'] ?? null))
+                                                <div class="pagos-receipt-cancelled-reason">
+                                                    <span>Motivo</span>
+
+                                                    <strong>
+                                                        {{ $detalleRecibo['anulacion']['motivo'] }}
+                                                    </strong>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </section>
+                                @endif
 
                                 {{-- ESTUDIANTE --}}
                                 <section class="pagos-receipt-detail-section">
@@ -4608,10 +5293,11 @@
                                 {{-- TOTALES --}}
                                 <section class="pagos-receipt-detail-totals">
                                     <div>
-                                        <span>Pagos recibidos</span>
+                                        <span>Valor de obligaciones</span>
+
                                         <strong>
                                             $ {{ number_format(
-                                                $detalleRecibo['total_recibido'] ?? 0,
+                                                $detalleRecibo['valor_obligaciones'] ?? 0,
                                                 0,
                                                 ',',
                                                 '.'
@@ -4620,20 +5306,26 @@
                                     </div>
 
                                     <div>
-                                        <span>Descuentos</span>
+                                        <span>Descuento aplicado</span>
+
                                         <strong>
-                                            $ {{ number_format(
-                                                $detalleRecibo['total_descuentos'] ?? 0,
-                                                0,
-                                                ',',
-                                                '.'
-                                            ) }}
+                                            @if(($detalleRecibo['total_descuentos'] ?? 0) > 0)
+                                                -$ {{ number_format(
+                                                    $detalleRecibo['total_descuentos'],
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                ) }}
+                                            @else
+                                                $ 0
+                                            @endif
                                         </strong>
                                     </div>
 
                                     @if(($detalleRecibo['saldo_favor_generado'] ?? 0) > 0)
                                         <div>
                                             <span>Saldo a favor generado</span>
+
                                             <strong class="pagos-text-green">
                                                 $ {{ number_format(
                                                     $detalleRecibo['saldo_favor_generado'],
@@ -4646,7 +5338,8 @@
                                     @endif
 
                                     <div class="pagos-receipt-detail-total">
-                                        <span>Total recibido</span>
+                                        <span>Total pagado</span>
+
                                         <strong>
                                             $ {{ number_format(
                                                 $detalleRecibo['total_recibido'] ?? 0,
@@ -4790,26 +5483,46 @@
                         @if(
                             ! ($detalleRecibo['impresion']['ha_sido_impreso'] ?? false)
                         )
-                            <button
-                                type="button"
-                                class="
-                                    pagos-slideover-footer-button
-                                    pagos-slideover-footer-button-primary
-                                "
-                                wire:click="imprimirRecibo"
-                                wire:loading.attr="disabled"
-                                wire:target="imprimirRecibo"
+                            <form
+                                method="POST"
+                                action="{{ route(
+                                    'pagos.recibos.original',
+                                    $operacionDetalleReciboId
+                                ) }}"
+                                target="_blank"
                             >
-                                <x-heroicon-o-printer />
+                                @csrf
 
-                                <span wire:loading.remove wire:target="imprimirRecibo">
+                                <input
+                                    type="hidden"
+                                    name="student_id"
+                                    value="{{ $student_id }}"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="sede_id"
+                                    value="{{ $sede_id }}"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="periodo_lectivo_id"
+                                    value="{{ $periodo_lectivo_id }}"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="
+                                        pagos-slideover-footer-button
+                                        pagos-slideover-footer-button-primary
+                                    "
+                                    x-on:click="reciboPendienteDeActualizar = true"
+                                >
+                                    <x-heroicon-o-printer />
                                     Imprimir recibo
-                                </span>
-
-                                <span wire:loading wire:target="imprimirRecibo">
-                                    Registrando...
-                                </span>
-                            </button>
+                                </button>
+                            </form>
                         @else
                             <button
                                 type="button"
@@ -4847,46 +5560,239 @@
                     class="pagos-modal-card"
                     wire:click.stop
                 >
+                    <form
+                        method="POST"
+                        action="{{ route(
+                            'pagos.recibos.reimpresion',
+                            $operacionDetalleReciboId
+                        ) }}"
+                        target="_blank"
+                    >
+                        @csrf
+
+                        <input
+                            type="hidden"
+                            name="student_id"
+                            value="{{ $student_id }}"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="sede_id"
+                            value="{{ $sede_id }}"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="periodo_lectivo_id"
+                            value="{{ $periodo_lectivo_id }}"
+                        >
+
+                        {{-- ENCABEZADO --}}
+                        <div class="pagos-modal-header">
+                            <div>
+                                <span>Reimpresión</span>
+
+                                <h3>
+                                    Recibo N.º
+                                    {{ $detalleRecibo['numero_recibo'] ?? '—' }}
+                                </h3>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="pagos-slideover-close"
+                                wire:click="cerrarModalReimpresion"
+                            >
+                                <x-heroicon-o-x-mark />
+                            </button>
+                        </div>
+
+                        {{-- CUERPO --}}
+                        <div class="pagos-modal-body">
+                            <div class="pagos-field">
+                                <label>
+                                    Motivo de la reimpresión (opcional)
+                                </label>
+
+                                <textarea
+                                    name="motivo"
+                                    class="pagos-textarea"
+                                    rows="4"
+                                    placeholder="Ej.: Recibo extraviado por el acudiente."
+                                >{{ $motivoReimpresion }}</textarea>
+                            </div>
+
+                            <div class="pagos-reprint-preview">
+                                La copia se identificará como:
+
+                                <strong>
+                                    {{ $detalleRecibo['numero_recibo'] ?? '' }}-R{{
+                                        ($detalleRecibo['impresion']['cantidad_reimpresiones']
+                                            ?? 0) + 1
+                                    }}
+                                </strong>
+                            </div>
+                        </div>
+
+                        {{-- PIE --}}
+                        @if($modoModalAcuerdoPago === 'crear')
+
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="guardarAcuerdoPago"
+                                wire:loading.attr="disabled"
+                                wire:target="guardarAcuerdoPago,acuerdoEvidenciasNuevas"
+                            >
+                                <x-heroicon-o-check />
+
+                                <span
+                                    wire:loading.remove
+                                    wire:target="guardarAcuerdoPago"
+                                >
+                                    Guardar acuerdo
+                                </span>
+
+                                <span
+                                    wire:loading
+                                    wire:target="guardarAcuerdoPago"
+                                >
+                                    Guardando...
+                                </span>
+                            </button>
+
+                        @elseif($modoModalAcuerdoPago === 'editar')
+
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="actualizarAcuerdoPago"
+                                wire:loading.attr="disabled"
+                                wire:target="actualizarAcuerdoPago"
+                            >
+                                <x-heroicon-o-check />
+
+                                <span
+                                    wire:loading.remove
+                                    wire:target="actualizarAcuerdoPago"
+                                >
+                                    Guardar cambios
+                                </span>
+
+                                <span
+                                    wire:loading
+                                    wire:target="actualizarAcuerdoPago"
+                                >
+                                    Guardando...
+                                </span>
+                            </button>
+
+                        @elseif($modoModalAcuerdoPago === 'ver')
+
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="guardarEstadoAcuerdoPago"
+                                wire:loading.attr="disabled"
+                                wire:target="guardarEstadoAcuerdoPago"
+                            >
+                                <x-heroicon-o-check />
+
+                                <span
+                                    wire:loading.remove
+                                    wire:target="guardarEstadoAcuerdoPago"
+                                >
+                                    Guardar estado
+                                </span>
+
+                                <span
+                                    wire:loading
+                                    wire:target="guardarEstadoAcuerdoPago"
+                                >
+                                    Guardando...
+                                </span>
+                            </button>
+
+                        @endif
+
+                    </form>
+                </div>
+
+            </div>
+        @endif
+
+
+
+
+
+
+
+
+
+        @if($mostrarModalAnulacion)
+            <div
+                class="pagos-modal-backdrop"
+                wire:click.self="cerrarModalAnulacion"
+            >
+                <div class="pagos-modal-card">
                     <div class="pagos-modal-header">
                         <div>
-                            <span>Reimpresión</span>
+                            <span>Anulación de pago</span>
 
-                            <h3>
-                                Recibo N.º
-                                {{ $detalleRecibo['numero_recibo'] ?? '—' }}
-                            </h3>
+                            <h3>Confirmar anulación</h3>
                         </div>
 
                         <button
                             type="button"
                             class="pagos-slideover-close"
-                            wire:click="cerrarModalReimpresion"
+                            wire:click="cerrarModalAnulacion"
+                            title="Cerrar"
                         >
                             <x-heroicon-o-x-mark />
                         </button>
                     </div>
 
                     <div class="pagos-modal-body">
-                        <div class="pagos-field">
-                            <label>Motivo de la reimpresión (opcional)</label>
+                        <div class="pagos-anulacion-warning">
+                            <x-heroicon-o-exclamation-triangle
+                                class="pagos-anulacion-warning-icon"
+                            />
 
-                            <textarea
-                                class="pagos-textarea"
-                                rows="4"
-                                wire:model="motivoReimpresion"
-                                placeholder="Ej.: Recibo extraviado por el acudiente."
-                            ></textarea>
+                            <div>
+                                <strong>
+                                    Esta acción no elimina el recibo.
+                                </strong>
+
+                                <p>
+                                    Se restaurará la cartera del estudiante y la
+                                    operación permanecerá en el historial como anulada.
+                                </p>
+                            </div>
                         </div>
 
-                        <div class="pagos-reprint-preview">
-                            La copia se identificará como:
+                        <div class="pagos-field">
+                            <label for="motivo-anulacion">
+                                Motivo de anulación (opcional)
+                            </label>
 
-                            <strong>
-                                {{ $detalleRecibo['numero_recibo'] ?? '' }}-R{{
-                                    ($detalleRecibo['impresion']['cantidad_reimpresiones']
-                                        ?? 0) + 1
-                                }}
-                            </strong>
+                            <textarea
+                                id="motivo-anulacion"
+                                class="pagos-textarea"
+                                wire:model.defer="motivoAnulacion"
+                                rows="4"
+                                maxlength="1000"
+                                placeholder="Ej.: Pago registrado por error."
+                            ></textarea>
                         </div>
                     </div>
 
@@ -4897,7 +5803,7 @@
                                 pagos-slideover-footer-button
                                 pagos-slideover-footer-button-secondary
                             "
-                            wire:click="cerrarModalReimpresion"
+                            wire:click="cerrarModalAnulacion"
                         >
                             Cancelar
                         </button>
@@ -4906,33 +5812,548 @@
                             type="button"
                             class="
                                 pagos-slideover-footer-button
-                                pagos-slideover-footer-button-primary
+                                pagos-slideover-footer-button-danger
                             "
-                            wire:click="reimprimirRecibo"
+                            wire:click="anularOperacionPago"
                             wire:loading.attr="disabled"
-                            wire:target="reimprimirRecibo"
+                            wire:target="anularOperacionPago"
                         >
-                            <x-heroicon-o-printer />
+                            <x-heroicon-o-no-symbol />
 
                             <span
                                 wire:loading.remove
-                                wire:target="reimprimirRecibo"
+                                wire:target="anularOperacionPago"
                             >
-                                Generar reimpresión
+                                Anular pago
                             </span>
 
                             <span
                                 wire:loading
-                                wire:target="reimprimirRecibo"
+                                wire:target="anularOperacionPago"
                             >
-                                Registrando...
+                                Anulando...
                             </span>
                         </button>
                     </div>
                 </div>
-
             </div>
         @endif
+
+
+
+
+
+
+
+
+
+        
+
+        @if($mostrarModalAcuerdoPago)
+            <div
+                class="pagos-modal-backdrop"
+                wire:click.self="cerrarModalAcuerdoPago"
+            >
+                <div class="pagos-modal-card pagos-agreement-modal">
+
+                    {{-- ENCABEZADO --}}
+                    <div class="pagos-modal-header">
+                        <div>
+                            <span>Acuerdos de pago</span>
+
+                            <h3>
+                                {{ match ($modoModalAcuerdoPago) {
+                                    'ver' => 'Detalle del acuerdo',
+                                    'editar' => 'Editar acuerdo',
+                                    default => 'Nuevo acuerdo',
+                                } }}
+                            </h3>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="pagos-slideover-close"
+                            wire:click="cerrarModalAcuerdoPago"
+                            title="Cerrar"
+                        >
+                            <x-heroicon-o-x-mark />
+                        </button>
+                    </div>
+
+                    {{-- CUERPO --}}
+                    <div class="pagos-modal-body">
+                        <div class="pagos-agreement-modal-grid">
+
+                            {{-- PERSONA --}}
+                            <div class="pagos-field">
+                                <label>
+                                    Persona que realiza el acuerdo
+                                    <span class="pagos-required">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="pagos-input"
+                                    wire:model="acuerdoPersona"
+                                    maxlength="255"
+                                    placeholder="Ej.: Diana Cuéllar"
+                                    @readonly($modoModalAcuerdoPago === 'ver')
+                                >
+
+                                @error('acuerdoPersona')
+                                    <small class="pagos-field-error">
+                                        {{ $message }}
+                                    </small>
+                                @enderror
+                            </div>
+
+                            {{-- PARENTESCO --}}
+                            <div class="pagos-field">
+                                <label>Parentesco</label>
+
+                                <input
+                                    type="text"
+                                    class="pagos-input"
+                                    wire:model="acuerdoParentesco"
+                                    maxlength="100"
+                                    placeholder="Ej.: Madre"
+                                    @readonly($modoModalAcuerdoPago === 'ver')
+                                >
+                            </div>
+
+                            {{-- FECHA --}}
+                            <div class="pagos-field">
+                                <label>
+                                    Fecha de compromiso
+                                    <span class="pagos-required">*</span>
+                                </label>
+
+                                <input
+                                    type="date"
+                                    class="pagos-input"
+                                    wire:model="acuerdoFechaCompromiso"
+                                    @readonly($modoModalAcuerdoPago === 'ver')
+                                >
+
+                                @error('acuerdoFechaCompromiso')
+                                    <small class="pagos-field-error">
+                                        {{ $message }}
+                                    </small>
+                                @enderror
+                            </div>
+
+                            {{-- REGISTRADO POR --}}
+                            <div class="pagos-field">
+                                <label>Registrado por</label>
+
+                                <div class="pagos-agreement-user-info">
+                                    <x-heroicon-o-user />
+
+                                    <div>
+                                        <strong>
+                                            {{ auth()->user()?->name
+                                                ?? auth()->user()?->nombre
+                                                ?? 'Usuario no disponible' }}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ESTADO: SOLO EN MODO VER --}}
+                            @if($modoModalAcuerdoPago === 'ver')
+                                <div class="pagos-field">
+                                    <label>Estado del acuerdo</label>
+
+                                    <select
+                                        class="pagos-select pagos-select-estado"
+                                        wire:model="acuerdoEstado"
+                                    >
+                                        <option value="vigente">Vigente</option>
+                                        <option value="cumplido">Cumplido</option>
+                                        <option value="incumplido">Incumplido</option>
+                                        <option value="vencido">Vencido</option>
+                                        <option value="anulado">Anulado</option>
+                                    </select>
+                                </div>
+
+                                <div class="pagos-field">
+                                    <label>Última modificación</label>
+
+                                    <div class="pagos-agreement-user-info">
+                                        <x-heroicon-o-clock />
+
+                                        <div>
+                                            @if($acuerdoEstadoModificadoPor)
+                                                <strong>
+                                                    {{ $acuerdoEstadoModificadoPor }}
+                                                </strong>
+
+                                                <small>
+                                                    {{ $acuerdoEstadoModificadoEn }}
+                                                </small>
+                                            @else
+                                                <strong>
+                                                    Sin modificaciones
+                                                </strong>
+
+                                                <small>
+                                                    El acuerdo conserva su estado inicial.
+                                                </small>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- TEXTO DEL ACUERDO --}}
+                            <div class="pagos-field pagos-agreement-full">
+                                <label>
+                                    Acuerdo
+                                    <span class="pagos-required">*</span>
+                                </label>
+
+                                <textarea
+                                    class="pagos-textarea"
+                                    wire:model="acuerdoTexto"
+                                    rows="5"
+                                    maxlength="2000"
+                                    placeholder="Describa claramente el compromiso, fechas y condiciones acordadas."
+                                    @readonly($modoModalAcuerdoPago === 'ver')
+                                ></textarea>
+
+                                @error('acuerdoTexto')
+                                    <small class="pagos-field-error">
+                                        {{ $message }}
+                                    </small>
+                                @enderror
+                            </div>
+
+                            {{-- EVIDENCIAS --}}
+                            <div class="pagos-field pagos-agreement-full">
+                                <label>Evidencias</label>
+
+                                @if($modoModalAcuerdoPago === 'crear')
+
+                                    {{-- CARGA DE EVIDENCIAS --}}
+                                    <div
+                                        class="pagos-agreement-dropzone"
+                                        x-data="{ isDragging: false }"
+                                        x-on:dragover.prevent="isDragging = true"
+                                        x-on:dragleave.prevent="isDragging = false"
+                                        x-on:drop.prevent="
+                                            isDragging = false;
+                                            $refs.acuerdoEvidencias.files =
+                                                $event.dataTransfer.files;
+
+                                            $refs.acuerdoEvidencias.dispatchEvent(
+                                                new Event(
+                                                    'change',
+                                                    { bubbles: true }
+                                                )
+                                            );
+                                        "
+                                        x-bind:class="{
+                                            'is-dragging': isDragging
+                                        }"
+                                    >
+                                        <input
+                                            x-ref="acuerdoEvidencias"
+                                            id="acuerdo-evidencias"
+                                            type="file"
+                                            class="pagos-agreement-dropzone-input"
+                                            wire:model="acuerdoEvidenciasNuevas"
+                                            multiple
+                                            accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx"
+                                        >
+
+                                        <label
+                                            for="acuerdo-evidencias"
+                                            class="pagos-agreement-dropzone-content"
+                                        >
+                                            <span class="pagos-agreement-dropzone-icon">
+                                                <x-heroicon-o-arrow-up-tray />
+                                            </span>
+
+                                            <span class="pagos-agreement-dropzone-text">
+                                                <strong>
+                                                    Seleccionar o arrastrar evidencias
+                                                </strong>
+
+                                                <small>
+                                                    PDF, imágenes, Word o Excel
+                                                </small>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    @if($mensajeEvidencias)
+                                        <div class="pagos-upload-warning">
+                                            <x-heroicon-o-exclamation-circle />
+
+                                            <span>
+                                                {{ $mensajeEvidencias }}
+                                            </span>
+                                        </div>
+                                    @endif
+
+                                    <div
+                                        wire:loading
+                                        wire:target="acuerdoEvidenciasNuevas"
+                                        class="pagos-agreement-uploading"
+                                    >
+                                        Cargando archivos...
+                                    </div>
+
+                                    @error('acuerdoEvidencias')
+                                        <small class="pagos-field-error">
+                                            {{ $message }}
+                                        </small>
+                                    @enderror
+
+                                    @error('acuerdoEvidencias.*')
+                                        <small class="pagos-field-error">
+                                            {{ $message }}
+                                        </small>
+                                    @enderror
+
+                                    @if(! empty($acuerdoEvidencias))
+                                        <div class="pagos-agreement-files">
+                                            @foreach(
+                                                $acuerdoEvidencias
+                                                as $indice => $archivo
+                                            )
+                                                <div
+                                                    wire:key="evidencia-temporal-{{ $indice }}"
+                                                    class="pagos-agreement-file"
+                                                >
+                                                    <x-heroicon-o-document />
+
+                                                    <span
+                                                        class="pagos-agreement-file-name"
+                                                    >
+                                                        {{ $archivo->getClientOriginalName() }}
+                                                    </span>
+
+                                                    <button
+                                                        type="button"
+                                                        class="pagos-agreement-file-remove"
+                                                        wire:click="eliminarEvidenciaTemporal({{ $indice }})"
+                                                        title="Quitar archivo"
+                                                    >
+                                                        <x-heroicon-o-x-mark />
+                                                    </button>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+
+                                @else
+
+                                    {{-- EVIDENCIAS GUARDADAS --}}
+                                    <div class="pagos-agreement-saved-files">
+                                        @forelse(
+                                            $acuerdoEvidenciasGuardadas
+                                            as $evidencia
+                                        )
+                                            @php
+                                                $ruta =
+                                                    $evidencia['ruta']
+                                                    ?? null;
+
+                                                $tipo = strtolower(
+                                                    (string) (
+                                                        $evidencia['tipo_archivo']
+                                                        ?? ''
+                                                    )
+                                                );
+
+                                                $esImagen = str_starts_with(
+                                                    $tipo,
+                                                    'image/'
+                                                );
+
+                                                $url = $ruta
+                                                    ? \Illuminate\Support\Facades\Storage
+                                                        ::disk('public')
+                                                        ->url($ruta)
+                                                    : null;
+                                            @endphp
+
+                                            <article
+                                                class="pagos-agreement-saved-file"
+                                            >
+                                                @if($esImagen && $url)
+                                                    <a
+                                                        href="{{ $url }}"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        class="pagos-agreement-image-preview"
+                                                        title="Abrir imagen"
+                                                    >
+                                                        <img
+                                                            src="{{ $url }}"
+                                                            alt="{{ $evidencia['nombre_original'] ?? 'Evidencia' }}"
+                                                        >
+                                                    </a>
+                                                @else
+                                                    <a
+                                                        href="{{ $url ?: '#' }}"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        class="pagos-agreement-document-preview"
+                                                        title="Abrir archivo"
+                                                    >
+                                                        <x-heroicon-o-document />
+                                                    </a>
+                                                @endif
+
+                                                <div
+                                                    class="pagos-agreement-saved-file-info"
+                                                >
+                                                    <strong
+                                                        title="{{ $evidencia['nombre_original'] ?? 'Archivo' }}"
+                                                    >
+                                                        {{ $evidencia['nombre_original'] ?? 'Archivo' }}
+                                                    </strong>
+
+                                                    @if($url)
+                                                        <a
+                                                            href="{{ $url }}"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            <x-heroicon-o-arrow-top-right-on-square />
+
+                                                            Abrir archivo
+                                                        </a>
+                                                    @endif
+                                                </div>
+                                            </article>
+                                        @empty
+                                            <div class="pagos-muted-text">
+                                                El acuerdo no tiene evidencias adjuntas.
+                                            </div>
+                                        @endforelse
+                                    </div>
+
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- FOOTER --}}
+                    <div class="pagos-modal-footer">
+                        <button
+                            type="button"
+                            class="
+                                pagos-slideover-footer-button
+                                pagos-slideover-footer-button-secondary
+                            "
+                            wire:click="cerrarModalAcuerdoPago"
+                        >
+                            {{ $modoModalAcuerdoPago === 'ver'
+                                ? 'Cerrar'
+                                : 'Cancelar' }}
+                        </button>
+
+                        @if($modoModalAcuerdoPago === 'crear')
+
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="guardarAcuerdoPago"
+                                wire:loading.attr="disabled"
+                                wire:target="
+                                    guardarAcuerdoPago,
+                                    acuerdoEvidenciasNuevas
+                                "
+                            >
+                                <x-heroicon-o-check />
+
+                                <span
+                                    wire:loading.remove
+                                    wire:target="guardarAcuerdoPago"
+                                >
+                                    Guardar acuerdo
+                                </span>
+
+                                <span
+                                    wire:loading
+                                    wire:target="guardarAcuerdoPago"
+                                >
+                                    Guardando...
+                                </span>
+                            </button>
+
+                        @elseif($modoModalAcuerdoPago === 'editar')
+
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="actualizarAcuerdoPago"
+                                wire:loading.attr="disabled"
+                                wire:target="actualizarAcuerdoPago"
+                            >
+                                <x-heroicon-o-check />
+
+                                <span
+                                    wire:loading.remove
+                                    wire:target="actualizarAcuerdoPago"
+                                >
+                                    Guardar cambios
+                                </span>
+
+                                <span
+                                    wire:loading
+                                    wire:target="actualizarAcuerdoPago"
+                                >
+                                    Guardando...
+                                </span>
+                            </button>
+
+                        @elseif($modoModalAcuerdoPago === 'ver')
+
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:click="guardarEstadoAcuerdoPago"
+                                wire:loading.attr="disabled"
+                                wire:target="guardarEstadoAcuerdoPago"
+                            >
+                                <x-heroicon-o-check />
+
+                                <span
+                                    wire:loading.remove
+                                    wire:target="guardarEstadoAcuerdoPago"
+                                >
+                                    Guardar estado
+                                </span>
+
+                                <span
+                                    wire:loading
+                                    wire:target="guardarEstadoAcuerdoPago"
+                                >
+                                    Guardando...
+                                </span>
+                            </button>
+
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
+
+
+        
 
 
     </div>

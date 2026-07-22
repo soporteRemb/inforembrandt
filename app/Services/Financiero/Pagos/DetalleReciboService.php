@@ -6,6 +6,7 @@ use App\Models\OperacionPago;
 use App\Models\ReciboPago;
 
 use App\Services\Financiero\Pagos\ImpresionReciboService;
+use App\Services\Institucion\InstitucionService;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -13,6 +14,7 @@ class DetalleReciboService
 {
     public function __construct(
         protected ImpresionReciboService $impresionReciboService,
+        protected InstitucionService $institucionService,
     ) {
     }
 
@@ -26,6 +28,8 @@ class DetalleReciboService
             ->with([
                 'student.course',
                 'registradoPor',
+                'anuladoPor',
+
                 'recibos' => function ($query) {
                     $query
                         ->with([
@@ -168,6 +172,18 @@ class DetalleReciboService
             $student?->segundo_apellido,
         ])));
 
+        $institucion = $this->institucionService->datos($sedeId);
+
+
+
+        $valorObligaciones = round(
+            collect($lineas)->sum(
+                fn (array $linea) =>
+                    (float) ($linea['valor_aplicado'] ?? 0)
+            ),
+            2
+        );
+
         return [
             'operacion_id' => (int) $operacion->id,
             'numero_recibo' => $numeroRecibo,
@@ -187,6 +203,24 @@ class DetalleReciboService
                 default => ucfirst((string) $operacion->estado),
             },
 
+            'anulacion' => [
+                'esta_anulado' =>
+                    $operacion->estado ===
+                    OperacionPago::ESTADO_ANULADA,
+
+                'anulado_por' =>
+                    $operacion->anuladoPor?->name
+                    ?? $operacion->anuladoPor?->nombre
+                    ?? null,
+
+                'anulado_en' =>
+                    $operacion->anulado_en
+                        ?->format('d/m/Y h:i a'),
+
+                'motivo' =>
+                    $operacion->motivo_anulacion,
+            ],
+
             'recibido_de' => $operacion->recibido_de,
 
             'registrado_por' =>
@@ -203,9 +237,50 @@ class DetalleReciboService
                 'curso' => $student?->course?->curso,
             ],
 
+            /*
+            |--------------------------------------------------------------------------
+            | Información institucional
+            |--------------------------------------------------------------------------
+            */
+            'institucion' => [
+                'id' => $institucion['id'],
+
+                'nombre' => $institucion['nombre'],
+
+                // Por ahora el nombre de la sede coincide con el nombre.
+                // Más adelante podremos diferenciar razón social y sede.
+                'sede' => $institucion['nombre'],
+
+                'codigo' => $institucion['codigo'],
+
+                'direccion' => $institucion['direccion'],
+
+                'telefono' => $institucion['telefono'],
+
+                'email' => $institucion['email'],
+
+                'nit' => $institucion['nit'],
+
+                'logo' => $institucion['logo'],
+
+                'pie_documentos' => $institucion['pie_documentos'],
+
+                'representante_legal' => $institucion['representante_legal'],
+
+                'cargo_representante' => $institucion['cargo_representante'],
+
+                'informacion_legal' => $institucion['informacion_legal'],
+
+                'prefijo_documentos' => $institucion['prefijo_documentos'],
+            ],
+
             'subtotal' => (float) $operacion->subtotal,
+
+            'valor_obligaciones' => $valorObligaciones,
+
             'total_descuentos' =>
                 (float) $operacion->total_descuentos,
+
             'total_recibido' =>
                 (float) $operacion->total_recibido,
 
