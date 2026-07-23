@@ -20,50 +20,88 @@ class VencimientosRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('mes')
-                    ->label('Mes')
-                    ->options([
-                        'ENERO' => 'Enero',
-                        'FEBRERO' => 'Febrero',
-                        'MARZO' => 'Marzo',
-                        'ABRIL' => 'Abril',
-                        'MAYO' => 'Mayo',
-                        'JUNIO' => 'Junio',
-                        'JULIO' => 'Julio',
-                        'AGOSTO' => 'Agosto',
-                        'SEPTIEMBRE' => 'Septiembre',
-                        'OCTUBRE' => 'Octubre',
-                        'NOVIEMBRE' => 'Noviembre',
-                        'DICIEMBRE' => 'Diciembre',
-                    ])
-                    ->required(),
 
+                Forms\Components\Hidden::make('mes')
+                    ->dehydrateStateUsing(function ($state, Forms\Get $get) {
+                        $fecha = $get('fecha_vencimiento');
+
+                        if (! $fecha) {
+                            return 'SIN_MES';
+                        }
+
+                        return mb_strtoupper(
+                            \Carbon\Carbon::parse($fecha)
+                                ->locale('es')
+                                ->translatedFormat('F')
+                        );
+                    }),
+                    
                 Forms\Components\DatePicker::make('fecha_vencimiento')
                     ->label('Vencimiento')
                     ->native(false)
-                    ->displayFormat('d/m/Y'),
+                    ->displayFormat('d/m/Y')
+                    ->required(),
 
-                Forms\Components\Select::make('tipo_limite_extemporaneo_id')
+                Forms\Components\Select::make(
+                    'tipo_limite_extemporaneo_id'
+                )
                     ->label('Tipo')
-                    ->options(fn () => TipoLimiteExtemporaneo::query()
-                        ->where('activo', true)
-                        ->orderBy('orden')
-                        ->pluck('nombre', 'id'))
+                    ->options(
+                        fn () =>
+                            TipoLimiteExtemporaneo::query()
+                                ->where('activo', true)
+                                ->orderBy('orden')
+                                ->pluck('nombre', 'id')
+                    )
                     ->searchable()
                     ->preload()
                     ->required()
                     ->rules([
-                        function (Forms\Get $get, ?AsignacionConceptoVencimiento $record) {
-                            return function (string $attribute, $value, \Closure $fail) use ($get, $record) {
-                                $existe = AsignacionConceptoVencimiento::query()
-                                    ->where('asignacion_concepto_id', $this->ownerRecord->id)
-                                    ->where('mes', $get('mes'))
-                                    ->where('tipo_limite_extemporaneo_id', $value)
-                                    ->when($record, fn ($query) => $query->where('id', '!=', $record->id))
-                                    ->exists();
+                        function (
+                            Forms\Get $get,
+                            ?AsignacionConceptoVencimiento $record
+                        ) {
+                            return function (
+                                string $attribute,
+                                $value,
+                                \Closure $fail
+                            ) use ($get, $record) {
+                                $fechaVencimiento =
+                                    $get('fecha_vencimiento');
+
+                                if (! $fechaVencimiento) {
+                                    return;
+                                }
+
+                                $existe =
+                                    AsignacionConceptoVencimiento::query()
+                                        ->where(
+                                            'asignacion_concepto_id',
+                                            $this->ownerRecord->id
+                                        )
+                                        ->whereDate(
+                                            'fecha_vencimiento',
+                                            $fechaVencimiento
+                                        )
+                                        ->where(
+                                            'tipo_limite_extemporaneo_id',
+                                            $value
+                                        )
+                                        ->when(
+                                            $record,
+                                            fn ($query) =>
+                                                $query->where(
+                                                    'id',
+                                                    '!=',
+                                                    $record->id
+                                                )
+                                        )
+                                        ->exists();
 
                                 if ($existe) {
-                                    $fail('Ya existe una tarifa para este mes y este tipo de límite.');
+                                    $fail(
+                                        'Ya existe una tarifa para esta fecha y este tipo de límite.'
+                                    );
                                 }
                             };
                         },
@@ -79,13 +117,26 @@ class VencimientosRelationManager extends RelationManager
                         }
 
                         return fmod((float) $state, 1) == 0
-                            ? number_format((float) $state, 0, '', '')
-                            : str_replace('.', ',', (string) $state);
+                            ? number_format(
+                                (float) $state,
+                                0,
+                                '',
+                                ''
+                            )
+                            : str_replace(
+                                '.',
+                                ',',
+                                (string) $state
+                            );
                     })
-                    ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
+                    ->dehydrateStateUsing(
+                        fn ($state) =>
+                            str_replace(',', '.', $state)
+                    )
                     ->rule('regex:/^\d+(,\d{1,2})?$/')
                     ->validationMessages([
-                        'regex' => 'Ingrese el valor sin puntos. Use coma solo si necesita decimales.',
+                        'regex' =>
+                            'Ingrese el valor sin puntos. Use coma solo si necesita decimales.',
                     ])
                     ->default(0)
                     ->required(),
@@ -95,33 +146,28 @@ class VencimientosRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) =>
-                $query->with('tipoLimiteExtemporaneo')
-                    ->leftJoin(
-                        'tipo_limite_extemporaneos',
-                        'asignacion_concepto_vencimientos.tipo_limite_extemporaneo_id',
-                        '=',
-                        'tipo_limite_extemporaneos.id'
-                    )
-                    ->select('asignacion_concepto_vencimientos.*')
-                    ->orderByRaw("
-                        FIELD(
-                            asignacion_concepto_vencimientos.mes,
-                            'ENERO',
-                            'FEBRERO',
-                            'MARZO',
-                            'ABRIL',
-                            'MAYO',
-                            'JUNIO',
-                            'JULIO',
-                            'AGOSTO',
-                            'SEPTIEMBRE',
-                            'OCTUBRE',
-                            'NOVIEMBRE',
-                            'DICIEMBRE'
+            ->modifyQueryUsing(
+                fn ($query) =>
+                    $query
+                        ->with('tipoLimiteExtemporaneo')
+                        ->leftJoin(
+                            'tipo_limite_extemporaneos',
+                            'asignacion_concepto_vencimientos.tipo_limite_extemporaneo_id',
+                            '=',
+                            'tipo_limite_extemporaneos.id'
                         )
-                    ")
-                    ->orderBy('tipo_limite_extemporaneos.orden')
+                        ->select(
+                            'asignacion_concepto_vencimientos.*'
+                        )
+                        ->orderBy(
+                            'asignacion_concepto_vencimientos.fecha_vencimiento'
+                        )
+                        ->orderBy(
+                            'tipo_limite_extemporaneos.orden'
+                        )
+                        ->orderBy(
+                            'asignacion_concepto_vencimientos.id'
+                        )
             )
             ->striped()
             ->heading('')
@@ -130,28 +176,41 @@ class VencimientosRelationManager extends RelationManager
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->label('Agregar tarifa')
-                    ->modalHeading('Nueva tarifa extemporánea')
-                    ->modalSubmitActionLabel('Guardar tarifa')
+                    ->modalHeading(
+                        'Nueva tarifa extemporánea'
+                    )
+                    ->modalSubmitActionLabel(
+                        'Guardar tarifa'
+                    )
                     ->color('danger'),
             ])
             ->columns([
-                Tables\Columns\TextColumn::make('mes')
-                    ->label('Mes')
-                    ->badge()
-                    ->color('warning'),
-
-                Tables\Columns\TextColumn::make('fecha_vencimiento')
+                Tables\Columns\TextColumn::make(
+                    'fecha_vencimiento'
+                )
                     ->label('Vencimiento')
-                    ->date('d/m/Y'),
+                    ->date('d/m/Y')
+                    ->sortable(),
 
-                Tables\Columns\TextColumn::make('tipoLimiteExtemporaneo.nombre')
+                Tables\Columns\TextColumn::make(
+                    'tipoLimiteExtemporaneo.nombre'
+                )
                     ->label('Tipo')
                     ->badge()
                     ->color('info'),
 
                 Tables\Columns\TextColumn::make('valor')
                     ->label('Valor')
-                    ->formatStateUsing(fn ($state) => '$' . number_format($state, 0, ',', '.'))
+                    ->formatStateUsing(
+                        fn ($state) =>
+                            '$'
+                            . number_format(
+                                (float) $state,
+                                0,
+                                ',',
+                                '.'
+                            )
+                    )
                     ->alignEnd(),
             ])
             ->actions([

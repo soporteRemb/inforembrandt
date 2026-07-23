@@ -220,8 +220,7 @@ class AsignacionConceptoResource extends Resource
                     ->alignEnd()
                     ->sortable(),
 
-                Forms\Components\Hidden::make('tarifa_extemporanea')
-                    ->default(0),
+                
 
                 Tables\Columns\TextColumn::make('orden')
                     ->label('Orden')

@@ -5,7 +5,10 @@ namespace App\Services\Financiero\Pagos;
 use App\Models\AplicacionPago;
 use App\Models\MovimientoCarteraEstudiante;
 use App\Models\ReciboPago;
+
 use Illuminate\Validation\ValidationException;
+
+use Carbon\CarbonInterface;
 
 class AplicarPagoCarteraService
 {
@@ -19,6 +22,13 @@ class AplicarPagoCarteraService
      * No modifica el valor histórico de la causación. La deuda pendiente
      * siempre se calcula a partir de las aplicaciones confirmadas.
      */
+
+    public function __construct(
+        protected CalcularValorVigenteObligacionService $calculador,
+    ) {
+    }
+
+
     public function aplicar(
         ReciboPago $recibo,
         int $movimientoId,
@@ -26,7 +36,10 @@ class AplicarPagoCarteraService
         int $sedeId,
         int $periodoLectivoId,
         float $valorSolicitado,
+        CarbonInterface $fechaCorte,
     ): AplicacionPago {
+
+
         /*
         |--------------------------------------------------------------------------
         | Bloquear la obligación
@@ -50,31 +63,37 @@ class AplicarPagoCarteraService
             ]);
         }
 
+        $movimiento->load([
+            'conceptoCobro',
+            'aplicacionesPago.reciboPago',
+        ]);
+
         /*
         |--------------------------------------------------------------------------
-        | Pagos confirmados ya aplicados
+        | Recalcular el saldo vigente dentro del bloqueo
         |--------------------------------------------------------------------------
-        | Los recibos anulados no disminuyen la obligación.
+        |
+        | No confiamos únicamente en la información que llegó desde la pantalla.
+        | Aquí se vuelve a calcular con:
+        |
+        | - valor original o personalizado;
+        | - tarifa extemporánea aplicable;
+        | - pagos que todavía continúan confirmados;
+        | - fecha real de la operación.
         */
-        $valorAplicadoAnterior = (float) AplicacionPago::query()
-            ->where(
-                'movimiento_cartera_estudiante_id',
-                $movimiento->id
-            )
-            ->whereHas('reciboPago', function ($query) {
-                $query->where(
-                    'estado',
-                    ReciboPago::ESTADO_CONFIRMADO
-                );
-            })
-            ->sum('valor_aplicado');
-
-        $valorObligacion = (float) $movimiento->valor;
-
-        $saldoAnterior = max(
-            0,
-            round($valorObligacion - $valorAplicadoAnterior, 2)
+        $calculo = $this->calculador->calcular(
+            movimiento: $movimiento,
+            fechaCorte: $fechaCorte,
         );
+
+        $saldoAnterior = round(
+            (float) (
+                $calculo['saldo_pendiente']
+                ?? 0
+            ),
+            2
+        );
+        
 
         if ($saldoAnterior <= 0) {
             throw ValidationException::withMessages([

@@ -7,6 +7,7 @@ use App\Models\ConceptoCobro;
 use App\Models\PeriodoLectivo;
 use App\Models\Sede;
 use App\Models\MovimientoCarteraEstudiante;
+use App\Models\ReciboPago;
 
 
 use App\Services\Financiero\CausacionCostosService;
@@ -76,6 +77,16 @@ class CausacionCostos extends Page
     public array $historialCausaciones = [];
 
     public bool $mostrarModalReversar = false;
+
+    public bool $mostrarModalReversionBloqueada = false;
+
+    public array $detalleReversionBloqueada = [
+        'concepto' => '',
+        'grado' => '',
+        'mes' => '',
+        'estudiantes_con_pagos' => 0,
+        'movimientos_con_pagos' => 0,
+    ];
 
     public string $motivoReversion = '';
 
@@ -482,6 +493,40 @@ class CausacionCostos extends Page
     }
 
 
+    private function obtenerMovimientosConPagosConfirmados(
+        int $conceptoId,
+        string $grado,
+        ?int $mesNumero
+    ) {
+        return MovimientoCarteraEstudiante::query()
+            ->where('sede_id', $this->sede_id)
+            ->where(
+                'periodo_lectivo_id',
+                $this->periodo_lectivo_id
+            )
+            ->when(
+                $grado !== 'todos',
+                fn ($query) =>
+                    $query->where('grado', $grado)
+            )
+            ->where('concepto_cobro_id', $conceptoId)
+            ->where('mes_numero', $mesNumero)
+            ->where('tipo_movimiento', 'causacion')
+            ->where('estado', 'activo')
+            ->whereHas(
+                'aplicacionesPago.reciboPago',
+                function ($query) {
+                    $query->where(
+                        'estado',
+                        ReciboPago::ESTADO_CONFIRMADO
+                    );
+                }
+            )
+            ->get();
+    }
+
+
+
     public function reversar(): void
     {
         $obligatorioListo = $this->grado_obligatorio && $this->concepto_obligatorio_id;
@@ -550,6 +595,53 @@ class CausacionCostos extends Page
             return;
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Bloquear reversa cuando existen pagos confirmados
+        |--------------------------------------------------------------------------
+        */
+        $movimientosConPagos =
+            $this->obtenerMovimientosConPagosConfirmados(
+                conceptoId: (int) $conceptoId,
+                grado: (string) $grado,
+                mesNumero: $mesNumero,
+            );
+
+        if ($movimientosConPagos->isNotEmpty()) {
+            $concepto = ConceptoCobro::find($conceptoId);
+
+            $this->detalleReversionBloqueada = [
+                'concepto' =>
+                    ($concepto?->codigo ?? '')
+                    . ' - '
+                    . ($concepto?->descripcion ?? ''),
+
+                'grado' =>
+                    $grado === 'todos'
+                        ? 'Todos los grados'
+                        : (string) $grado,
+
+                'mes' =>
+                    $mesNumero
+                        ? ($this->meses[$mesNumero] ?? '-')
+                        : '-',
+
+                'estudiantes_con_pagos' =>
+                    $movimientosConPagos
+                        ->pluck('student_id')
+                        ->unique()
+                        ->count(),
+
+                'movimientos_con_pagos' =>
+                    $movimientosConPagos->count(),
+            ];
+
+            $this->mostrarModalReversionBloqueada = true;
+
+            return;
+        }
+
         $concepto = ConceptoCobro::find($conceptoId);
 
         $this->confirmacionReversion = [
@@ -589,6 +681,56 @@ class CausacionCostos extends Page
         $mesNumero = $obligatorioListo && $this->conceptoObligatorioEsPension() && $this->mes_pension
             ? (int) $this->mes_pension
             : null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Segunda validación de seguridad
+        |--------------------------------------------------------------------------
+        |
+        | Se repite dentro de la confirmación porque un pago pudo registrarse
+        | después de abrir el modal.
+        */
+        $movimientosConPagos =
+            $this->obtenerMovimientosConPagosConfirmados(
+                conceptoId: (int) $conceptoId,
+                grado: (string) $grado,
+                mesNumero: $mesNumero,
+            );
+
+        if ($movimientosConPagos->isNotEmpty()) {
+            $concepto = ConceptoCobro::find($conceptoId);
+
+            $this->detalleReversionBloqueada = [
+                'concepto' =>
+                    ($concepto?->codigo ?? '')
+                    . ' - '
+                    . ($concepto?->descripcion ?? ''),
+
+                'grado' =>
+                    $grado === 'todos'
+                        ? 'Todos los grados'
+                        : (string) $grado,
+
+                'mes' =>
+                    $mesNumero
+                        ? ($this->meses[$mesNumero] ?? '-')
+                        : '-',
+
+                'estudiantes_con_pagos' =>
+                    $movimientosConPagos
+                        ->pluck('student_id')
+                        ->unique()
+                        ->count(),
+
+                'movimientos_con_pagos' =>
+                    $movimientosConPagos->count(),
+            ];
+
+            $this->mostrarModalReversar = false;
+            $this->mostrarModalReversionBloqueada = true;
+
+            return;
+        }    
 
         $mesesPosterioresTexto = null;
 

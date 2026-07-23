@@ -71,6 +71,31 @@ class CrearReciboPagoService
             ]);
         }
 
+
+
+        $valorOriginal = round(
+            (float) (
+                $fila['valor_original']
+                ?? $fila['valor_vigente']
+                ?? $fila['saldo_anterior']
+                ?? 0
+            ),
+            2
+        );
+
+        $valorVigente = round(
+            (float) (
+                $fila['valor_vigente']
+                ?? $fila['saldo_anterior']
+                ?? 0
+            ),
+            2
+        );
+
+        $tipoLimiteExtemporaneoId =
+            ! empty($fila['tipo_limite_extemporaneo_id'])
+                ? (int) $fila['tipo_limite_extemporaneo_id']
+                : null;
         /*
         |--------------------------------------------------------------------------
         | Crear la línea del recibo
@@ -100,17 +125,14 @@ class CrearReciboPagoService
              * Son valores provisionales. Luego se reemplazan con los saldos
              * reales obtenidos al bloquear y aplicar la obligación.
              */
-            'valor_ordinario' => round(
-                (float) ($fila['saldo_anterior'] ?? 0),
-                2
-            ),
+            'valor_ordinario' =>
+                $valorOriginal,
 
-            'tipo_limite_extemporaneo_id' => null,
+            'tipo_limite_extemporaneo_id' =>
+                $tipoLimiteExtemporaneoId,
 
-            'valor_vigente' => round(
-                (float) ($fila['saldo_anterior'] ?? 0),
-                2
-            ),
+            'valor_vigente' =>
+                $valorVigente,
 
             'penalizacion' => 0,
             'descuento' => $descuento,
@@ -169,6 +191,7 @@ class CrearReciboPagoService
             sedeId: (int) $operacion->sede_id,
             periodoLectivoId: (int) $operacion->periodo_lectivo_id,
             valorSolicitado: $valorSolicitadoAplicar,
+            fechaCorte: $fechaPago,
         );
 
         /*
@@ -214,10 +237,23 @@ class CrearReciboPagoService
         |--------------------------------------------------------------------------
         */
         $recibo->update([
-            'valor_ordinario' => $saldoAnteriorReal,
-            'valor_vigente' => $saldoAnteriorReal,
-            'valor_aplicado' => $valorAplicadoReal,
-            'saldo_favor_generado' => $saldoFavorGenerado,
+            'valor_ordinario' =>
+                $valorOriginal,
+
+            'tipo_limite_extemporaneo_id' =>
+                $tipoLimiteExtemporaneoId,
+
+            'valor_vigente' =>
+                $valorVigente,
+
+            'penalizacion' =>
+                0,
+
+            'valor_aplicado' =>
+                $valorAplicadoReal,
+
+            'saldo_favor_generado' =>
+                $saldoFavorGenerado,
         ]);
 
         /*

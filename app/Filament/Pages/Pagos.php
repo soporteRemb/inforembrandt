@@ -14,8 +14,11 @@ use App\Services\Financiero\Pagos\AcuerdosPagoService;
 use App\Services\Financiero\Pagos\CrearAcuerdoPagoService;
 use App\Services\Financiero\Pagos\ActualizarEstadoAcuerdoPagoService;
 use App\Services\Financiero\Pagos\ActualizarAcuerdoPagoService;
+use App\Services\Financiero\Pagos\BuscarReciboGlobalService;
+
 
 use App\Services\Financiero\Pagos\Pdf\ReciboPdfService;
+use App\Services\Financiero\Pagos\Pdf\ExtractoPdfService;
 
 use Filament\Pages\Page;
 
@@ -191,6 +194,12 @@ class Pagos extends Page
     public ?string $filtroAcuerdoHasta = null;
 
     public array $acuerdosPagoOriginales = [];
+
+    public bool $mostrarModalBuscarRecibo = false;
+
+    public string $numeroReciboBusqueda = '';
+
+    public ?string $urlExtractoGenerado = null;
     
 
     /*
@@ -293,6 +302,9 @@ class Pagos extends Page
         }
 
         $this->colaPagos = [];
+        $this->secuenciaCola = 0;
+        $this->recibiDe = '';
+        $this->detallePago = '';
 
         $student = app(PagosService::class)
             ->cartera()
@@ -529,6 +541,8 @@ class Pagos extends Page
 
         $this->colaPagos = [];
         $this->secuenciaCola = 0;
+        $this->recibiDe = '';
+        $this->detallePago = '';
 
         $this->ultimoNumeroRecibo = null;
         $this->ultimaOperacionPagoId = null;
@@ -782,6 +796,35 @@ class Pagos extends Page
             'movimiento_id' => (int) $obligacion['id'],
             'concepto_cobro_id' => $obligacion['concepto_cobro_id'] ?? null,
 
+            'valor_original' => (float) (
+                $obligacion['valor_original']
+                ?? $obligacion['valor_base']
+                ?? 0
+            ),
+
+            'valor_vigente' => (float) (
+                $obligacion['valor_vigente']
+                ?? $obligacion['valor_causado']
+                ?? 0
+            ),
+
+            'aumento_extemporaneo' => (float) (
+                $obligacion['aumento_extemporaneo']
+                ?? 0
+            ),
+
+            'tipo_limite_extemporaneo_id' =>
+                $obligacion['tipo_limite_extemporaneo_id']
+                ?? null,
+
+            'tipo_limite_texto' =>
+                $obligacion['tipo_limite_texto']
+                ?? null,
+
+            'fecha_vencimiento_aplicada' =>
+                $obligacion['fecha_vencimiento_aplicada']
+                ?? null,
+
             'concepto' => $obligacion['concepto'],
             'mes' => $obligacion['mes'] ?? '',
             'mes_numero' => $obligacion['mes_numero'] ?? null,
@@ -835,6 +878,23 @@ class Pagos extends Page
     public function limpiarColaPagos(): void
     {
         $this->colaPagos = [];
+        $this->secuenciaCola = 0;
+
+        /*
+        * Se cancela completamente la transacción actual.
+        */
+        $this->recibiDe = '';
+        $this->detallePago = '';
+
+        $this->limpiarFormularioPago();
+
+        unset(
+            $this->subtotalCola,
+            $this->descuentosCola,
+            $this->totalAplicadoCola,
+            $this->saldoFavorGeneradoCola,
+            $this->puedeConfirmarCola,
+        );
     }
 
     public function confirmarPagos(
@@ -913,10 +973,7 @@ class Pagos extends Page
 
             $this->limpiarFormularioPago();
 
-            /*
-            * Recibí de también se limpia porque la operación ya fue confirmada.
-            */
-            $this->recibiDe = '';
+            
 
             /*
             |--------------------------------------------------------------------------
@@ -929,6 +986,13 @@ class Pagos extends Page
             | - el historial incluye el recibo recién registrado.
             */
             $this->seleccionarEstudiante($studentId);
+
+            /*
+            * La operación anterior terminó. La próxima atención comienza
+            * sin conservar la persona de quien se recibió el dinero.
+            */
+            $this->recibiDe = '';
+            $this->detallePago = '';
 
             /*
             * seleccionarEstudiante() puede limpiar propiedades de la atención.
@@ -2272,5 +2336,179 @@ class Pagos extends Page
         $this->aplicarFiltrosAcuerdos();
     }
 
+
+    public function abrirModalBuscarRecibo(): void
+    {
+        $this->numeroReciboBusqueda = '';
+
+        $this->resetValidation(
+            'numeroReciboBusqueda'
+        );
+
+        $this->mostrarModalBuscarRecibo = true;
+    }
+
+    public function cerrarModalBuscarRecibo(): void
+    {
+        $this->mostrarModalBuscarRecibo = false;
+        $this->numeroReciboBusqueda = '';
+
+        $this->resetValidation(
+            'numeroReciboBusqueda'
+        );
+    }
+
+    public function buscarReciboParaImprimir(
+        BuscarReciboGlobalService $buscarReciboService,
+        DetalleReciboService $detalleReciboService,
+    ): void {
+        $datos = $this->validate(
+            [
+                'numeroReciboBusqueda' => [
+                    'required',
+                    'string',
+                    'max:30',
+                ],
+            ],
+            [
+                'numeroReciboBusqueda.required' =>
+                    'Ingrese el número del recibo.',
+            ]
+        );
+
+        if (
+            ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            Notification::make()
+                ->title('No se encontró el contexto de trabajo.')
+                ->body(
+                    'No fue posible identificar la sede y el periodo lectivo activos.'
+                )
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $resultado = $buscarReciboService->buscar(
+            numeroRecibo:
+                (string) $datos['numeroReciboBusqueda'],
+
+            sedeId:
+                (int) $this->sede_id,
+
+            periodoLectivoId:
+                (int) $this->periodo_lectivo_id,
+        );
+
+        if (! $resultado) {
+            Notification::make()
+                ->title('Recibo no encontrado.')
+                ->body(
+                    'No existe un recibo con ese número en la sede y el periodo lectivo activos.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cargar automáticamente el estudiante asociado al recibo
+        |--------------------------------------------------------------------------
+        */
+        $this->seleccionarEstudiante(
+            (int) $resultado['student_id']
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cerrar el buscador y abrir el resumen existente
+        |--------------------------------------------------------------------------
+        */
+        $this->cerrarModalBuscarRecibo();
+
+        $this->abrirDetalleRecibo(
+            operacionPagoId:
+                (int) $resultado['operacion_pago_id'],
+
+            detalleReciboService:
+                $detalleReciboService,
+        );
+    }
+
+    public function generarExtracto(
+        ExtractoPdfService $extractoPdfService,
+    ): void {
+        if (
+            ! $this->student_id
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            Notification::make()
+                ->title('Seleccione un estudiante.')
+                ->body(
+                    'Debe seleccionar un estudiante para generar el extracto de cartera.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $usuarioId = auth()->id();
+
+        if (! $usuarioId) {
+            Notification::make()
+                ->title('No se encontró el usuario de la sesión.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        try {
+            $resultado = $extractoPdfService->generar(
+                studentId: (int) $this->student_id,
+                sedeId: (int) $this->sede_id,
+                periodoLectivoId: (int) $this->periodo_lectivo_id,
+                generadoPor: (int) $usuarioId,
+            );
+
+            $url = (string) (
+                $resultado['url']
+                ?? ''
+            );
+
+            if ($url === '') {
+                throw new \RuntimeException(
+                    'El servicio no devolvió la URL del extracto.'
+                );
+            }
+
+            $this->urlExtractoGenerado = $url;
+
+            $this->js("
+                window.open('{$url}', '_blank');
+            ");
+
+            Notification::make()
+                ->title('Extracto generado correctamente.')
+                ->success()
+                ->send();
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            Notification::make()
+                ->title('No fue posible generar el extracto.')
+                ->body(
+                    'Revise la información financiera del estudiante e intente nuevamente.'
+                )
+                ->danger()
+                ->send();
+        }
+    }
 
 }

@@ -3515,6 +3515,91 @@
         }
 
 
+        .pagos-receipt-search-modal {
+            width: min(440px, calc(100vw - 32px));
+        }
+
+        .pagos-top-action-disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .pagos-top-action-disabled small {
+            margin-left: 5px;
+            color: #94a3b8;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+
+
+        /* =========================================================
+        ACCIONES SUPERIORES DE PAGOS
+        ========================================================= */
+
+        .pagos-header-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 9px;
+            flex-wrap: wrap;
+        }
+
+        .pagos-header-action {
+            min-height: 35px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+
+            padding: 7px 12px;
+
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+
+            background: #ffffff;
+            color: #334155;
+
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+
+            cursor: pointer;
+
+            transition:
+                background-color 0.16s ease,
+                border-color 0.16s ease,
+                color 0.16s ease;
+        }
+
+        .pagos-header-action:hover:not(:disabled) {
+            border-color: #93c5fd;
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .pagos-header-action > svg {
+            width: 16px !important;
+            height: 16px !important;
+            min-width: 16px;
+            flex: 0 0 16px;
+        }
+
+        .pagos-header-action small {
+            margin-left: 2px;
+            color: #94a3b8;
+            font-size: 8px;
+            font-weight: 600;
+        }
+
+        .pagos-header-action:disabled,
+        .pagos-header-action-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+
+
     </style>
 
 
@@ -3539,15 +3624,54 @@
             </div>
 
             <div class="pagos-header-actions">
-                <button type="button" class="pagos-btn pagos-btn-outline-blue">
-                    <x-heroicon-o-document-chart-bar class="pagos-btn-icon" />
-                    Extracto
+                <button
+                    type="button"
+                    class="pagos-header-action"
+                    wire:click="generarExtracto"
+                    wire:loading.attr="disabled"
+                    wire:target="generarExtracto"
+                    @disabled(! $student_id)
+                    title="Generar extracto de cartera"
+                >
+                    <x-heroicon-o-document-text />
+
+                    <span
+                        wire:loading.remove
+                        wire:target="generarExtracto"
+                    >
+                        Extracto
+                    </span>
+
+                    <span
+                        wire:loading
+                        wire:target="generarExtracto"
+                    >
+                        Generando...
+                    </span>
                 </button>
 
-                <button type="button" class="pagos-btn pagos-btn-outline-dark">
-                    <x-heroicon-o-printer class="pagos-btn-icon" />
-                    Imprimir / Reimprimir
-                    <x-heroicon-o-chevron-down class="pagos-btn-chevron" />
+                <button
+                    type="button"
+                    class="pagos-header-action"
+                    wire:click="abrirModalBuscarRecibo"
+                    title="Buscar un recibo para imprimir o reimprimir"
+                >
+                    <x-heroicon-o-printer />
+
+                    <span>Imprimir / Reimprimir</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="pagos-header-action pagos-header-action-disabled"
+                    disabled
+                    title="Función disponible próximamente"
+                >
+                    <x-heroicon-o-building-library />
+
+                    <span>Importar bancos</span>
+
+                    <small>Próximamente</small>
                 </button>
             </div>
         </div>
@@ -3887,7 +4011,7 @@
 
                                 <div class="pagos-field">
                                     <label>
-                                        Valor que paga
+                                        Valor
                                         <span class="pagos-required">*</span>
                                     </label>
 
@@ -5636,94 +5760,36 @@
                         </div>
 
                         {{-- PIE --}}
-                        @if($modoModalAcuerdoPago === 'crear')
-
+                        <div class="pagos-modal-footer">
                             <button
                                 type="button"
                                 class="
                                     pagos-slideover-footer-button
-                                    pagos-slideover-footer-button-primary
+                                    pagos-slideover-footer-button-secondary
                                 "
-                                wire:click="guardarAcuerdoPago"
-                                wire:loading.attr="disabled"
-                                wire:target="guardarAcuerdoPago,acuerdoEvidenciasNuevas"
+                                wire:click="cerrarModalReimpresion"
                             >
-                                <x-heroicon-o-check />
-
-                                <span
-                                    wire:loading.remove
-                                    wire:target="guardarAcuerdoPago"
-                                >
-                                    Guardar acuerdo
-                                </span>
-
-                                <span
-                                    wire:loading
-                                    wire:target="guardarAcuerdoPago"
-                                >
-                                    Guardando...
-                                </span>
+                                Cancelar
                             </button>
 
-                        @elseif($modoModalAcuerdoPago === 'editar')
-
                             <button
-                                type="button"
+                                type="submit"
                                 class="
                                     pagos-slideover-footer-button
                                     pagos-slideover-footer-button-primary
                                 "
-                                wire:click="actualizarAcuerdoPago"
-                                wire:loading.attr="disabled"
-                                wire:target="actualizarAcuerdoPago"
-                            >
-                                <x-heroicon-o-check />
-
-                                <span
-                                    wire:loading.remove
-                                    wire:target="actualizarAcuerdoPago"
-                                >
-                                    Guardar cambios
-                                </span>
-
-                                <span
-                                    wire:loading
-                                    wire:target="actualizarAcuerdoPago"
-                                >
-                                    Guardando...
-                                </span>
-                            </button>
-
-                        @elseif($modoModalAcuerdoPago === 'ver')
-
-                            <button
-                                type="button"
-                                class="
-                                    pagos-slideover-footer-button
-                                    pagos-slideover-footer-button-primary
+                                x-on:click="
+                                    reciboPendienteDeActualizar = true;
+                                    $wire.cerrarModalReimpresion();
                                 "
-                                wire:click="guardarEstadoAcuerdoPago"
-                                wire:loading.attr="disabled"
-                                wire:target="guardarEstadoAcuerdoPago"
                             >
-                                <x-heroicon-o-check />
+                                <x-heroicon-o-printer />
 
-                                <span
-                                    wire:loading.remove
-                                    wire:target="guardarEstadoAcuerdoPago"
-                                >
-                                    Guardar estado
-                                </span>
-
-                                <span
-                                    wire:loading
-                                    wire:target="guardarEstadoAcuerdoPago"
-                                >
-                                    Guardando...
+                                <span>
+                                    Reimprimir recibo
                                 </span>
                             </button>
-
-                        @endif
+                        </div> 
 
                     </form>
                 </div>
@@ -6353,6 +6419,109 @@
         @endif
 
 
+
+
+
+
+
+
+
+
+
+        @if($mostrarModalBuscarRecibo)
+            <div
+                class="pagos-modal-backdrop"
+                wire:click.self="cerrarModalBuscarRecibo"
+            >
+                <div class="pagos-modal-card pagos-receipt-search-modal">
+                    <div class="pagos-modal-header">
+                        <div>
+                            <span>Recibos de caja</span>
+
+                            <h3>Imprimir / Reimprimir</h3>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="pagos-slideover-close"
+                            wire:click="cerrarModalBuscarRecibo"
+                            title="Cerrar"
+                        >
+                            <x-heroicon-o-x-mark />
+                        </button>
+                    </div>
+
+                    <form wire:submit="buscarReciboParaImprimir">
+                        <div class="pagos-modal-body">
+                            <div class="pagos-field">
+                                <label>
+                                    Número del recibo
+                                    <span class="pagos-required">*</span>
+                                </label>
+
+                                <input
+                                    type="text"
+                                    class="pagos-input"
+                                    wire:model="numeroReciboBusqueda"
+                                    placeholder="Ej.: 8"
+                                    autocomplete="off"
+                                    autofocus
+                                >
+
+                                <small class="pagos-field-help">
+                                    Digite el número original del recibo, sin el consecutivo de reimpresión.
+                                </small>
+
+                                @error('numeroReciboBusqueda')
+                                    <small class="pagos-field-error">
+                                        {{ $message }}
+                                    </small>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="pagos-modal-footer">
+                            <button
+                                type="button"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-secondary
+                                "
+                                wire:click="cerrarModalBuscarRecibo"
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="submit"
+                                class="
+                                    pagos-slideover-footer-button
+                                    pagos-slideover-footer-button-primary
+                                "
+                                wire:loading.attr="disabled"
+                                wire:target="buscarReciboParaImprimir"
+                            >
+                                <x-heroicon-o-magnifying-glass />
+
+                                <span
+                                    wire:loading.remove
+                                    wire:target="buscarReciboParaImprimir"
+                                >
+                                    Buscar recibo
+                                </span>
+
+                                <span
+                                    wire:loading
+                                    wire:target="buscarReciboParaImprimir"
+                                >
+                                    Buscando...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
         
 
 

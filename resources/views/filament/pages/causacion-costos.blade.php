@@ -465,6 +465,78 @@
 
         
 
+        .cc-blocked-modal {
+            width: 560px;
+        }
+
+        .cc-blocked-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 14px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+        }
+
+        .cc-blocked-icon svg {
+            width: 34px;
+            height: 34px;
+        }
+
+        .cc-blocked-title {
+            text-align: center;
+            color: #991b1b;
+            font-size: 19px;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .cc-blocked-message {
+            text-align: center;
+            color: #475569;
+            font-size: 14px;
+            line-height: 1.55;
+            max-width: 460px;
+            margin: 0 auto;
+        }
+
+        .cc-blocked-message strong {
+            color: #991b1b;
+        }
+
+        .cc-blocked-summary {
+            margin-top: 18px;
+            padding: 14px;
+            border: 1px solid #fecaca;
+            background: #fff7f7;
+            border-radius: 12px;
+        }
+
+        .cc-blocked-summary-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 7px 0;
+            border-bottom: 1px solid #fee2e2;
+            font-size: 13px;
+        }
+
+        .cc-blocked-summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .cc-blocked-summary-row span {
+            color: #64748b;
+        }
+
+        .cc-blocked-summary-row strong {
+            color: #1f2937;
+            text-align: right;
+        }
         
 
 
@@ -1072,6 +1144,117 @@
             </div>
         </div>
     @endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+    @if($mostrarModalReversionBloqueada)
+        <div
+            class="cc-modal-backdrop"
+            wire:click.self="$set('mostrarModalReversionBloqueada', false)"
+        >
+            <div class="cc-modal cc-blocked-modal">
+                <div class="cc-modal-header">
+                    <h3>Reversión no permitida</h3>
+
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalReversionBloqueada', false)"
+                        class="cc-modal-close"
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div class="cc-modal-body">
+                    <div class="cc-blocked-icon">
+                        <x-heroicon-o-exclamation-triangle />
+                    </div>
+
+                    <div class="cc-blocked-title">
+                        No es posible reversar esta causación
+                    </div>
+
+                    <div class="cc-blocked-message">
+                        La obligación posee pagos registrados.
+                        Primero debe
+                        <strong>
+                            anular los pagos asociados
+                        </strong>
+                        a esta obligación.
+                    </div>
+
+                    <div class="cc-blocked-summary">
+                        <div class="cc-blocked-summary-row">
+                            <span>Concepto</span>
+
+                            <strong>
+                                {{ $detalleReversionBloqueada['concepto'] ?? '-' }}
+                            </strong>
+                        </div>
+
+                        <div class="cc-blocked-summary-row">
+                            <span>Grado</span>
+
+                            <strong>
+                                {{ $detalleReversionBloqueada['grado'] ?? '-' }}
+                            </strong>
+                        </div>
+
+                        @if(
+                            filled(
+                                $detalleReversionBloqueada['mes'] ?? null
+                            )
+                            && ($detalleReversionBloqueada['mes'] ?? '-') !== '-'
+                        )
+                            <div class="cc-blocked-summary-row">
+                                <span>Mes</span>
+
+                                <strong>
+                                    {{ $detalleReversionBloqueada['mes'] }}
+                                </strong>
+                            </div>
+                        @endif
+
+                        <div class="cc-blocked-summary-row">
+                            <span>Estudiantes con pagos</span>
+
+                            <strong>
+                                {{
+                                    $detalleReversionBloqueada[
+                                        'estudiantes_con_pagos'
+                                    ] ?? 0
+                                }}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cc-modal-footer">
+                    <button
+                        type="button"
+                        wire:click="$set('mostrarModalReversionBloqueada', false)"
+                        class="cc-btn cc-btn-primary"
+                    >
+                        Entendido
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+
+
+
 
 
 

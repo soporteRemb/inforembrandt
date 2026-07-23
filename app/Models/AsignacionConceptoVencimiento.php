@@ -16,6 +16,11 @@ class AsignacionConceptoVencimiento extends Model
         'valor',
     ];
 
+    protected $casts = [
+        'fecha_vencimiento' => 'date',
+        'valor' => 'decimal:2',
+    ];
+
     public function asignacionConcepto()
     {
         return $this->belongsTo(AsignacionConcepto::class, 'asignacion_concepto_id');
