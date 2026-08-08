@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,24 +17,83 @@ return new class extends Migration
             WHERE sd.student_codigo IS NULL
         ');
 
-        // 2. Eliminar el UNIQUE KEY que bloquea el drop de student_id
-        DB::statement('ALTER TABLE student_documentos DROP INDEX student_documentos_student_id_tipo_unique');
+        // 2. Eliminar primero la foreign key de student_id
+        DB::statement('
+            ALTER TABLE student_documentos
+            DROP FOREIGN KEY student_documentos_student_id_foreign
+        ');
 
-        // 3. Eliminar columna student_id
-        DB::statement('ALTER TABLE student_documentos DROP COLUMN student_id');
+        // 3. Eliminar el UNIQUE que dependía de student_id
+        DB::statement('
+            ALTER TABLE student_documentos
+            DROP INDEX student_documentos_student_id_tipo_unique
+        ');
 
-        // 4. Hacer student_codigo NOT NULL y crear nuevo UNIQUE KEY (student_codigo, tipo)
-        DB::statement('ALTER TABLE student_documentos MODIFY student_codigo VARCHAR(255) NOT NULL');
-        DB::statement('ALTER TABLE student_documentos ADD UNIQUE KEY student_documentos_student_codigo_tipo_unique (student_codigo, tipo)');
+        // 4. Eliminar student_id
+        DB::statement('
+            ALTER TABLE student_documentos
+            DROP COLUMN student_id
+        ');
+
+        // 5. student_codigo pasa a ser obligatorio
+        DB::statement('
+            ALTER TABLE student_documentos
+            MODIFY student_codigo VARCHAR(255) NOT NULL
+        ');
+
+        // 6. Nuevo UNIQUE por código de estudiante + tipo
+        DB::statement('
+            ALTER TABLE student_documentos
+            ADD UNIQUE KEY student_documentos_student_codigo_tipo_unique
+            (student_codigo, tipo)
+        ');
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE student_documentos DROP INDEX student_documentos_student_codigo_tipo_unique');
-        DB::statement('ALTER TABLE student_documentos MODIFY student_codigo VARCHAR(255) NULL');
+        // 1. Retirar el índice nuevo
+        DB::statement('
+            ALTER TABLE student_documentos
+            DROP INDEX student_documentos_student_codigo_tipo_unique
+        ');
+
+        // 2. Volver student_codigo nullable temporalmente
+        DB::statement('
+            ALTER TABLE student_documentos
+            MODIFY student_codigo VARCHAR(255) NULL
+        ');
+
+        // 3. Recuperar student_id
         Schema::table('student_documentos', function (Blueprint $table) {
             $table->unsignedBigInteger('student_id')->nullable()->after('id');
-            $table->unique(['student_id', 'tipo']);
         });
+
+        // 4. Reconstruir student_id desde student_codigo
+        DB::statement('
+            UPDATE student_documentos sd
+            JOIN students s ON s.codigo = sd.student_codigo
+            SET sd.student_id = s.id
+            WHERE sd.student_id IS NULL
+        ');
+
+        // 5. Restaurar estructura original
+        DB::statement('
+            ALTER TABLE student_documentos
+            MODIFY student_id BIGINT UNSIGNED NOT NULL
+        ');
+
+        DB::statement('
+            ALTER TABLE student_documentos
+            ADD UNIQUE KEY student_documentos_student_id_tipo_unique
+            (student_id, tipo)
+        ');
+
+        DB::statement('
+            ALTER TABLE student_documentos
+            ADD CONSTRAINT student_documentos_student_id_foreign
+            FOREIGN KEY (student_id)
+            REFERENCES students(id)
+            ON DELETE CASCADE
+        ');
     }
 };
