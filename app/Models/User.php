@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, HasRoles;
 
@@ -101,6 +103,24 @@ class User extends Authenticatable
             PreMatriculaHistorial::class,
             'user_id'
         );
+    }
+
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        if ($this->hasRole('superadmin')) {
+            return true;
+        }
+
+        if ($this->expires_at && now()->greaterThan($this->expires_at)) {
+            return false;
+        }
+
+        return true;
     }
 
 }
