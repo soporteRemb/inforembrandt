@@ -11,7 +11,10 @@
             id="rp-search"
             type="text"
             placeholder="Buscar permiso o módulo..."
-            oninput="rpFilter()"
+            oninput="
+                sessionStorage.setItem('rp-search', this.value);
+                rpFilter();
+            "
             onkeydown="event.stopPropagation()"
             autocomplete="off"
             style="padding-left:2.25rem"
@@ -19,7 +22,11 @@
         >
         <button
             id="rp-clear"
-            onclick="document.getElementById('rp-search').value=''; rpFilter();"
+            onclick="
+                document.getElementById('rp-search').value='';
+                sessionStorage.removeItem('rp-search');
+                rpFilter();
+            "
             style="display:none; position:absolute; right:8px; top:50%; transform:translateY(-50%);"
             class="text-gray-400 hover:text-gray-600"
             type="button"
@@ -85,6 +92,11 @@ function rpToggleOnlyChecked() {
     const thumb = document.getElementById('rp-toggle-thumb');
 
     cb.checked = !cb.checked;
+
+    sessionStorage.setItem(
+        'rp-only-checked',
+        cb.checked ? '1' : '0'
+    );
 
     if (cb.checked) {
         track.style.backgroundColor = 'rgb(var(--color-primary-600, 30 64 175))';
@@ -186,4 +198,53 @@ function rpToggleCheckboxes(check) {
 
 function rpSelectAll()   { rpToggleCheckboxes(true);  }
 function rpDeselectAll() { rpToggleCheckboxes(false); }
+
+function rpRestoreFilter() {
+    const input = document.getElementById('rp-search');
+
+    if (!input) {
+        return;
+    }
+
+    const savedSearch = sessionStorage.getItem('rp-search') ?? '';
+
+    input.value = savedSearch;
+
+    requestAnimationFrame(() => {
+        rpFilter();
+    });
+
+    const onlyChecked = sessionStorage.getItem('rp-only-checked') === '1';
+    const onlyInput = document.getElementById('rp-only');
+
+    if (onlyInput) {
+        onlyInput.checked = onlyChecked;
+    }
+
+    const track = document.getElementById('rp-toggle-track');
+    const thumb = document.getElementById('rp-toggle-thumb');
+
+    if (track && thumb) {
+        if (onlyChecked) {
+            track.style.background = '#c1121f';
+            thumb.style.transform = 'translateX(1rem)';
+        } else {
+            track.style.background = '';
+            thumb.style.transform = '';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', rpRestoreFilter);
+
+document.addEventListener('livewire:init', () => {
+    rpRestoreFilter();
+
+    if (window.Livewire?.hook) {
+        Livewire.hook('morph.updated', () => {
+            rpRestoreFilter();
+        });
+    }
+});
+
 </script>

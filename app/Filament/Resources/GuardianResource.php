@@ -32,6 +32,27 @@ class GuardianResource extends Resource
 {
     use HasRolePermissions;
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Permisos
+    |--------------------------------------------------------------------------
+    */
+
+    protected static ?string $viewPermission =
+        'ver_acudientes';
+
+    protected static ?string $createPermission =
+        'crear_acudientes';
+
+    protected static ?string $editPermission =
+        'editar_acudientes';
+
+    protected static ?string $deletePermission =
+        'eliminar_acudientes';
+
+        
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();

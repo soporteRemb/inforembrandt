@@ -3,22 +3,45 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AsignacionConceptoResource\Pages;
+use App\Filament\Resources\AsignacionConceptoResource\RelationManagers;
 use App\Models\AsignacionConcepto;
 use App\Models\ConceptoCobro;
 use App\Models\Course;
 use App\Models\PeriodoLectivo;
 use App\Models\Sede;
+use App\Traits\HasRolePermissions;
+
+
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
-use App\Filament\Resources\AsignacionConceptoResource\RelationManagers;
+
+
 
 class AsignacionConceptoResource extends Resource
 {
+
+    use HasRolePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_asignacion_costos';
+
+    protected static ?string $createPermission =
+        'crear_asignacion_costos';
+
+    protected static ?string $editPermission =
+        'editar_asignacion_costos';
+
+    protected static ?string $deletePermission =
+        'eliminar_asignacion_costos';
+
+
     protected static ?string $model = AsignacionConcepto::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
@@ -34,6 +57,8 @@ class AsignacionConceptoResource extends Resource
     protected static ?int $navigationSort = 6;
 
     protected static bool $shouldRegisterNavigation = true;
+
+
 
 
     public static function form(Form $form): Form
@@ -94,19 +119,43 @@ class AsignacionConceptoResource extends Resource
                         Forms\Components\Select::make('grado')
                             ->label('Grado')
                             ->options(function (Forms\Get $get) {
-                                return Course::query()
-                                    ->when($get('sede_id'), fn ($query, $sedeId) => $query->where('sede_id', $sedeId))
-                                    ->when($get('periodo_lectivo_id'), fn ($query, $periodoId) => $query->where('periodo_lectivo_id', $periodoId))
+                                $grados = Course::query()
+                                    ->when(
+                                        $get('sede_id'),
+                                        fn ($query, $sedeId) =>
+                                            $query->where('sede_id', $sedeId)
+                                    )
+                                    ->when(
+                                        $get('periodo_lectivo_id'),
+                                        fn ($query, $periodoId) =>
+                                            $query->where(
+                                                'periodo_lectivo_id',
+                                                $periodoId
+                                            )
+                                    )
                                     ->whereNotNull('grado')
-                                    ->orderBy('grado')
-                                    ->pluck('descripcion', 'grado')
-                                    ->unique()
+                                    ->orderByRaw(
+                                        "CAST(grado AS UNSIGNED), grado"
+                                    )
+                                    ->get()
+                                    ->unique('grado')
+                                    ->mapWithKeys(fn ($course) => [
+                                        (string) $course->grado =>
+                                            $course->descripcion
+                                            ?: 'Grado ' . $course->grado,
+                                    ])
                                     ->toArray();
+
+                                return [
+                                    'todos' => 'Todos los grados',
+                                    ...$grados,
+                                ];
                             })
                             ->searchable()
                             ->preload()
                             ->required()
                             ->columnSpan(3),
+                           
 
                         Forms\Components\Select::make('concepto_cobro_id')
                             ->label('Concepto')
@@ -126,6 +175,7 @@ class AsignacionConceptoResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
+                            ->live()
                             ->rules([
                                 function (Forms\Get $get, ?AsignacionConcepto $record) {
                                     return function (string $attribute, $value, \Closure $fail) use ($get, $record) {
@@ -146,11 +196,41 @@ class AsignacionConceptoResource extends Resource
                             ->columnSpan(3),
 
                         Forms\Components\TextInput::make('tarifa_ordinaria')
-                            ->label('Tarifa Ordinaria')
+                            ->label('Tarifa ordinaria')
                             ->prefix('$')
                             ->inputMode('decimal')
+                            ->placeholder(function (Forms\Get $get): string {
+                                $conceptoId = $get('concepto_cobro_id');
+
+                                if (! $conceptoId) {
+                                    return 'Seleccione primero el concepto';
+                                }
+
+                                $esObligatorio = ConceptoCobro::query()
+                                    ->whereKey($conceptoId)
+                                    ->value('obligatorio');
+
+                                return $esObligatorio
+                                    ? 'Valor obligatorio'
+                                    : 'Puede definirse al causar';
+                            })
+                            ->helperText(function (Forms\Get $get): ?string {
+                                $conceptoId = $get('concepto_cobro_id');
+
+                                if (! $conceptoId) {
+                                    return null;
+                                }
+
+                                $esObligatorio = ConceptoCobro::query()
+                                    ->whereKey($conceptoId)
+                                    ->value('obligatorio');
+
+                                return $esObligatorio
+                                    ? 'Los conceptos obligatorios deben tener una tarifa.'
+                                    : 'Solo diligencie este campo cuando el concepto tenga un valor fijo.';
+                            })
                             ->formatStateUsing(function ($state) {
-                                if ($state === null) {
+                                if ($state === null || $state === '') {
                                     return null;
                                 }
 
@@ -158,14 +238,64 @@ class AsignacionConceptoResource extends Resource
                                     ? number_format((float) $state, 0, '', '')
                                     : str_replace('.', ',', (string) $state);
                             })
-                            ->dehydrateStateUsing(fn ($state) => str_replace(',', '.', $state))
-                            ->rule('regex:/^\d+(,\d{1,2})?$/')
-                            ->validationMessages([
-                                'regex' => 'Ingrese el valor sin puntos ni comas.',
+                            ->dehydrateStateUsing(function ($state) {
+                                if ($state === null || trim((string) $state) === '') {
+                                    return null;
+                                }
+
+                                return str_replace(',', '.', (string) $state);
+                            })
+                            ->required(function (Forms\Get $get): bool {
+                                $conceptoId = $get('concepto_cobro_id');
+
+                                if (! $conceptoId) {
+                                    return false;
+                                }
+
+                                return (bool) ConceptoCobro::query()
+                                    ->whereKey($conceptoId)
+                                    ->value('obligatorio');
+                            })
+                            ->rules([
+                                function (Forms\Get $get) {
+                                    return function (
+                                        string $attribute,
+                                        $value,
+                                        \Closure $fail
+                                    ) use ($get): void {
+                                        if ($value === null || trim((string) $value) === '') {
+                                            $conceptoId = $get('concepto_cobro_id');
+
+                                            $esObligatorio = $conceptoId
+                                                ? (bool) ConceptoCobro::query()
+                                                    ->whereKey($conceptoId)
+                                                    ->value('obligatorio')
+                                                : false;
+
+                                            if ($esObligatorio) {
+                                                $fail(
+                                                    'La tarifa es obligatoria para este concepto.'
+                                                );
+                                            }
+
+                                            return;
+                                        }
+
+                                        if (
+                                            ! preg_match(
+                                                '/^\d+(,\d{1,2})?$/',
+                                                (string) $value
+                                            )
+                                        ) {
+                                            $fail(
+                                                'Ingrese el valor sin puntos. Use coma solo para decimales.'
+                                            );
+                                        }
+                                    };
+                                },
                             ])
                             ->minValue(0)
-                            ->default(0)
-                            ->required()
+                            ->default(null)
                             ->columnSpan(2),
 
                         Forms\Components\Hidden::make('tarifa_extemporanea')
@@ -204,6 +334,12 @@ class AsignacionConceptoResource extends Resource
 
                 Tables\Columns\TextColumn::make('grado')
                     ->label('Grado')
+                    ->formatStateUsing(
+                        fn ($state) =>
+                            $state === 'todos'
+                                ? 'Todos los grados'
+                                : (string) $state
+                    )
                     ->alignCenter()
                     ->searchable()
                     ->sortable(),
@@ -215,8 +351,23 @@ class AsignacionConceptoResource extends Resource
                     ->weight('medium'),
 
                 Tables\Columns\TextColumn::make('tarifa_ordinaria')
-                    ->label('Valor Ord.')
-                    ->money('COP')
+                    ->label('Valor ordinario')
+                    ->formatStateUsing(function ($state): string {
+                        if ($state === null || $state === '') {
+                            return 'Por definir';
+                        }
+
+                        return '$' . number_format(
+                            (float) $state,
+                            0,
+                            ',',
+                            '.'
+                        );
+                    })
+                    ->badge(fn ($state) => $state === null)
+                    ->color(fn ($state) =>
+                        $state === null ? 'warning' : null
+                    )
                     ->alignEnd()
                     ->sortable(),
 

@@ -27,6 +27,20 @@ class SedeResource extends Resource
 {
     use HasRolePermissions;
 
+    protected static ?string $viewPermission =
+    'ver_sedes';
+
+    protected static ?string $createPermission =
+        'crear_sedes';
+
+    protected static ?string $editPermission =
+        'editar_sedes';
+
+    protected static ?string $deletePermission =
+        'eliminar_sedes';
+
+
+
     protected static ?string $model = Sede::class;
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
     protected static ?string $navigationLabel = 'Sedes';
@@ -161,12 +175,7 @@ class SedeResource extends Resource
             ]);
     }
 
-    public static function canAccess(): bool
-    {
-        $user = auth()->user();
-        if (!$user) return false;
-        return $user->hasAnyRole(['superadmin', 'admin']);
-    }
+    
 
     public static function getPages(): array
     {

@@ -21,6 +21,8 @@ use App\Models\BoletinRecomendacion;
 use App\Models\BoletinGenerado;
 use App\Models\Docente;
 
+use App\Traits\HasPagePermissions;
+
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +36,13 @@ use App\Services\Boletines\BoletinPdfService;
 
 class BoletinesAdministrativos extends Page
 {
+    
+    use HasPagePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_boletines_administrativos';
+
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.pages.boletines-administrativos';
@@ -1020,13 +1029,7 @@ class BoletinesAdministrativos extends Page
             && ! $user->hasAnyRole(['superadmin', 'admin']);
     }
 
-    public static function canAccess(): bool
-    {
-        $user = auth()->user();
-
-        return $user
-            && $user->hasAnyRole(['superadmin', 'admin', 'director_grupo']);
-    }
+    
 
 
 

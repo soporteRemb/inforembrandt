@@ -107,6 +107,11 @@
     .login-dropdown-item.is-selected { background: rgba(255,220,0,0.15); font-weight: 700; color: white; }
 
     [x-cloak] { display: none !important; }
+
+    /* Mensajes de validación del login de Filament */
+    .fi-simple-main .fi-fo-field-wrp-error-message {
+        color: #d1c2c2 !important;
+    }
 </style>
 
 {{-- Header: logos + título + selectores --}}

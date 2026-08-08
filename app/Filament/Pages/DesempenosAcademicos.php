@@ -15,16 +15,25 @@ use App\Models\PensumAcademico;
 use App\Models\BoletinDesempeno;
 use App\Models\PeriodoAcademico;
 use App\Models\BoletinRecomendacion;
+use App\Models\Docente;
+use App\Traits\HasPagePermissions;
 
 use Illuminate\Support\Facades\Auth;
 
 
-use App\Models\Docente;
+
 
 
 
 class DesempenosAcademicos extends Page implements Forms\Contracts\HasForms
 {
+
+    use HasPagePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_desempenos';
+
+        
     use Forms\Concerns\InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-adjustments-horizontal';

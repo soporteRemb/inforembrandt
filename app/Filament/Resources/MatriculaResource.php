@@ -25,8 +25,29 @@ use App\Traits\HasRolePermissions;
 class MatriculaResource extends Resource
 {
     use HasRolePermissions;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Permisos
+    |--------------------------------------------------------------------------
+    */
+
+    protected static ?string $viewPermission =
+        'ver_matriculas';
+
+    protected static ?string $createPermission =
+        'crear_matriculas';
+
+    protected static ?string $editPermission =
+        'editar_matriculas';
+
+    protected static ?string $deletePermission =
+        'eliminar_matriculas';
+
+
+
     use ScopedBySedePeriodo;
-    protected static bool $shouldRegisterNavigation = false;
+    
     protected static ?string $model = Matricula::class;
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationLabel = 'Matrículas';

@@ -39,9 +39,28 @@ class EditStudent extends EditRecord
         ];
 
         foreach ($tipos as $tipo) {
+            /*
+            * Primero busca mediante la relación nueva guardian_student.
+            */
             $guardian = $this->record->guardians()
                 ->wherePivot('tipo', $tipo)
                 ->first();
+
+            /*
+            * Compatibilidad con acudientes antiguos asociados
+            * mediante guardians.student_id y guardians.tipo.
+            */
+            if (!$guardian) {
+                $guardian = Guardian::query()
+                    ->where('student_id', $this->record->id)
+                    ->where('tipo', $tipo)
+                    ->where(function ($query) {
+                        $query
+                            ->whereNull('estado')
+                            ->orWhere('estado', 'activo');
+                    })
+                    ->first();
+            }
 
             foreach ($fields as $field) {
                 $data["g_{$tipo}_{$field}"] = $guardian?->{$field} ?? null;

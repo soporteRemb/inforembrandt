@@ -12,6 +12,8 @@ use App\Services\Importacion\Docentes\DocentesImportService;
 use App\Services\Importacion\Asignaciones\AsignacionesImportService;
 use App\Services\Importacion\Acudientes\AcudientesImportService;
 
+use App\Traits\HasPagePermissions;
+
 
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -23,6 +25,14 @@ use Illuminate\Support\Facades\Cache;
 
 class ImportacionDatos extends Page
 {
+
+    use HasPagePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_importacion_datos';
+
+
+
     use WithFileUploads;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';

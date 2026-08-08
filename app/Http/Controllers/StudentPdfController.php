@@ -4,7 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Student;
 use App\Models\StudentDocumento;
+
+
+use App\Services\DocumentosEstudiante\ContratoServicioPdf;
+
+
 use Barryvdh\DomPDF\Facade\Pdf;
+
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -70,27 +77,70 @@ class StudentPdfController extends Controller
     }
 
     // ── PDF genérico para los 6 formatos ────────────────────────────────────
-    public function formato(Request $request, Student $student, string $tipo)
-    {
-        $todos = \App\Models\StudentDocumento::todos();
+    public function formato(
+        Request $request,
+        Student $student,
+        string $tipo
+    ) {
+        $todos = StudentDocumento::todos();
 
         if (!isset($todos[$tipo])) {
             abort(404);
         }
 
-        $student->load(['guardians', 'course', 'periodoLectivo', 'sede']);
+        /*
+        * El contrato utiliza su plantilla AcroForm original.
+        * Prematrícula y hoja de matrícula no se modifican.
+        */
+        if ($tipo === 'contrato_servicios') {
+            return app(ContratoServicioPdf::class)
+                ->generar($student);
+        }
+
+        /*
+        * Los demás formatos continúan con el comportamiento
+        * que ya tenían.
+        */
+        $student->load([
+            'guardians',
+            'course',
+            'periodoLectivo',
+            'sede',
+        ]);
+
         $doc      = $todos[$tipo];
         $logoPath = public_path('images/Logo.png');
-        $logoB64  = file_exists($logoPath)
-            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+
+        $logoB64 = file_exists($logoPath)
+            ? 'data:image/png;base64,'
+                . base64_encode(file_get_contents($logoPath))
             : null;
-        $fecha    = now()->format('d/m/Y');
-        $revisor  = Auth::user()->name ?? 'Administrador';
 
-        $pdf = Pdf::loadView('pdf.formato', compact('student', 'doc', 'tipo', 'fecha', 'revisor', 'logoB64'))
-            ->setPaper('letter', 'portrait');
+        $fecha   = now()->format('d/m/Y');
+        $revisor = Auth::user()->name ?? 'Administrador';
 
-        return $pdf->stream(str_replace(' ', '-', strtolower($doc['label'])) . '-' . $student->codigo . '.pdf');
+        $pdf = Pdf::loadView(
+            'pdf.formato',
+            compact(
+                'student',
+                'doc',
+                'tipo',
+                'fecha',
+                'revisor',
+                'logoB64'
+            )
+        )->setPaper('letter', 'portrait');
+
+        return $pdf->stream(
+            str_replace(
+                ' ',
+                '-',
+                strtolower($doc['label'])
+            )
+            . '-'
+            . $student->codigo
+            . '.pdf'
+        );
     }
 
     // ── Toggle marcar/desmarcar documento digital ────────────────────────────

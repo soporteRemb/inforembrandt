@@ -10,6 +10,8 @@ use App\Models\RangoDesempenoNota;
 use App\Models\Student;
 use App\Models\Guardian;
 
+use App\Traits\HasPagePermissions;
+
 use App\Services\Boletines\BoletinDataService;
 use App\Services\Boletines\BoletinPdfService;
 use Filament\Notifications\Notification;
@@ -21,6 +23,13 @@ use Illuminate\Support\Facades\Storage;
 
 class BoletinesAcudientes extends Page
 {
+
+    use HasPagePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_boletines_acudientes';
+
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static string $view = 'filament.pages.boletines-acudientes';
     protected static ?string $navigationGroup = 'Portal del Acudiente';
@@ -43,7 +52,17 @@ class BoletinesAcudientes extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->user()?->hasAnyRole(['Acudiente', 'acudiente']) ?? false;
+        $usuario = auth()->user();
+
+        if (! $usuario) {
+            return false;
+        }
+
+        return $usuario->hasAnyRole([
+            'Acudiente',
+            'acudiente',
+        ])
+            && $usuario->can('ver_boletines_acudientes');
     }
 
     public function mount(): void

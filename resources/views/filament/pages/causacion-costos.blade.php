@@ -210,6 +210,10 @@
             .summary-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .form-grid-no-obligatorio {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
         @media (max-width: 1100px) {
@@ -539,7 +543,201 @@
         }
         
 
+        .form-grid-no-obligatorio {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
 
+
+        .cc-student-selector {
+            margin: 14px 18px 0;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .cc-student-selector-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .cc-student-selector-header strong {
+            display: block;
+            font-size: 13px;
+            color: #1e293b;
+        }
+
+        .cc-student-selector-header span {
+            display: block;
+            margin-top: 2px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .cc-student-selector-actions {
+            display: flex;
+            gap: 7px;
+        }
+
+        .cc-student-selector-actions button {
+            padding: 6px 9px;
+            border: 1px solid #d7dee7;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .cc-student-search {
+            width: 100%;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #d7dee7;
+            border-radius: 6px;
+            background: #ffffff;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .cc-student-list {
+            max-height: 190px;
+            margin-top: 9px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+            background: #ffffff;
+        }
+
+        .cc-student-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 10px;
+            border-bottom: 1px solid #edf1f5;
+            cursor: pointer;
+        }
+
+        .cc-student-item:last-child {
+            border-bottom: 0;
+        }
+
+        .cc-student-item:hover {
+            background: #f8fafc;
+        }
+
+        .cc-student-item-main {
+            min-width: 0;
+        }
+
+        .cc-student-item-main strong {
+            display: block;
+            color: #1e293b;
+            font-size: 12px;
+        }
+
+        .cc-student-item-main small {
+            display: block;
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .cc-student-empty {
+            padding: 20px;
+            color: #94a3b8;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .cc-causacion-value {
+            margin: 14px 18px 0;
+            max-width: 240px;
+        }
+
+        .cc-causacion-value label {
+            display: block;
+            margin-bottom: 5px;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .cc-causacion-value small {
+            display: block;
+            margin-top: 5px;
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .history-reverse-button {
+            padding: 5px 8px;
+            border: 1px solid #ef4444;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #dc2626;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .history-reverse-button:hover {
+            background: #fef2f2;
+        }
+
+        .history-action-empty {
+            color: #94a3b8;
+        }
+
+
+        .student-checkbox {
+            accent-color: #9b1c1c; /* rojo vino institucional */
+            cursor: pointer;
+        }
+
+        .cc-student-list input.student-checkbox[type="checkbox"] {
+            appearance: auto !important;
+            -webkit-appearance: auto !important;
+            accent-color: #8f211d !important;
+            cursor: pointer;
+        }
+
+        .cc-btn-outline-danger {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+
+            height: 40px;
+            padding: 0 14px;
+
+            border: 1px solid #c62828;
+            border-radius: 8px;
+
+            background: #fff;
+            color: #c62828;
+
+            font-size: .875rem;
+            font-weight: 600;
+
+            cursor: pointer;
+            transition: all .18s ease;
+        }
+
+        .cc-btn-outline-danger:hover {
+            background: #fff5f5;
+            border-color: #b71c1c;
+            color: #b71c1c;
+        }
+
+        .cc-btn-outline-danger svg {
+            width: 16px;
+            height: 16px;
+        }
     </style>
 
     <div class="causacion-page">
@@ -611,7 +809,7 @@
                     </div>
 
                     <div class="field">
-                        <label>Concepto obligatorio<span class="required">*</span></label>
+                        <label>Concepto<span class="required">*</span></label>
                         <x-filament::input.wrapper>
                             <x-filament::input.select
                                 wire:model.live="concepto_obligatorio_id"
@@ -715,7 +913,7 @@
                     <span>Conceptos no obligatorios</span>
                 </div>
 
-                <div class="form-grid">
+                <div class="form-grid form-grid-no-obligatorio">
                     {{-- Filtros no obligatorios --}}
                     <div class="field">
                         <label>Sede<span class="required">*</span></label>
@@ -772,7 +970,29 @@
                     </div>
 
                     <div class="field">
-                        <label>Concepto no obligatorio<span class="required">*</span></label>
+                        <label>Curso<span class="required">*</span></label>
+
+                        <x-filament::input.wrapper>
+                            <x-filament::input.select
+                                wire:model.live="curso_no_obligatorio"
+                                required
+                                :disabled="! $grado_no_obligatorio || $grado_no_obligatorio === 'todos'"
+                            >
+                                <option value="todos">
+                                    Todos
+                                </option>
+
+                                @foreach($this->cursosNoObligatorios as $id => $nombre)
+                                    <option value="{{ $id }}">
+                                        {{ $nombre }}
+                                    </option>
+                                @endforeach
+                            </x-filament::input.select>
+                        </x-filament::input.wrapper>
+                    </div>
+
+                    <div class="field">
+                        <label>Concepto<span class="required">*</span></label>
                         <x-filament::input.wrapper>
                             <x-filament::input.select
                                 wire:model.live="concepto_no_obligatorio_id"
@@ -790,6 +1010,116 @@
                         </x-filament::input.wrapper>
                     </div>
                 </div>
+
+
+
+
+                @if(
+                    $grado_no_obligatorio
+                    && $concepto_no_obligatorio_id
+                )
+                    <div class="cc-causacion-value">
+                        <label>
+                            Valor a causar
+                            <span class="required">*</span>
+                        </label>
+
+                        <x-filament::input.wrapper prefix="$">
+                            <x-filament::input
+                                type="text"
+                                inputmode="numeric"
+                                placeholder="Ingrese el valor"
+                                wire:model.live.debounce.400ms="valor_no_obligatorio"
+                            />
+                        </x-filament::input.wrapper>
+
+                        <small>
+                            Puede modificar el valor antes de realizar la causación.
+                        </small>
+                    </div>
+                @endif
+
+
+
+
+                @if(
+                    $grado_no_obligatorio
+                    && $concepto_no_obligatorio_id
+                )
+                    <div class="cc-student-selector">
+                        <div class="cc-student-selector-header">
+                            <div>
+                                <strong>Estudiantes</strong>
+
+                                <span>
+                                    {{ count($estudiantesSeleccionadosNoObligatorios) }}
+                                    seleccionados de
+                                    {{ count($estudiantesNoObligatorios) }}
+                                </span>
+                            </div>
+
+                            <div class="cc-student-selector-actions">
+                                <button
+                                    type="button"
+                                    wire:click="seleccionarTodosNoObligatorios"
+                                >
+                                    Seleccionar todos
+                                </button>
+
+                                <button
+                                    type="button"
+                                    wire:click="desmarcarTodosNoObligatorios"
+                                >
+                                    Desmarcar todos
+                                </button>
+                            </div>
+                        </div>
+
+                        <input
+                            type="text"
+                            class="cc-student-search"
+                            placeholder="Buscar por nombre, documento o código..."
+                            wire:model.live.debounce.300ms="buscarEstudianteNoObligatorio"
+                        >
+
+                        <div class="cc-student-list">
+                            @forelse(
+                                $this->estudiantesNoObligatoriosVisibles
+                                as $student
+                            )
+                                <label
+                                    class="cc-student-item"
+                                    wire:key="student-causacion-{{ $student['id'] }}"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        class="student-checkbox"
+                                        wire:model.live="estudiantesSeleccionadosNoObligatorios"
+                                        value="{{ $student['id'] }}"
+                                    >
+
+                                    <span class="cc-student-item-main">
+                                        <strong>
+                                            {{ $student['nombre'] }}
+                                        </strong>
+
+                                        <small>
+                                            Código: {{ $student['codigo'] }}
+                                            · Documento: {{ $student['documento'] }}
+                                            · Curso: {{ $student['curso'] }}
+                                        </small>
+                                    </span>
+                                </label>
+                            @empty
+                                <div class="cc-student-empty">
+                                    No se encontraron estudiantes para los filtros seleccionados.
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                @endif
+
+
 
                 {{-- Resumen tarjeta derecha --}}
                 <div class="summary-grid summary-grid-bottom">
@@ -861,10 +1191,7 @@
                     <span>Causar</span>
                 </button>
 
-                <button type="button" wire:click="reversar" class="btn-outline flex items-center justify-center gap-2">
-                    <x-heroicon-o-arrow-uturn-left class="w-5 h-5" />
-                    <span>Reversar</span>
-                </button>
+                
             </div>
         </section>
 
@@ -899,9 +1226,10 @@
                 <button
                     type="button"
                     wire:click="limpiarFiltrosHistorial"
-                    class="history-filter-clear"
+                    class="cc-btn-outline-danger"
                 >
-                    Limpiar
+                    
+                    <span>Limpiar</span>
                 </button>
             </div>
 
@@ -918,6 +1246,7 @@
                             <th>Total causado</th>
                             <th>Usuario</th>
                             <th>Estado</th>
+                            <th>Acc.</th>
                         </tr>
                     </thead>
 
@@ -934,13 +1263,38 @@
                                 <td>{{ $item['concepto'] }}</td>
                                 <td>{{ $item['mes'] }}</td>
                                 <td>{{ $item['estudiantes'] }}</td>
-                                <td>${{ number_format($item['total_causado'], 0, ',', '.') }}</td>
+                                <td>
+                                    ${{ number_format(
+                                        $item['total_causado'],
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}
+                                </td>
                                 <td>{{ $item['usuario'] }}</td>
                                 <td>{{ $item['estado'] }}</td>
+
+                                <td>
+                                    @if(
+                                        $item['estado_raw'] === 'activo'
+                                        && ! empty($item['referencia'])
+                                    )
+                                        <button
+                                            type="button"
+                                            wire:click.stop="prepararReversionDesdeHistorial('{{ $item['referencia'] }}')"
+                                            class="history-reverse-button"
+                                            title="Reversar esta causación"
+                                        >
+                                            Reversar
+                                        </button>
+                                    @else
+                                        <span class="history-action-empty">-</span>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="empty-row">
+                                <td colspan="10" class="empty-row">
                                     No hay causaciones registradas todavía.
                                 </td>
                             </tr>
@@ -988,6 +1342,22 @@
                             <strong>{{ $confirmacionCausacion['estudiantes'] }}</strong>
                         </div>
                     </div>
+
+
+                    @if(($confirmacionCausacion['valor_unitario'] ?? 0) > 0)
+                        <div class="cc-confirm-row">
+                            <span>Valor por estudiante</span>
+
+                            <strong>
+                                ${{ number_format(
+                                    $confirmacionCausacion['valor_unitario'],
+                                    0,
+                                    ',',
+                                    '.'
+                                ) }}
+                            </strong>
+                        </div>
+                    @endif
 
                     <div class="cc-total-box">
                         <span>Total a causar</span>

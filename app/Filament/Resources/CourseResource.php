@@ -30,6 +30,25 @@ class CourseResource extends Resource
     protected static ?string $navigationGroup = 'Académico';
     protected static ?int $navigationSort = 3;
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Permisos
+    |--------------------------------------------------------------------------
+    */
+    protected static ?string $viewPermission =
+        'ver_cursos';
+
+    protected static ?string $createPermission =
+        'crear_cursos';
+
+    protected static ?string $editPermission =
+        'editar_cursos';
+
+    protected static ?string $deletePermission =
+        'eliminar_cursos';
+
+
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $query = parent::getEloquentQuery();

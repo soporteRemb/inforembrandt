@@ -3,20 +3,42 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DocenteResource\Pages;
+use App\Filament\Resources\DocenteResource\RelationManagers\AsignaturasRelationManager;
+
 use App\Models\Docente;
 use App\Models\User;
+use App\Models\Course;
+use App\Models\PeriodoLectivo;
+
+use App\Traits\HasRolePermissions;
+
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use App\Models\Course;
-use App\Models\PeriodoLectivo;
+
+
 use Illuminate\Support\Facades\Auth;
-use App\Filament\Resources\DocenteResource\RelationManagers\AsignaturasRelationManager;
+
 
 class DocenteResource extends Resource
 {
+    use HasRolePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_docentes';
+
+    protected static ?string $createPermission =
+        'crear_docentes';
+
+    protected static ?string $editPermission =
+        'editar_docentes';
+
+    protected static ?string $deletePermission =
+        'eliminar_docentes';
+
+
     protected static ?string $model = Docente::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';

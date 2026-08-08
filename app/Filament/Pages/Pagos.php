@@ -20,6 +20,8 @@ use App\Services\Financiero\Pagos\BuscarReciboGlobalService;
 use App\Services\Financiero\Pagos\Pdf\ReciboPdfService;
 use App\Services\Financiero\Pagos\Pdf\ExtractoPdfService;
 
+use App\Traits\HasPagePermissions;
+
 use Filament\Pages\Page;
 
 use Filament\Notifications\Notification;
@@ -35,6 +37,13 @@ use Throwable;
 
 class Pagos extends Page
 {
+    use HasPagePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_pagos';
+
+
+
     use WithFileUploads;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';

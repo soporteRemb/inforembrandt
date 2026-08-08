@@ -16,6 +16,9 @@ class CausacionCostosService
         ?string $grado,
         ?int $conceptoCobroId,
         ?int $mesNumero = null,
+        ?int $courseId = null,
+        ?array $studentIds = null,
+        ?float $valorBaseManual = null,
     ): array {
         $resumen = [
             'estudiantes' => 0,
@@ -32,13 +35,17 @@ class CausacionCostosService
         }
 
         $grados = $grado === 'todos'
-            ? AsignacionConcepto::query()
+            ? Student::query()
                 ->where('sede_id', $sedeId)
-                ->where('periodo_lectivo_id', $periodoLectivoId)
-                ->where('concepto_cobro_id', $conceptoCobroId)
-                ->where('activo', true)
-                ->orderBy('grado')
-                ->pluck('grado')
+                ->where(
+                    'periodo_lectivo_id',
+                    $periodoLectivoId
+                )
+                ->whereHas('course')
+                ->with('course:id,grado')
+                ->get()
+                ->pluck('course.grado')
+                ->filter()
                 ->unique()
                 ->values()
                 ->toArray()
@@ -47,17 +54,39 @@ class CausacionCostosService
         foreach ($grados as $gradoActual) {
             $asignacion = AsignacionConcepto::query()
                 ->where('sede_id', $sedeId)
-                ->where('periodo_lectivo_id', $periodoLectivoId)
-                ->where('grado', $gradoActual)
-                ->where('concepto_cobro_id', $conceptoCobroId)
+                ->where(
+                    'periodo_lectivo_id',
+                    $periodoLectivoId
+                )
+                ->where(
+                    'concepto_cobro_id',
+                    $conceptoCobroId
+                )
                 ->where('activo', true)
+                ->whereIn('grado', [
+                    $gradoActual,
+                    'todos',
+                ])
+                ->orderByRaw(
+                    "CASE WHEN grado = ? THEN 0 ELSE 1 END",
+                    [$gradoActual]
+                )
                 ->first();
 
             if (! $asignacion) {
                 continue;
             }
 
-            $valorBaseGrado = (float) $asignacion->tarifa_ordinaria;
+            $valorBaseGrado =
+                $valorBaseManual !== null
+                    ? round($valorBaseManual, 2)
+                    : round(
+                        (float) (
+                            $asignacion->tarifa_ordinaria
+                            ?? 0
+                        ),
+                        2
+                    );
 
             if ($grado !== 'todos') {
                 $resumen['tarifa_base'] = $valorBaseGrado;
@@ -65,10 +94,35 @@ class CausacionCostosService
 
             $estudiantes = Student::query()
                 ->where('sede_id', $sedeId)
-                ->where('periodo_lectivo_id', $periodoLectivoId)
-                ->whereHas('course', function ($query) use ($gradoActual) {
-                    $query->where('grado', $gradoActual);
-                })
+                ->where(
+                    'periodo_lectivo_id',
+                    $periodoLectivoId
+                )
+                ->whereHas(
+                    'course',
+                    function ($query) use (
+                        $gradoActual,
+                        $courseId
+                    ) {
+                        $query->where(
+                            'grado',
+                            $gradoActual
+                        );
+
+                        if ($courseId) {
+                            $query->whereKey($courseId);
+                        }
+                    }
+                )
+                ->when(
+                    is_array($studentIds),
+                    function ($query) use ($studentIds) {
+                        $query->whereIn(
+                            'id',
+                            array_map('intval', $studentIds)
+                        );
+                    }
+                )
                 ->get();
 
             foreach ($estudiantes as $student) {

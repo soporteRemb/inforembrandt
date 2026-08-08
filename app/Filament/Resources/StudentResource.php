@@ -48,6 +48,19 @@ class StudentResource extends Resource
     protected static ?string $navigationGroup = 'Académico';
     protected static ?int $navigationSort = 1;
 
+    // ─── Permisos
+    protected static ?string $viewPermission =
+        'ver_estudiantes';
+
+    protected static ?string $createPermission =
+        'crear_estudiantes';
+
+    protected static ?string $editPermission =
+        'editar_estudiantes';
+
+    protected static ?string $deletePermission =
+        'eliminar_estudiantes';
+
     // ─── Campos de acudiente por tipo ────────────────────────────────────────
     private static function guardianSchema(string $tipo): array
     {

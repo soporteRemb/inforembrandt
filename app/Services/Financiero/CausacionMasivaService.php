@@ -21,6 +21,8 @@ class CausacionMasivaService
         int $conceptoCobroId,
         ?int $mesNumero,
         ?int $userId,
+        ?array $studentIds = null,
+        ?float $valorBaseManual = null,
     ): array {
         return DB::transaction(function () use (
             $sedeId,
@@ -28,7 +30,9 @@ class CausacionMasivaService
             $grado,
             $conceptoCobroId,
             $mesNumero,
-            $userId
+            $userId,
+            $studentIds,
+            $valorBaseManual,
         ) {
 
             $referenciaLote = sprintf(
@@ -39,13 +43,30 @@ class CausacionMasivaService
             );
 
             $grados = $grado === 'todos'
-                ? AsignacionConcepto::query()
+                ? Student::query()
                     ->where('sede_id', $sedeId)
-                    ->where('periodo_lectivo_id', $periodoLectivoId)
-                    ->where('concepto_cobro_id', $conceptoCobroId)
-                    ->where('activo', true)
-                    ->orderBy('grado')
-                    ->pluck('grado')
+                    ->where(
+                        'periodo_lectivo_id',
+                        $periodoLectivoId
+                    )
+                    ->when(
+                        is_array($studentIds),
+                        function ($query) use ($studentIds) {
+                            $query->whereIn(
+                                'id',
+                                collect($studentIds)
+                                    ->map(fn ($id) => (int) $id)
+                                    ->filter(fn ($id) => $id > 0)
+                                    ->unique()
+                                    ->values()
+                                    ->toArray()
+                            );
+                        }
+                    )
+                    ->with('course:id,grado')
+                    ->get()
+                    ->pluck('course.grado')
+                    ->filter()
                     ->unique()
                     ->values()
                     ->toArray()
@@ -60,10 +81,23 @@ class CausacionMasivaService
                 $asignacion = AsignacionConcepto::query()
                     ->with('conceptoCobro')
                     ->where('sede_id', $sedeId)
-                    ->where('periodo_lectivo_id', $periodoLectivoId)
-                    ->where('grado', $gradoActual)
-                    ->where('concepto_cobro_id', $conceptoCobroId)
+                    ->where(
+                        'periodo_lectivo_id',
+                        $periodoLectivoId
+                    )
+                    ->where(
+                        'concepto_cobro_id',
+                        $conceptoCobroId
+                    )
                     ->where('activo', true)
+                    ->whereIn('grado', [
+                        $gradoActual,
+                        'todos',
+                    ])
+                    ->orderByRaw(
+                        'CASE WHEN grado = ? THEN 0 ELSE 1 END',
+                        [$gradoActual]
+                    )
                     ->first();
 
                 if (! $asignacion) {
@@ -72,8 +106,28 @@ class CausacionMasivaService
 
                 $estudiantes = Student::query()
                     ->where('sede_id', $sedeId)
-                    ->where('periodo_lectivo_id', $periodoLectivoId)
-                    ->whereHas('course', fn ($query) => $query->where('grado', $gradoActual))
+                    ->where(
+                        'periodo_lectivo_id',
+                        $periodoLectivoId
+                    )
+                    ->whereHas(
+                        'course',
+                        fn ($query) =>
+                            $query->where('grado', $gradoActual)
+                    )
+                    ->when(
+                        is_array($studentIds),
+                        function ($query) use ($studentIds) {
+                            $idsValidos = collect($studentIds)
+                                ->map(fn ($id) => (int) $id)
+                                ->filter(fn ($id) => $id > 0)
+                                ->unique()
+                                ->values()
+                                ->toArray();
+
+                            $query->whereIn('id', $idsValidos);
+                        }
+                    )
                     ->with('course')
                     ->get();
 
@@ -82,9 +136,11 @@ class CausacionMasivaService
                 foreach ($estudiantes as $student) {
                     $yaExiste = MovimientoCarteraEstudiante::query()
                         ->where('student_id', $student->id)
+                        ->where('sede_id', $sedeId)
                         ->where('periodo_lectivo_id', $periodoLectivoId)
                         ->where('concepto_cobro_id', $conceptoCobroId)
                         ->where('mes_numero', $mesNumero)
+                        ->where('tipo_movimiento', 'causacion')
                         ->where('estado', 'activo')
                         ->exists();
 
@@ -93,7 +149,15 @@ class CausacionMasivaService
                         continue;
                     }
 
-                    $valorBase = (float) $asignacion->tarifa_ordinaria;
+                    $valorBase = $valorBaseManual !== null
+                        ? round($valorBaseManual, 2)
+                        : round(
+                            (float) (
+                                $asignacion->tarifa_ordinaria
+                                ?? 0
+                            ),
+                            2
+                        );
                     $valorPersonalizado = 0;
                     $valorFinal = $valorBase;
 

@@ -395,6 +395,89 @@
             text-align: right;
         }
 
+        .payments-filters {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) 180px 170px auto;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .payments-filter-input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #d7dde7;
+            border-radius: 7px;
+            background: #fff;
+            font-size: 13px;
+            color: #1f2937;
+            outline: none;
+        }
+
+        .payments-filter-input:focus {
+            border-color: #9f1d1d;
+            box-shadow: 0 0 0 2px rgba(159, 29, 29, 0.08);
+        }
+
+        .payments-filter-clear {
+            height: 36px;
+            padding: 0 18px;
+            border: 1px solid #c91f2d;
+            border-radius: 7px;
+            background: #fff;
+            color: #c91f2d;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .payments-filter-clear:hover {
+            background: #fff5f5;
+        }
+
+        .payments-wrap {
+            border: 1px solid #d7dde7;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .payments-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+        }
+
+        .payments-table th,
+        .payments-table td {
+            width: 25%;
+        }
+
+        .payments-table thead th {
+            position: static;
+            background: #f3f6fa;
+        }
+
+        .payments-body-scroll {
+            max-height: 180px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .payments-table-body {
+            border-top: none;
+        }
+
+        .payments-table-body td {
+            border-top: 1px solid #d7dde7;
+        }
+
+        @media (max-width: 900px) {
+            .payments-filters {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
 
         .toast-success {
             position: fixed;
@@ -594,50 +677,85 @@
         <div class="card panel">
             <div class="panel-title">
                 <svg class="title-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12h6m-6 4h6M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/>
                 </svg>
                 Resumen de cuenta
             </div>
 
+            {{-- Saldo anterior (aún no proviene de cartera) --}}
             <div class="row-line">
                 <label>Saldo anterior</label>
-                <input type="text" name="saldo_anterior" class="input-control money-input"
-                    value="{{ number_format($ficha->saldo_anterior ?? 0, 0, ',', '.') }}">
+
+                <input
+                    type="text"
+                    name="saldo_anterior"
+                    class="input-control money-input"
+                    value="{{ number_format($ficha->saldo_anterior ?? 0, 0, ',', '.') }}"
+                >
             </div>
 
+            {{-- Matrícula --}}
             <div class="row-line">
                 <label>Matrícula</label>
-                <input type="text" name="matricula" class="input-control money-input"
-                    value="{{ number_format($ficha->matricula ?? 0, 0, ',', '.') }}">
+
+                <input
+                    type="text"
+                    name="matricula"
+                    class="input-control money-input"
+                    value="{{ number_format($valorMatricula ?? 0, 0, ',', '.') }}"
+                    @disabled($movimientoMatricula?->tiene_pago_confirmado)
+                >
             </div>
 
+            {{-- Costos académicos --}}
             <div class="row-line">
                 <label>Costos académicos</label>
-                <input type="text" name="costos_academicos" class="input-control money-input"
-                    value="{{ number_format($ficha->costos_academicos ?? 0, 0, ',', '.') }}">
+
+                <input
+                    type="text"
+                    name="costos_academicos"
+                    class="input-control money-input"
+                    value="{{ number_format($valorCostosAcademicos ?? 0, 0, ',', '.') }}"
+                    @disabled($movimientoCostosAcademicos?->tiene_pago_confirmado)
+                >
             </div>
 
+            {{-- Deudas manuales --}}
             <div class="row-line">
                 <label>Deudas</label>
-                <input type="text" name="deudas" class="input-control money-input"
-                    value="{{ number_format($ficha->deudas ?? 0, 0, ',', '.') }}">
+
+                <input
+                    type="text"
+                    name="deudas"
+                    class="input-control money-input"
+                    value="{{ number_format($ficha->deudas ?? 0, 0, ',', '.') }}"
+                >
             </div>
 
+            {{-- Total otros conceptos causados --}}
             <div class="row-line">
                 <label>Otras deudas</label>
+
                 <input
                     type="text"
                     name="otras_deudas"
                     class="input-control money-input"
-                    value="{{ number_format($ficha->otras_deudas ?? 0, 0, ',', '.') }}"
+                    value="{{ number_format($totalOtrosCostos ?? 0, 0, ',', '.') }}"
                     readonly
                 >
             </div>
 
+            {{-- Abonos administrativos --}}
             <div class="row-line">
                 <label>Abonos</label>
-                <input type="text" name="abonos" class="input-control money-input"
-                    value="{{ number_format($ficha->abonos ?? 0, 0, ',', '.') }}">
+
+                <input
+                    type="text"
+                    name="abonos"
+                    class="input-control money-input"
+                    value="{{ number_format($ficha->abonos ?? 0, 0, ',', '.') }}"
+                >
             </div>
 
             <div class="total-deuda">
@@ -647,13 +765,21 @@
                 </div>
 
                 <div class="value" id="totalDeudaVista">
-                    ${{ number_format($ficha->total_deuda ?? 0, 0, ',', '.') }}
+                    ${{ number_format($totalDeuda ?? 0, 0, ',', '.') }}
                 </div>
             </div>
 
             <div style="margin-top:14px;">
-                <div class="field-label">Observaciones</div>
-                <textarea class="textarea-control" name="observaciones" rows="4" placeholder="Ingrese observaciones...">{{ $ficha->observaciones }}</textarea>
+                <div class="field-label">
+                    Observaciones
+                </div>
+
+                <textarea
+                    class="textarea-control"
+                    name="observaciones"
+                    rows="4"
+                    placeholder="Ingrese observaciones..."
+                >{{ $ficha->observaciones }}</textarea>
             </div>
         </div>
 
@@ -668,7 +794,7 @@
             <div class="month-list">
                 @foreach($meses as $numero => $mes)
                     @php
-                        $pensionMes = $ficha->pensiones->firstWhere('mes_numero', $numero);
+                        $pensionMes = $movimientosPension->firstWhere('mes_numero', $numero);
                     @endphp
 
                     <div class="row-line">
@@ -725,40 +851,51 @@
                 <div>Valor</div>
             </div>
             @php
-                $otrosCostosFiltrados = $ficha->otrosCostos->filter(function ($otroCosto) {
+                $otrosCostosFiltrados = $otrosMovimientos->filter(function ($movimiento) {
                     $nombre = \Illuminate\Support\Str::upper(
-                        \Illuminate\Support\Str::ascii($otroCosto->nombre_concepto)
+                        \Illuminate\Support\Str::ascii(
+                            $movimiento->conceptoCobro?->descripcion ?? ''
+                        )
                     );
 
-                    return ! str_contains($nombre, 'MATRICULA')
-                        && ! str_contains($nombre, 'PENSION')
-                        && ! str_contains($nombre, 'COSTOS ACADEMICOS');
-                });
+                    $buscar = \Illuminate\Support\Str::upper(
+                        \Illuminate\Support\Str::ascii(
+                            request('buscarOtrosCostos', '')
+                        )
+                    );
 
-                $totalOtrosCostos = $otrosCostosFiltrados->sum('valor_personalizado');
+                    return $buscar === ''
+                        || str_contains($nombre, $buscar);
+                });
             @endphp
 
-            <div class="mini-table-scroll">
-                @forelse($otrosCostosFiltrados as $otroCosto)
-                    <div class="mini-table-row fila-otro-costo">
+            <div id="listaOtrosCostos">
+                @forelse($otrosCostosFiltrados as $movimiento)
+                    <div
+                        class="mini-table-row otro-costo-item"
+                        data-nombre="{{ \Illuminate\Support\Str::upper(
+                            \Illuminate\Support\Str::ascii(
+                                $movimiento->conceptoCobro?->descripcion ?? ''
+                            )
+                        ) }}"
+                    >
                         <div>
-                            {{ $otroCosto->nombre_concepto }}
+                            {{ $movimiento->conceptoCobro?->descripcion ?? 'Concepto sin nombre' }}
                         </div>
 
                         <div>
                             <input
                                 type="text"
-                                name="otros_costos[{{ $otroCosto->id }}]"
-                                class="input-control money-input input-mini-valor input-otro-costo"
-                                value="{{ number_format($otroCosto->valor_personalizado, 0, ',', '.') }}"
+                                name="otros_costos[{{ $movimiento->id }}]"
+                                class="input-control money-input input-otro-costo"
+                                value="{{ number_format($movimiento->valor ?? 0, 0, ',', '.') }}"
+                                @disabled($movimiento->tiene_pago_confirmado)
                             >
                         </div>
                     </div>
                 @empty
-                    <div class="mini-table-row fila-otro-costo">
-                        <div style="grid-column: span 2; text-align:center; color:#6b7280;">
-                            No hay otros costos asignados.
-                        </div>
+                    <div class="empty-mini-table">
+                        No hay otros costos causados.
                     </div>
                 @endforelse
             </div>
@@ -768,7 +905,12 @@
 
                 <div style="text-align:right;">
                     <span id="totalOtrosCostosValor">
-                        ${{ number_format($totalOtrosCostos, 0, ',', '.') }}
+                        ${{ number_format(
+                            $totalOtrosMovimientos ?? 0,
+                            0,
+                            ',',
+                            '.'
+                        ) }}
                     </span>
                 </div>
             </div>
@@ -812,6 +954,36 @@
             Pagos realizados
         </div>
 
+        <div class="payments-filters">
+            <input
+                type="text"
+                id="buscarPagoConcepto"
+                class="payments-filter-input"
+                placeholder="Buscar concepto..."
+            >
+
+            <input
+                type="text"
+                id="buscarPagoRecibo"
+                class="payments-filter-input"
+                placeholder="No. de recibo"
+            >
+
+            <input
+                type="date"
+                id="buscarPagoFecha"
+                class="payments-filter-input"
+            >
+
+            <button
+                type="button"
+                id="limpiarFiltrosPagos"
+                class="payments-filter-clear"
+            >
+                Limpiar
+            </button>
+        </div>
+
         <div class="bottom-grid">
             <div>
 
@@ -825,15 +997,86 @@
                                 <th>Valor pagado</th>
                             </tr>
                         </thead>
-
-                        <tbody>
-                            <tr>
-                                <td colspan="4" style="text-align:center;color:#6b7280;">
-                                    No hay pagos registrados todavía.
-                                </td>
-                            </tr>
-                        </tbody>
                     </table>
+
+                    <div class="payments-body-scroll">
+                        <table class="payments-table payments-table-body">
+                            <tbody id="tablaPagosRealizados">
+                                @forelse($pagosRealizados as $pago)
+                                    @php
+                                        $fechaVisible = $pago['fecha_pago'] ?? '-';
+                                        $fechaFiltro = '';
+
+                                        if (! empty($pago['fecha_pago'])) {
+                                            try {
+                                                $fechaFiltro = \Carbon\Carbon::createFromFormat(
+                                                    'd/m/Y h:i a',
+                                                    trim($pago['fecha_pago'])
+                                                )->format('Y-m-d');
+                                            } catch (\Throwable $e) {
+                                                $fechaFiltro = '';
+                                            }
+                                        }
+                                    @endphp
+
+                                    <tr
+                                        class="pago-realizado-row"
+                                        data-concepto="{{ \Illuminate\Support\Str::lower($pago['concepto'] ?? '') }}"
+                                        data-recibo="{{ $pago['numero_recibo'] ?? '' }}"
+                                        data-fecha="{{ $fechaFiltro }}"
+                                    >
+                                        <td>
+                                            {{ $fechaVisible }}
+                                        </td>
+
+                                        <td>
+                                            {{ $pago['numero_recibo'] ?? '-' }}
+                                        </td>
+
+                                        <td>
+                                            {{ $pago['concepto'] ?? 'Concepto de pago' }}
+
+                                            @if(!empty($pago['mes']))
+                                                — {{ $pago['mes'] }}
+                                            @endif
+                                        </td>
+
+                                        <td>
+                                            ${{
+                                                number_format(
+                                                    (float) ($pago['valor_pagado'] ?? 0),
+                                                    0,
+                                                    ',',
+                                                    '.'
+                                                )
+                                            }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td
+                                            colspan="4"
+                                            style="text-align:center;color:#6b7280;"
+                                        >
+                                            No hay pagos confirmados registrados todavía.
+                                        </td>
+                                    </tr>
+                                @endforelse
+
+                                <tr
+                                    id="sinResultadosPagos"
+                                    style="display:none;"
+                                >
+                                    <td
+                                        colspan="4"
+                                        style="text-align:center;color:#6b7280;"
+                                    >
+                                        No se encontraron pagos para los filtros seleccionados.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>
@@ -865,7 +1108,7 @@
 
         input.addEventListener('input', function () {
             const filtro = this.value.toLowerCase().trim();
-            const filas = document.querySelectorAll('.fila-otro-costo');
+            const filas = document.querySelectorAll('.otro-costo-item');
 
             filas.forEach(function (fila) {
                 const texto = fila.innerText.toLowerCase();
@@ -974,6 +1217,132 @@
                 }, 400);
             }, 2600);
         }
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const inputConcepto = document.getElementById(
+            'buscarPagoConcepto'
+        );
+
+        const inputRecibo = document.getElementById(
+            'buscarPagoRecibo'
+        );
+
+        const inputFecha = document.getElementById(
+            'buscarPagoFecha'
+        );
+
+        const botonLimpiar = document.getElementById(
+            'limpiarFiltrosPagos'
+        );
+
+        const filas = document.querySelectorAll(
+            '.pago-realizado-row'
+        );
+
+        const filaSinResultados = document.getElementById(
+            'sinResultadosPagos'
+        );
+
+        function normalizarTexto(texto) {
+            return String(texto ?? '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+        }
+
+        function filtrarPagos() {
+            const conceptoBuscado = normalizarTexto(
+                inputConcepto?.value
+            );
+
+            const reciboBuscado = normalizarTexto(
+                inputRecibo?.value
+            );
+
+            const fechaBuscada = inputFecha?.value ?? '';
+
+            let visibles = 0;
+
+            filas.forEach(function (fila) {
+                const concepto = normalizarTexto(
+                    fila.dataset.concepto
+                );
+
+                const recibo = normalizarTexto(
+                    fila.dataset.recibo
+                );
+
+                const fecha = fila.dataset.fecha ?? '';
+
+                const coincideConcepto =
+                    !conceptoBuscado
+                    || concepto.includes(conceptoBuscado);
+
+                const coincideRecibo =
+                    !reciboBuscado
+                    || recibo.includes(reciboBuscado);
+
+                const coincideFecha =
+                    !fechaBuscada
+                    || fecha === fechaBuscada;
+
+                const mostrar =
+                    coincideConcepto
+                    && coincideRecibo
+                    && coincideFecha;
+
+                fila.style.display = mostrar ? '' : 'none';
+
+                if (mostrar) {
+                    visibles++;
+                }
+            });
+
+            if (filaSinResultados) {
+                filaSinResultados.style.display =
+                    visibles === 0 && filas.length > 0
+                        ? ''
+                        : 'none';
+            }
+        }
+
+        inputConcepto?.addEventListener(
+            'input',
+            filtrarPagos
+        );
+
+        inputRecibo?.addEventListener(
+            'input',
+            filtrarPagos
+        );
+
+        inputFecha?.addEventListener(
+            'change',
+            filtrarPagos
+        );
+
+        botonLimpiar?.addEventListener(
+            'click',
+            function () {
+                if (inputConcepto) {
+                    inputConcepto.value = '';
+                }
+
+                if (inputRecibo) {
+                    inputRecibo.value = '';
+                }
+
+                if (inputFecha) {
+                    inputFecha.value = '';
+                }
+
+                filtrarPagos();
+            }
+        );
     });
 </script>
 

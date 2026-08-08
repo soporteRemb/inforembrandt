@@ -8,16 +8,34 @@ use App\Models\Docente;
 use App\Models\PensumAcademico;
 use App\Models\PeriodoLectivo;
 use App\Models\Sede;
+use App\Traits\HasRolePermissions;
+
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+
 use Illuminate\Support\Facades\Auth;
 
 
 class PensumAcademicoResource extends Resource
 {
+    use HasRolePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_pensum';
+
+    protected static ?string $createPermission =
+        'crear_pensum';
+
+    protected static ?string $editPermission =
+        'editar_pensum';
+
+    protected static ?string $deletePermission =
+        'eliminar_pensum';
+
+
     protected static ?string $model = PensumAcademico::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';

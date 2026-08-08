@@ -21,6 +21,21 @@ class PeriodoLectivoResource extends Resource
 {
     use HasRolePermissions;
 
+
+    protected static ?string $viewPermission =
+    'ver_periodos';
+
+    protected static ?string $createPermission =
+        'crear_periodos';
+
+    protected static ?string $editPermission =
+        'editar_periodos';
+
+    protected static ?string $deletePermission =
+        'eliminar_periodos';
+
+
+
     protected static ?string $model = PeriodoLectivo::class;
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationLabel = 'Periodos Lectivos';

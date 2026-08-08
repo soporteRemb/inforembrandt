@@ -69,7 +69,10 @@ class MovimientoCarteraEstudiante extends Model
 
     public function conceptoCobro()
     {
-        return $this->belongsTo(ConceptoCobro::class);
+        return $this->belongsTo(
+            ConceptoCobro::class,
+            'concepto_cobro_id'
+        );
     }
 
     public function causadoPor()

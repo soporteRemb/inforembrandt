@@ -2,7 +2,7 @@
 
 return [
 
-    'failed' => 'Las credenciales ingresadas no son correctas.',
+    'failed' => 'Usuario o contraseña incorrectos.',
 
     'password' => 'La contraseña es incorrecta.',
 

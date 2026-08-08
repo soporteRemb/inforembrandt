@@ -8,10 +8,13 @@ use App\Models\AsignacionConcepto;
 use App\Models\PensionEstudiante;
 use App\Models\OtroCostoEstudiante;
 use App\Models\CostoMoraEstudiante;
+use App\Models\MovimientoCarteraEstudiante;
+use App\Models\ReciboPago;
 
 
 use App\Services\Financiero\ResumenCuentaEstudianteService;
 use App\Services\Financiero\Pagos\SincronizacionCarteraEstudianteService;
+use App\Services\Financiero\Pagos\HistorialPagosService;
 
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -20,8 +23,19 @@ class CostosEstudianteController extends Controller
 {
     public function index(Student $student)
     {
-        $student->load(['sede', 'periodoLectivo', 'course']);
+        $student->load([
+            'sede',
+            'periodoLectivo',
+            'course',
+        ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Datos administrativos de la ficha
+        |--------------------------------------------------------------------------
+        | La ficha sigue guardando tipo de pago, pagaré, observaciones y otros
+        | datos administrativos, pero los valores causados se leen de cartera.
+        */
         $ficha = FichaCostoEstudiante::firstOrCreate(
             [
                 'student_id' => $student->id,
@@ -43,54 +57,254 @@ class CostosEstudianteController extends Controller
                 'observaciones' => null,
             ]
         );
-        $resumenCausado = app(ResumenCuentaEstudianteService::class)->calcular($student);
 
-        $ficha->update([
-            
-            'costos_academicos' => $resumenCausado['costos_academicos'],
-            'deudas' => $resumenCausado['deudas'],
-            'otras_deudas' => $resumenCausado['otras_deudas'],
-            'total_deuda' => max(
-                ($ficha->saldo_anterior ?? 0)
-                + $resumenCausado['matricula']
-                + $resumenCausado['costos_academicos']
-                + $resumenCausado['deudas']
-                + $resumenCausado['otras_deudas']
-                - ($ficha->abonos ?? 0),
-                0
-            ),
-        ]);
-
-        $ficha->refresh();
-
-        $mesesCausados = \App\Models\MovimientoCarteraEstudiante::query()
+        /*
+        |--------------------------------------------------------------------------
+        | Fuente única de valores económicos
+        |--------------------------------------------------------------------------
+        */
+        $movimientos = MovimientoCarteraEstudiante::query()
+            ->with([
+                'conceptoCobro',
+                'aplicacionesPago.reciboPago',
+            ])
             ->where('student_id', $student->id)
             ->where('sede_id', $student->sede_id)
-            ->where('periodo_lectivo_id', $student->periodo_lectivo_id)
+            ->where(
+                'periodo_lectivo_id',
+                $student->periodo_lectivo_id
+            )
             ->where('tipo_movimiento', 'causacion')
             ->where('estado', 'activo')
-            ->whereNotNull('mes_numero')
-            ->pluck('mes_numero')
+            ->orderByRaw('mes_numero IS NULL')
+            ->orderBy('mes_numero')
+            ->orderBy('concepto_cobro_id')
+            ->get()
+            ->map(function (MovimientoCarteraEstudiante $movimiento) {
+                /*
+                * Solo bloqueamos por pagos actualmente confirmados.
+                * Las aplicaciones asociadas a recibos anulados permanecen
+                * como trazabilidad, pero ya no representan un pago vigente.
+                */
+                $movimiento->tiene_pago_confirmado =
+                    $movimiento->aplicacionesPago->contains(
+                        fn ($aplicacion) =>
+                            $aplicacion->reciboPago?->estado
+                            === ReciboPago::ESTADO_CONFIRMADO
+                    );
+
+                $movimiento->valor_pagado_confirmado =
+                    $movimiento->aplicacionesPago
+                        ->filter(
+                            fn ($aplicacion) =>
+                                $aplicacion->reciboPago?->estado
+                                === ReciboPago::ESTADO_CONFIRMADO
+                        )
+                        ->sum(
+                            fn ($aplicacion) =>
+                                (float) $aplicacion->valor_aplicado
+                        );
+
+                return $movimiento;
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Clasificar los movimientos para las tarjetas
+        |--------------------------------------------------------------------------
+        */
+        $movimientoMatricula = $movimientos->first(
+            function (MovimientoCarteraEstudiante $movimiento) {
+                $descripcion = Str::upper(
+                    Str::ascii(
+                        $movimiento->conceptoCobro?->descripcion
+                        ?? $movimiento->descripcion
+                        ?? ''
+                    )
+                );
+
+                return str_contains($descripcion, 'MATRICULA');
+            }
+        );
+
+        $movimientoCostosAcademicos = $movimientos->first(
+            function (MovimientoCarteraEstudiante $movimiento) {
+                $descripcion = Str::upper(
+                    Str::ascii(
+                        $movimiento->conceptoCobro?->descripcion
+                        ?? $movimiento->descripcion
+                        ?? ''
+                    )
+                );
+
+                return str_contains(
+                    $descripcion,
+                    'COSTOS ACADEMICOS'
+                );
+            }
+        );
+
+        $movimientosPension = $movimientos
+            ->filter(
+                function (MovimientoCarteraEstudiante $movimiento) {
+                    $descripcion = Str::upper(
+                        Str::ascii(
+                            $movimiento->conceptoCobro?->descripcion
+                            ?? $movimiento->descripcion
+                            ?? ''
+                        )
+                    );
+
+                    return str_contains($descripcion, 'PENSION');
+                }
+            )
+            ->keyBy(
+                fn (MovimientoCarteraEstudiante $movimiento) =>
+                    (int) $movimiento->mes_numero
+            );
+
+        $otrosMovimientos = $movimientos
+            ->filter(
+                function (MovimientoCarteraEstudiante $movimiento) {
+                    $descripcion = Str::upper(
+                        Str::ascii(
+                            $movimiento->conceptoCobro?->descripcion
+                            ?? $movimiento->descripcion
+                            ?? ''
+                        )
+                    );
+
+                    return ! str_contains($descripcion, 'MATRICULA')
+                        && ! str_contains($descripcion, 'PENSION')
+                        && ! str_contains(
+                            $descripcion,
+                            'COSTOS ACADEMICOS'
+                        );
+                }
+            )
+            ->values();
+        $totalOtrosMovimientos = $otrosMovimientos->sum(
+            fn (MovimientoCarteraEstudiante $movimiento) =>
+                (float) $movimiento->valor
+        );
+
+        
+
+        /*
+        |--------------------------------------------------------------------------
+        | Meses causados
+        |--------------------------------------------------------------------------
+        */
+        $mesesCausados = $movimientosPension
+            ->keys()
             ->map(fn ($mes) => (int) $mes)
+            ->values()
             ->toArray();
 
-            $ultimoMesCausado = app(ResumenCuentaEstudianteService::class)
-                ->obtenerUltimoMesCausado($student);
+        $ultimoMesCausado = app(
+            ResumenCuentaEstudianteService::class
+        )->obtenerUltimoMesCausado($student);
 
-            if ($ultimoMesCausado) {
-                $ficha->update([
-                    'mes_causado' => strtoupper($ultimoMesCausado),
-                ]);
+        if ($ultimoMesCausado) {
+            $ficha->update([
+                'mes_causado' => strtoupper($ultimoMesCausado),
+            ]);
 
-                $ficha->refresh();
-            }
+            $ficha->refresh();
+        }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Totales provenientes de cartera
+        |--------------------------------------------------------------------------
+        */
+        $valorMatricula =
+            (float) ($movimientoMatricula?->valor ?? 0);
 
+        $valorCostosAcademicos =
+            (float) ($movimientoCostosAcademicos?->valor ?? 0);
+
+        $totalPensiones = $movimientosPension->sum(
+            fn ($movimiento) => (float) $movimiento->valor
+        );
+
+        $totalOtrosCostos = $otrosMovimientos->sum(
+            fn ($movimiento) => (float) $movimiento->valor
+        );
+
+        $totalCausado =
+            $valorMatricula
+            + $valorCostosAcademicos
+            + $totalPensiones
+            + $totalOtrosCostos;
+
+        $totalDeuda = max(
+            (float) ($ficha->saldo_anterior ?? 0)
+            + $totalCausado
+            - (float) ($ficha->abonos ?? 0),
+            0
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resumen de pagos realizados
+        |--------------------------------------------------------------------------
+        | Usa el mismo servicio del historial de la pantalla Pagos.
+        | Solo muestra recibos actualmente confirmados.
+        */
+        $historialPagos = app(
+            HistorialPagosService::class
+        )->consultar(
+            studentId: (int) $student->id,
+            sedeId: (int) $student->sede_id,
+            periodoLectivoId: (int) $student->periodo_lectivo_id,
+            estado: ReciboPago::ESTADO_CONFIRMADO,
+            limite: 100,
+        );
+
+        $pagosRealizados = collect(
+            $historialPagos['filas'] ?? []
+        );
 
         return view('costos-estudiante.index', [
             'student' => $student,
             'ficha' => $ficha,
-            'mesesCausados' => $mesesCausados,
+
+            'movimientoMatricula' =>
+                $movimientoMatricula,
+
+            'movimientoCostosAcademicos' =>
+                $movimientoCostosAcademicos,
+
+            'movimientosPension' =>
+                $movimientosPension,
+
+            'otrosMovimientos' =>
+                $otrosMovimientos,
+
+            'mesesCausados' =>
+                $mesesCausados,
+
+            'valorMatricula' =>
+                $valorMatricula,
+
+            'valorCostosAcademicos' =>
+                $valorCostosAcademicos,
+
+            'totalPensiones' =>
+                $totalPensiones,
+
+            'totalOtrosCostos' =>
+                $totalOtrosCostos,
+
+            'totalOtrosMovimientos' =>
+                $totalOtrosMovimientos,
+
+            'totalDeuda' =>
+                $totalDeuda,
+
+            'pagosRealizados' =>
+                $pagosRealizados,
         ]);
     }
 
@@ -225,7 +439,91 @@ class CostosEstudianteController extends Controller
             }
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Actualizar otros costos causados
+        |--------------------------------------------------------------------------
+        */
+        $otrosMovimientos = $request->input('otros_movimientos', []);
 
+        foreach ($otrosMovimientos as $movimientoId => $valorIngresado) {
+            $movimiento = MovimientoCarteraEstudiante::query()
+                ->where('id', (int) $movimientoId)
+                ->where('student_id', $student->id)
+                ->where('periodo_lectivo_id', $student->periodo_lectivo_id)
+                ->where('tipo_movimiento', 'causacion')
+                ->where('tipo_concepto', 'no_obligatorio')
+                ->where('estado', 'activo')
+                ->first();
+
+            if (! $movimiento) {
+                continue;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | No modificar obligaciones con pagos confirmados
+            |--------------------------------------------------------------------------
+            */
+            $tienePagoConfirmado = MovimientoCarteraEstudiante::query()
+                ->where('movimiento_origen_id', $movimiento->id)
+                ->where('tipo_movimiento', 'pago')
+                ->where('estado', 'confirmado')
+                ->exists();
+
+            if ($tienePagoConfirmado) {
+                continue;
+            }
+
+            $valorNuevo = $this->convertirMonedaAFloat($valorIngresado);
+
+            $movimiento->update([
+                'valor_personalizado' => $valorNuevo,
+                'valor' => $valorNuevo,
+            ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Actualizar otros costos causados
+        |--------------------------------------------------------------------------
+        */
+        $otrosCostos = $request->input('otros_costos', []);
+
+        foreach ($otrosCostos as $movimientoId => $valorIngresado) {
+            $movimiento = MovimientoCarteraEstudiante::query()
+                ->where('id', (int) $movimientoId)
+                ->where('student_id', $student->id)
+                ->where(
+                    'periodo_lectivo_id',
+                    $student->periodo_lectivo_id
+                )
+                ->where('tipo_movimiento', 'causacion')
+                ->where('tipo_concepto', 'no_obligatorio')
+                ->where('estado', 'activo')
+                ->first();
+
+            if (! $movimiento) {
+                continue;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Bloquear modificación cuando la obligación tenga pagos confirmados
+            |--------------------------------------------------------------------------
+            */
+            
+
+            $valorNuevo = $this->convertirMonedaAFloat(
+                $valorIngresado
+            );
+
+            $movimiento->update([
+                'valor_personalizado' => $valorNuevo,
+                'valor' => $valorNuevo,
+            ]);
+        }
         
         return redirect()
             ->route('costos.estudiante', $student)
@@ -357,6 +655,23 @@ class CostosEstudianteController extends Controller
         return redirect()
             ->route('costos.estudiante', $student)
             ->with('success', 'Costos asignados correctamente.');
+    }
+
+    private function convertirMonedaAFloat(mixed $valor): float
+    {
+        if ($valor === null || trim((string) $valor) === '') {
+            return 0;
+        }
+
+        $valorLimpio = str_replace(
+            ['$', ' ', '.'],
+            '',
+            (string) $valor
+        );
+
+        $valorLimpio = str_replace(',', '.', $valorLimpio);
+
+        return round((float) $valorLimpio, 2);
     }
 
 }

@@ -8,12 +8,21 @@ use App\Models\Jornada;
 use App\Models\TipoLimiteExtemporaneo;
 use App\Models\FormaPago;
 
+use App\Traits\HasPagePermissions;
+
 
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
 class OtrosParametros extends Page
 {
+    use HasPagePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_otros_parametros';
+
+
+
     protected static ?string $navigationIcon = 'heroicon-o-adjustments-horizontal';
 
     protected static ?string $navigationLabel = 'Otros Parámetros';

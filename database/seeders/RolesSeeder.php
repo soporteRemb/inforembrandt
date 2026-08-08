@@ -21,11 +21,11 @@ class RolesSeeder extends Seeder
             'acudiente',
         ];
 
-        foreach ($roles as $role) {
-            Role::firstOrCreate(['name' => $role, 'guard_name' => 'web']);
+        foreach ($roles as $rol) {
+            Role::firstOrCreate([
+                'name' => $rol,
+                'guard_name' => 'web',
+            ]);
         }
-
-        // Asignar permisos por defecto
-        $this->call(PermissionsSeeder::class);
     }
 }

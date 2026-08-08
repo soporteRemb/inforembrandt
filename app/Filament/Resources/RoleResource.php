@@ -3,8 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RoleResource\Pages;
+use App\Filament\Resources\UserResource;
+
 use App\Traits\HasRolePermissions;
+
 use Database\Seeders\PermissionsSeeder;
+
+
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
@@ -15,13 +20,29 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+
+
+
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
 
 class RoleResource extends Resource
 {
     use HasRolePermissions;
+
+
+    protected static ?string $viewPermission =
+        'ver_roles';
+
+    protected static ?string $editPermission =
+        'editar_roles';
+
+    
+
+
 
     protected static ?string $model = Role::class;
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
@@ -30,6 +51,35 @@ class RoleResource extends Resource
     protected static ?string $pluralModelLabel = 'Roles y Permisos';
     protected static ?string $navigationGroup = 'Administración';
     protected static ?int $navigationSort = 3;
+
+
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        $usuarioActual = auth()->user();
+
+        if (! $usuarioActual) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($usuarioActual->hasAnyRole([
+            'admin',
+            'superadmin',
+        ])) {
+            return $query;
+        }
+
+        return $query->whereNotIn(
+            'name',
+            [
+                'admin',
+                'superadmin',
+            ]
+        );
+    }
+
 
     public static function form(Form $form): Form
     {
@@ -48,8 +98,16 @@ class RoleResource extends Resource
 
             // ID del permiso "ver_" de este módulo (puede no existir en todos)
             $verPermId = (string) ($permRecords->firstWhere(
-                fn($p) => str_starts_with($p->name, 'ver_')
+                fn ($permiso) => str_starts_with($permiso->name, 'ver_')
             )?->id ?? '');
+
+            $permisosIndependientes = $permRecords
+                ->filter(fn ($permiso) => in_array($permiso->name, [
+                    'diligenciar_formulario_pre_matricula',
+                ]))
+                ->pluck('id')
+                ->map(fn ($id) => (string) $id)
+                ->toArray();
 
             $sections[] = Section::make($modulo)
                 ->collapsible()
@@ -58,14 +116,7 @@ class RoleResource extends Resource
                         ->label('')
                         ->options($options)
                         ->columns(2)
-                        ->gridDirection('row')
-                        ->live()
-                        ->afterStateUpdated(function (?array $state, Set $set) use ($fieldName, $verPermId) {
-                            // Si "Ver" fue desmarcado, quitar todos los demás del módulo
-                            if ($verPermId && !in_array($verPermId, array_map('strval', $state ?? []))) {
-                                $set($fieldName, []);
-                            }
-                        }),
+                        ->gridDirection('row'),
                 ]);
         }
 
@@ -74,8 +125,24 @@ class RoleResource extends Resource
                 ->label('Nombre del rol')
                 ->required()
                 ->maxLength(50)
-                ->disabled(fn($record) => in_array($record?->name ?? '', ['superadmin', 'admin']))
-                ->helperText('Los roles superadmin y admin no se pueden renombrar.'),
+
+                // Siempre guardar el nombre normalizado
+                ->dehydrateStateUsing(
+                    fn ($state) => UserResource::normalizarNombreRol($state)
+                )
+
+                // No permitir renombrar los roles principales
+                ->disabled(
+                    fn ($record) => in_array(
+                        UserResource::normalizarNombreRol($record?->name),
+                        ['superadmin', 'admin'],
+                        true
+                    )
+                )
+
+                ->helperText(
+                    'Los roles superadmin y admin no se pueden renombrar.'
+                ),
 
             ViewField::make('filament.forms.role-filter-toolbar')
                 ->label('')
@@ -115,7 +182,11 @@ class RoleResource extends Resource
 
     public static function canCreate(): bool
     {
-        return false;
+        $usuario = auth()->user();
+
+        return $usuario
+            && $usuario->hasAnyRole(['superadmin', 'admin'])
+            && $usuario->hasPermissionTo('editar_roles');
     }
 
     public static function canDelete(\Illuminate\Database\Eloquent\Model $record): bool
@@ -128,20 +199,9 @@ class RoleResource extends Resource
         return false;
     }
 
-    public static function canAccess(): bool
-    {
-        $user = auth()->user();
-        if (!$user) return false;
-        return $user->hasAnyRole(['superadmin', 'admin']) && $user->hasPermissionTo('ver_roles');
-    }
+    
 
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListRoles::route('/'),
-            'edit'  => Pages\EditRole::route('/{record}/edit'),
-        ];
-    }
+    
 
     /** Devuelve los nombres de los campos de permisos para un registro de role */
     public static function permFieldsFromRecord(Role $role): array
@@ -172,6 +232,18 @@ class RoleResource extends Resource
 
     private static function etiqueta(string $name): string
     {
+        $etiquetasEspeciales = [
+            'diligenciar_formulario_pre_matricula' => 'Diligenciar formulario',
+            'ver_pre_matriculas' => 'Ver pre-matrículas',
+            'editar_pre_matriculas' => 'Editar pre-matrículas',
+            'exportar_pre_matriculas' => 'Exportar pre-matrículas',
+            'ver_historial_pre_matriculas' => 'Ver historial',
+        ];
+
+        if (isset($etiquetasEspeciales[$name])) {
+            return $etiquetasEspeciales[$name];
+        }
+
         $mapa = [
             'ver_'      => 'Ver ',
             'crear_'    => 'Crear ',
@@ -180,25 +252,49 @@ class RoleResource extends Resource
         ];
 
         $recursos = [
-            'estudiantes'       => 'Estudiantes',
-            'usuarios'          => 'Usuarios',
-            'cursos'            => 'Cursos',
-            'sedes'             => 'Sedes',
-            'periodos'          => 'Períodos',
-            'acudientes'        => 'Acudientes',
-            'matriculas'        => 'Matrículas',
-            'roles'             => 'Roles',
-            'conceptos_cobro'   => 'Conceptos de Cobro',
-            'asignacion_costos' => 'Asignación Costos',
+            'estudiantes'        => 'Estudiantes',
+            'usuarios'           => 'Usuarios',
+            'cursos'             => 'Cursos',
+            'sedes'              => 'Sedes',
+            'periodos'           => 'Períodos',
+            'acudientes'         => 'Acudientes',
+            'matriculas'         => 'Matrículas',
+            'roles'              => 'Roles',
+            'conceptos_cobro'    => 'Conceptos de Cobro',
+            'asignacion_costos'  => 'Asignación Costos',
+
+            'notas'              => 'Notas',
+            'pensum'             => 'Pensum Académico',
+            'docentes'           => 'Docentes',
+            'desempenos'         => 'Desempeños',
+
+            'boletines_administrativos' => 'Boletines Administrativos',
+            'causacion_costos'           => 'Causación de Costos',
+            'pagos'                      => 'Pagos',
+            'otros_parametros'           => 'Otros Parámetros',
+            'importacion_datos'          => 'Importación de Datos',
+
+            'boletines_acudientes' => 'Boletines Acudientes',
+
         ];
 
         foreach ($mapa as $prefijo => $label) {
             if (str_starts_with($name, $prefijo)) {
                 $recurso = substr($name, strlen($prefijo));
+
                 return $label . ($recursos[$recurso] ?? ucfirst($recurso));
             }
         }
 
         return $name;
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListRoles::route('/'),
+            'create' => Pages\CreateRole::route('/create'),
+            'edit' => Pages\EditRole::route('/{record}/edit'),
+        ];
     }
 }

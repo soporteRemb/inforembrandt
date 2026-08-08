@@ -6,15 +6,37 @@ use App\Filament\Resources\ConceptoCobroResource\Pages;
 use App\Models\ConceptoCobro;
 use App\Models\PeriodoLectivo;
 use App\Models\Sede;
+use App\Traits\HasRolePermissions;
+
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+
+
 use Illuminate\Database\Eloquent\Builder;
 
 class ConceptoCobroResource extends Resource
 {
+
+    use HasRolePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_conceptos_cobro';
+
+    protected static ?string $createPermission =
+        'crear_conceptos_cobro';
+
+    protected static ?string $editPermission =
+        'editar_conceptos_cobro';
+
+    protected static ?string $deletePermission =
+        'eliminar_conceptos_cobro';
+
+
+
+
     protected static ?string $model = ConceptoCobro::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
@@ -28,6 +50,10 @@ class ConceptoCobroResource extends Resource
     protected static ?string $pluralModelLabel = 'Conceptos de Cobro';
 
     protected static ?int $navigationSort = 5;
+
+
+
+
 
     public static function form(Form $form): Form
     {

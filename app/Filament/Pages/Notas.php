@@ -12,6 +12,8 @@ use App\Models\Docente;
 use App\Models\DocenteAsignatura;
 use App\Models\PeriodoAcademico;
 
+use App\Traits\HasPagePermissions;
+
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
@@ -36,6 +38,14 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class Notas extends Page implements Forms\Contracts\HasForms
 {
+
+    use HasPagePermissions;
+
+    protected static ?string $viewPermission =
+        'ver_notas';
+
+
+
     use Forms\Concerns\InteractsWithForms;
     use WithFileUploads;
 
