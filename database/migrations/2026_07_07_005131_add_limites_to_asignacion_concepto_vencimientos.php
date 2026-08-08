@@ -9,13 +9,30 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('asignacion_concepto_vencimientos', function (Blueprint $table) {
-            if (! Schema::hasColumn('asignacion_concepto_vencimientos', 'valor')) {
+
+            if (! Schema::hasColumn(
+                'asignacion_concepto_vencimientos',
+                'tipo_limite_extemporaneo_id'
+            )) {
+                $table->unsignedBigInteger('tipo_limite_extemporaneo_id')
+                    ->after('dias');
+            }
+
+            if (! Schema::hasColumn(
+                'asignacion_concepto_vencimientos',
+                'valor'
+            )) {
                 $table->decimal('valor', 12, 2)
                     ->default(0)
                     ->after('tipo_limite_extemporaneo_id');
             }
+        });
 
-            $table->foreign('tipo_limite_extemporaneo_id', 'acv_tipo_limite_fk')
+        Schema::table('asignacion_concepto_vencimientos', function (Blueprint $table) {
+            $table->foreign(
+                'tipo_limite_extemporaneo_id',
+                'acv_tipo_limite_fk'
+            )
                 ->references('id')
                 ->on('tipo_limite_extemporaneos')
                 ->cascadeOnUpdate()
