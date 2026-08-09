@@ -26,13 +26,13 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->favicon(asset('images/Logo.png'))
+            ->favicon(asset('images/logo.png'))
             ->login(\App\Filament\Pages\Auth\Login::class)
             ->brandName(function() {
                 $sede = \App\Models\Sede::find(session('sede_id'));
                 $anio = session('anio', date('Y'));
                 $nombreSede = $sede ? $sede->nombre : 'Rembrandt';
-                $logoUrl = asset('images/Logo.png');
+                $logoUrl = asset('images/logo.png');
                 return new \Illuminate\Support\HtmlString(
                     '<span style="display:flex;align-items:center;gap:10px;">'
                     . '<img src="' . e($logoUrl) . '" style="height:36px;width:auto;flex-shrink:0;" alt="">'

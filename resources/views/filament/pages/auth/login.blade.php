@@ -5,7 +5,6 @@
     .fi-simple-main {
         max-width: 820px !important; width: 100% !important;
         background-color: #8f0f12 !important;
-        background-image: url('{{ asset('images/colorrojo.png') }}') !important;
         background-size: cover !important; background-position: center !important;
         border-radius: 28px !important; padding: 42px 46px 36px !important;
         box-shadow: 0 26px 65px rgba(0,0,0,0.4) !important;
@@ -117,7 +116,7 @@
 {{-- Header: logos + título + selectores --}}
 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:30px;">
 
-    <img src="{{ asset('images/Logo.png') }}" style="width:115px; height:auto; flex-shrink:0;">
+    <img src="{{ asset('images/logo.png') }}" style="width:115px; height:auto; flex-shrink:0;">
 
     <div style="text-align:center; flex:1; padding:0 18px;">
         <h1 style="color:white; font-size:2.1rem; font-weight:800; margin:0 0 16px; letter-spacing:0.2px;">
