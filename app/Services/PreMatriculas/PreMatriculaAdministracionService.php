@@ -161,17 +161,27 @@ class PreMatriculaAdministracionService
                 $preMatricula->eps?->nombre ?? ''
             ),
 
+            'eps_otro' => (string) (
+                $preMatricula->eps_otro ?? ''
+            ),
+
             'telefono_emergencia' => (string) (
                 $preMatricula->telefono_emergencia ?? ''
             ),
 
-            'grado' => (string) (
-                $preMatricula->grado_aspira ?? ''
-            ),
+            'grado' => filled($preMatricula->grado_aspira)
+                ? mb_strtoupper(
+                    trim((string) $preMatricula->grado_aspira),
+                    'UTF-8'
+                )
+                : '',
 
-            'grado_aspira' => (string) (
-                $preMatricula->grado_aspira ?? ''
-            ),
+            'grado_aspira' => filled($preMatricula->grado_aspira)
+                ? mb_strtoupper(
+                    trim((string) $preMatricula->grado_aspira),
+                    'UTF-8'
+                )
+                : '',
 
             'institucion_anterior' => (string) (
                 $preMatricula->institucion_anterior ?? ''
@@ -383,6 +393,7 @@ class PreMatriculaAdministracionService
             'direccion',
             'rh',
             'eps_id',
+            'eps_otro',
             'telefono_emergencia',
             'grado',
             'grado_aspira',
@@ -427,6 +438,7 @@ class PreMatriculaAdministracionService
             'direccion',
             'grado_aspira',
             'institucion_anterior',
+            'eps_otro',
 
             'documento',
             'telefono',

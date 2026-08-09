@@ -43,6 +43,7 @@ class PreMatricula extends Model
         'direccion',
         'rh',
         'eps_id',
+        'eps_otro',
         'telefono_emergencia',
         'grado_aspira',
         'institucion_anterior',

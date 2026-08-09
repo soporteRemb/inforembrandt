@@ -22,7 +22,7 @@ class StudentPdfController extends Controller
         $student->load(['guardians', 'course', 'periodoLectivo', 'sede']);
 
         $revisor  = Auth::user()->name ?? 'Administrador';
-        $logoPath = public_path('images/Logo.png');
+        $logoPath = public_path('images/logo.png');
         $logoB64  = file_exists($logoPath)
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
@@ -56,7 +56,7 @@ class StudentPdfController extends Controller
             ['tipo' => 'hoja_matricula'],
             ['generado_at' => now(), 'generado_por' => $revisor]
         );
-        $logoPath = public_path('images/Logo.png');
+        $logoPath = public_path('images/logo.png');
         $logoB64  = file_exists($logoPath)
             ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
             : null;
@@ -109,7 +109,7 @@ class StudentPdfController extends Controller
         ]);
 
         $doc      = $todos[$tipo];
-        $logoPath = public_path('images/Logo.png');
+        $logoPath = public_path('images/logo.png');
 
         $logoB64 = file_exists($logoPath)
             ? 'data:image/png;base64,'

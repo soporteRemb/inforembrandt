@@ -10,8 +10,8 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="icon" type="image/png" href="/images/Logo.png?v=3">
-    <link rel="shortcut icon" type="image/png" href="/images/Logo.png?v=3">
+    <link rel="icon" type="image/png" href="/images/logo.png?v=3">
+    <link rel="shortcut icon" type="image/png" href="/images/logo.png?v=3">
 
     <style>
         * {
@@ -539,7 +539,7 @@
 <body>
 
 @php
-    $logo = asset('images/Logo.png');
+    $logo = asset('images/logo.png');
     $foto = $student->foto
         ? asset('storage/' . $student->foto)
         : null;

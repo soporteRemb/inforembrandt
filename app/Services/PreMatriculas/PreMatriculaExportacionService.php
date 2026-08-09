@@ -165,9 +165,26 @@ class PreMatriculaExportacionService
                 $this->texto($formulario->rh)
             );
 
+            $nombreEps = $this->texto(
+                $formulario->eps?->nombre
+            );
+
+            if (
+                mb_strtolower(
+                    $nombreEps,
+                    'UTF-8'
+                ) === 'otro'
+            ) {
+                $epsExportada = filled($formulario->eps_otro)
+                    ? $this->texto($formulario->eps_otro)
+                    : $nombreEps;
+            } else {
+                $epsExportada = $nombreEps;
+            }
+
             $hoja->setCellValue(
                 "Q{$fila}",
-                $this->texto($formulario->eps?->nombre)
+                $epsExportada
             );
 
             $this->escribirTexto(

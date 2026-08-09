@@ -448,6 +448,21 @@ class PreMatriculas extends Page
             'formularioEdicion.eps_id' =>
                 ['required', 'exists:eps,id'],
 
+            'formularioEdicion.eps_otro' => [
+                (
+                    !empty($this->formularioEdicion['eps_id'])
+                    && isset($this->eps[$this->formularioEdicion['eps_id']])
+                    && mb_strtolower(
+                        trim($this->eps[$this->formularioEdicion['eps_id']]),
+                        'UTF-8'
+                    ) === 'otro'
+                )
+                    ? 'required'
+                    : 'nullable',
+                'string',
+                'max:180',
+            ],
+
             'formularioEdicion.telefono_emergencia' =>
                 ['required', 'string', 'max:30'],
 

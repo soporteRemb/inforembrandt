@@ -111,19 +111,187 @@
     .fi-simple-main .fi-fo-field-wrp-error-message {
         color: #d1c2c2 !important;
     }
+
+    /* =========================================================
+    Header responsive del login
+    ========================================================= */
+
+    .login-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .login-header-logo {
+        display: block;
+        height: auto;
+        flex-shrink: 0;
+        object-fit: contain;
+    }
+
+    .login-header-logo-left {
+        width: 115px;
+    }
+
+    .login-header-logo-right {
+        width: 130px;
+    }
+
+    .login-header-center {
+        min-width: 0;
+        flex: 1;
+        padding: 0 18px;
+        text-align: center;
+    }
+
+    .login-title {
+        margin: 0 0 16px;
+        color: white;
+        font-size: 2.1rem;
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: .2px;
+    }
+
+    .login-selectors {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    /* Tablet */
+    @media (max-width: 760px) {
+
+        .fi-simple-main-ctn {
+            width: calc(100% - 20px) !important;
+        }
+
+        .fi-simple-main {
+            padding: 28px 24px 28px !important;
+            border-radius: 22px !important;
+        }
+
+        .login-header {
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .login-header-logo-left {
+            width: 82px;
+        }
+
+        .login-header-logo-right {
+            width: 90px;
+        }
+
+        .login-header-center {
+            padding: 0 6px;
+        }
+
+        .login-title {
+            margin-bottom: 12px;
+            font-size: 1.7rem;
+        }
+    }
+
+    /* Celular */
+    @media (max-width: 520px) {
+
+        .fi-simple-main-ctn {
+            width: calc(100% - 18px) !important;
+        }
+
+        .fi-simple-main {
+            padding: 24px 18px 26px !important;
+            border-radius: 22px !important;
+        }
+
+        .login-header {
+            display: grid;
+            grid-template-columns: 72px minmax(0, 1fr);
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 26px;
+        }
+
+        .login-header-logo-left {
+            width: 72px;
+            grid-column: 1;
+            grid-row: 1;
+        }
+
+        .login-header-center {
+            grid-column: 2;
+            grid-row: 1;
+            padding: 0;
+            text-align: left;
+        }
+
+        .login-header-logo-right {
+            display: none;
+        }
+
+        .login-title {
+            margin: 0 0 12px;
+            font-size: 1.55rem;
+            line-height: 1.15;
+            text-align: left;
+        }
+
+        .login-selectors {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .login-select-btn {
+            width: 100%;
+            min-width: 0;
+            justify-content: space-between;
+        }
+
+        .login-dropdown-menu {
+            width: 100%;
+        }
+
+        .fi-input-wrp {
+            min-height: 52px !important;
+        }
+
+        .fi-input {
+            height: 52px !important;
+            line-height: 52px !important;
+            font-size: 1rem !important;
+        }
+
+        .fi-simple-main .fi-form-actions button {
+            height: 56px !important;
+            font-size: 1.05rem !important;
+        }
+    }
+
+
+
+
 </style>
 
 {{-- Header: logos + título + selectores --}}
-<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:30px;">
+<div class="login-header">
 
-    <img src="{{ asset('images/logo.png') }}" style="width:115px; height:auto; flex-shrink:0;">
+    <img
+    src="{{ asset('images/logo.png') }}"
+    class="login-header-logo login-header-logo-left"
+    alt="Logo Colegio Rembrandt"
+>
 
-    <div style="text-align:center; flex:1; padding:0 18px;">
-        <h1 style="color:white; font-size:2.1rem; font-weight:800; margin:0 0 16px; letter-spacing:0.2px;">
+    <div class="login-header-center">
+        <h1 class="login-title">
             Colegio Rembrandt
         </h1>
 
-        <div style="display:flex; gap:12px; justify-content:center;">
+        <div class="login-selectors">
 
             {{-- Selector de Año --}}
             <div x-data="{
@@ -185,7 +353,11 @@
         </div>
     </div>
 
-    <img src="{{ asset('images/logo-rembrandt.png') }}" style="width:130px; height:auto; flex-shrink:0;">
+    <img
+        src="{{ asset('images/logo-rembrandt.png') }}"
+        class="login-header-logo login-header-logo-right"
+        alt="Escudo Colegio Rembrandt"
+    >
 </div>
 
 {{-- Formulario --}}

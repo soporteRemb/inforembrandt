@@ -83,6 +83,8 @@ class FormularioPreMatricula extends Page
 
     public string $eps_id = '';
 
+    public ?string $eps_otro = null;
+
     public string $telefono_emergencia = '';
 
     public string $grado_aspira = '';
@@ -214,6 +216,24 @@ class FormularioPreMatricula extends Page
         $this->edad = app(
             PreMatriculaFormularioService::class
         )->calcularEdad($fechaNacimiento);
+    }
+
+    public function updatedEpsId(): void
+    {
+        if (! $this->esEpsOtro()) {
+            $this->eps_otro = null;
+            $this->resetValidation('eps_otro');
+        }
+    }
+
+    public function esEpsOtro(): bool
+    {
+        $nombreEps = $this->eps[$this->eps_id] ?? '';
+
+        return mb_strtolower(
+            trim((string) $nombreEps),
+            'UTF-8'
+        ) === 'otro';
     }
 
     /*
@@ -634,6 +654,11 @@ class FormularioPreMatricula extends Page
             'direccion' => ['required', 'string', 'max:180'],
             'rh' => ['required', 'string', 'max:5'],
             'eps_id' => ['required', 'exists:eps,id'],
+            'eps_otro' => [
+                $this->esEpsOtro() ? 'required' : 'nullable',
+                'string',
+                'max:180',
+            ],
 
             'telefono_emergencia' => ['required', 'string', 'max:30'],
             'grado_aspira' => ['required', 'string', 'max:30'],

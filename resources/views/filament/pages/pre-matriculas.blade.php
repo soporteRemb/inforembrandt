@@ -1074,7 +1074,7 @@
                     <option value="">Todos los grados</option>
 
                     @foreach($grados as $grado)
-                        <option value="{{ $grado }}">
+                        <option value="{{ mb_strtoupper(trim($grado), 'UTF-8') }}">
                             {{ $grado }}
                         </option>
                     @endforeach
@@ -1454,7 +1454,7 @@
 
                                 <select
                                     class="pre-detail-select"
-                                    wire:model.defer="formularioEdicion.eps_id"
+                                    wire:model.live="formularioEdicion.eps_id"
                                 >
                                     <option value="">Seleccione</option>
 
@@ -1470,6 +1470,30 @@
                                         {{ $message }}
                                     </span>
                                 @enderror
+                                @if(
+                                    !empty($formularioEdicion['eps_id'])
+                                    && isset($eps[$formularioEdicion['eps_id']])
+                                    && mb_strtolower(
+                                        trim($eps[$formularioEdicion['eps_id']]),
+                                        'UTF-8'
+                                    ) === 'otro'
+                                )
+                                    <div class="pre-detail-field">
+                                        <label>¿Cuál EPS?</label>
+
+                                        <input
+                                            type="text"
+                                            class="pre-detail-input"
+                                            wire:model.defer="formularioEdicion.eps_otro"
+                                        >
+
+                                        @error('formularioEdicion.eps_otro')
+                                            <span class="prematricula-error">
+                                                {{ $message }}
+                                            </span>
+                                        @enderror
+                                    </div>
+                                @endif
                             </div>
 
                             <div class="pre-detail-field">
@@ -1488,7 +1512,7 @@
                                     wire:model.defer="formularioEdicion.grado"
                                 >
                                     @foreach($grados as $grado)
-                                        <option value="{{ $grado }}">
+                                        <option value="{{ mb_strtoupper(trim($grado), 'UTF-8') }}">
                                             {{ $grado }}
                                         </option>
                                     @endforeach

@@ -931,6 +931,20 @@
 
             .prematricula-notice {
                 align-items: flex-start;
+                padding: 14px;
+                gap: 12px;
+            }
+
+            .prematricula-aviso-texto {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .prematricula-notice p,
+            .prematricula-notice strong {
+                max-width: 100%;
+                overflow-wrap: anywhere;
+                word-break: normal;
             }
         }
     </style>
@@ -948,7 +962,7 @@
 
             <div class="prematricula-header-logo prematricula-header-logo-left">
                 <img
-                    src="{{ asset('images/Logo.png') }}"
+                    src="{{ asset('images/logo.png') }}"
                     alt="Logo Colegio Rembrandt"
                 >
             </div>
@@ -1283,7 +1297,7 @@
 
                             <select
                                 class="prematricula-select"
-                                wire:model.defer="eps_id"
+                                wire:model.live="eps_id"
                             >
                                 <option value="">Seleccione la EPS</option>
 
@@ -1299,6 +1313,28 @@
                                     {{ $message }}
                                 </span>
                             @enderror
+
+                            @if($this->esEpsOtro())
+                                <div style="margin-top: 10px;">
+                                    <label>
+                                        ¿Cuál EPS?
+                                        <span class="prematricula-required">*</span>
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        class="prematricula-input"
+                                        wire:model.defer="eps_otro"
+                                        placeholder="Ingrese el nombre de la EPS"
+                                    >
+
+                                    @error('eps_otro')
+                                        <span class="prematricula-error">
+                                            {{ $message }}
+                                        </span>
+                                    @enderror
+                                </div>
+                            @endif
                         </div>
                     </div>
 
