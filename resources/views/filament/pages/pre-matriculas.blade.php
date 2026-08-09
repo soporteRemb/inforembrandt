@@ -740,6 +740,35 @@
             color:#64748b;
         }
 
+        .pre-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pre-delete-button {
+            width: 30px;
+            height: 30px;
+            display: inline-grid;
+            place-items: center;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #dc2626;
+            cursor: pointer;
+        }
+
+        .pre-delete-button:hover {
+            border-color: #fca5a5;
+            background: #fff1f2;
+            color: #b91c1c;
+        }
+
+        .pre-delete-button svg {
+            width: 15px;
+            height: 15px;
+        }
+
 
 
 
@@ -1152,19 +1181,42 @@
                             </td>
 
                             <td>
-                                <button
-                                    type="button"
-                                    class="pre-view-button"
-                                    title="Editar formulario"
-                                    aria-label="Editar formulario"
-                                    wire:click.stop="
-                                        seleccionarPreMatricula(
-                                            {{ $formulario['id'] }}
-                                        )
-                                    "
-                                >
-                                    <x-heroicon-o-pencil-square />
-                                </button>
+                                <div class="pre-actions">
+
+                                    {{-- EDITAR --}}
+                                    <button
+                                        type="button"
+                                        class="pre-view-button"
+                                        title="Editar formulario"
+                                        aria-label="Editar formulario"
+                                        wire:click.stop="
+                                            seleccionarPreMatricula(
+                                                {{ $formulario['id'] }}
+                                            )
+                                        "
+                                    >
+                                        <x-heroicon-o-pencil-square />
+                                    </button>
+
+                                    {{-- ELIMINAR - SOLO SUPERADMIN --}}
+                                    @if(auth()->user()?->hasRole('superadmin'))
+                                        <button
+                                            type="button"
+                                            class="pre-delete-button"
+                                            title="Eliminar pre-matrícula"
+                                            aria-label="Eliminar pre-matrícula"
+                                            wire:click.stop="
+                                                eliminarPreMatricula(
+                                                    {{ $formulario['id'] }}
+                                                )
+                                            "
+                                            wire:confirm="¿Está seguro de eliminar la pre-matrícula {{ $formulario['numero_formulario'] }}? Esta acción eliminará también su historial y no se puede deshacer."
+                                        >
+                                            <x-heroicon-o-trash />
+                                        </button>
+                                    @endif
+
+                                </div>
                             </td>
                         </tr>
                     @endforeach

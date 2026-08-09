@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -548,6 +549,122 @@ class PreMatriculas extends Page
             'in' =>
                 'La opción seleccionada no es válida.',
         ];
+    }
+
+    public function eliminarPreMatricula(int $id): void
+    {
+        $usuario = auth()->user();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Solo SuperAdmin puede eliminar pre-matrículas
+        |--------------------------------------------------------------------------
+        */
+
+        if (! $usuario || ! $usuario->hasRole('superadmin')) {
+            Notification::make()
+                ->title('Acción no autorizada')
+                ->body('Solo SuperAdmin puede eliminar pre-matrículas.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validar contexto activo
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            Notification::make()
+                ->title('Contexto académico incompleto')
+                ->body(
+                    'No se encontró la sede o el período lectivo activo.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Buscar únicamente dentro de la sede y período activos
+        |--------------------------------------------------------------------------
+        */
+
+        $preMatricula = PreMatricula::query()
+            ->whereKey($id)
+            ->where('sede_id', $this->sede_id)
+            ->where(
+                'periodo_lectivo_id',
+                $this->periodo_lectivo_id
+            )
+            ->first();
+
+        if (! $preMatricula) {
+            Notification::make()
+                ->title('Pre-matrícula no encontrada')
+                ->body(
+                    'El formulario no existe o no pertenece al contexto activo.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $numeroFormulario = $preMatricula->numero_formulario;
+
+        DB::transaction(function () use ($preMatricula) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Eliminar historial del formulario
+            |--------------------------------------------------------------------------
+            */
+
+            $preMatricula->historiales()->delete();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Eliminar la pre-matrícula
+            |--------------------------------------------------------------------------
+            */
+
+            $preMatricula->delete();
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cerrar modal si por alguna razón estaba abierto
+        |--------------------------------------------------------------------------
+        */
+
+        if ($this->preMatriculaSeleccionadaId === $id) {
+            $this->cerrarModalDetalle();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Refrescar tarjetas y listado
+        |--------------------------------------------------------------------------
+        */
+
+        $this->cargarPantalla();
+
+        Notification::make()
+            ->title('Pre-matrícula eliminada')
+            ->body(
+                "El formulario {$numeroFormulario} fue eliminado correctamente."
+            )
+            ->success()
+            ->send();
     }
 
     public function getHeading(): string
