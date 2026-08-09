@@ -54,6 +54,43 @@ class RoleResource extends Resource
 
 
 
+    public static function canAccess(): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        // Excepción de arranque:
+        // SuperAdmin siempre puede entrar a Roles y Permisos.
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        // Para todos los demás usuarios,
+        // aplica el sistema normal de permisos.
+        return $user->can('ver_roles');
+    }
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        // Excepción de arranque:
+        // SuperAdmin siempre puede entrar a Roles y Permisos.
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('ver_roles');
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
