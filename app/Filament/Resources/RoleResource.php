@@ -73,6 +73,24 @@ class RoleResource extends Resource
         return $user->can('ver_roles');
     }
 
+    public static function canEdit(
+        \Illuminate\Database\Eloquent\Model $record
+    ): bool {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('editar_roles');
+    }
+
+
+
 
     public static function shouldRegisterNavigation(): bool
     {
