@@ -756,6 +756,8 @@
         }
 
 
+
+
         @media (max-width: 1250px) {
             .prematricula-student-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -945,6 +947,770 @@
                 max-width: 100%;
                 overflow-wrap: anywhere;
                 word-break: normal;
+            }
+
+
+            
+        }
+
+
+
+        /* =========================================================
+        DOCUMENTOS PARA MATRÍCULA
+        ========================================================= */
+
+        .prematricula-documentos-intro {
+            margin-bottom: 20px;
+            padding: 14px 18px;
+            border: 1px solid #bfdbfe;
+            border-radius: 9px;
+            background: #f8fbff;
+        }
+
+        .prematricula-documentos-intro-title {
+            margin-bottom: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #2563eb;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .prematricula-documentos-intro-title svg {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 18px;
+        }
+
+        .prematricula-documentos-pasos {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .prematricula-documentos-paso {
+            min-width: 0;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .prematricula-documentos-paso-numero {
+            width: 25px;
+            height: 25px;
+            flex: 0 0 25px;
+            display: grid;
+            place-items: center;
+            border-radius: 999px;
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .prematricula-documentos-paso-contenido {
+            min-width: 0;
+        }
+
+        .prematricula-documentos-paso-contenido strong {
+            display: block;
+            margin-bottom: 3px;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .prematricula-documentos-paso-contenido p {
+            margin: 0;
+            color: #475569;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+
+        /* FILA DE CARGA */
+
+        .prematricula-documentos-form {
+            display: grid;
+            grid-template-columns:
+                minmax(280px, 1fr)
+                minmax(300px, 1fr)
+                auto;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .prematricula-documentos-form .prematricula-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .prematricula-documentos-form .prematricula-field > label {
+            min-height: 18px;
+        }
+
+        .prematricula-documentos-form .prematricula-error {
+            min-height: 16px;
+            margin-top: 4px;
+        }
+
+        .prematricula-documento-button {
+            min-height: 39px;
+            margin-top: 20px;
+
+            padding: 0 17px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+
+            border: 1px solid #b91c1c;
+            border-radius: 7px;
+            background: #c71922;
+            color: #ffffff;
+
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .prematricula-documento-button:hover {
+            background: #a80f1b;
+        }
+
+        .prematricula-documento-button:disabled {
+            opacity: .65;
+            cursor: wait;
+        }
+
+
+        /* GALERÍA */
+
+        .prematricula-documentos-adjuntos {
+            margin-top: 20px;
+            padding: 14px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 9px;
+            background: #ffffff;
+        }
+
+        .prematricula-documentos-adjuntos-titulo {
+            margin: 0 0 13px;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .prematricula-documentos-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .prematricula-documento-card {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, .05);
+        }
+
+        .prematricula-documento-preview {
+            height: 105px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .prematricula-documento-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .prematricula-documento-preview-generico {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            color: #64748b;
+            font-size: 10px;
+        }
+
+        .prematricula-documento-preview-generico svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .prematricula-documento-preview-pdf {
+            color: #b91c1c;
+        }
+
+        .prematricula-documento-body {
+            padding: 8px 9px 9px;
+        }
+
+        .prematricula-documento-tipo {
+            display: block;
+            overflow: hidden;
+            color: #1e293b;
+            font-size: 10px;
+            line-height: 1.3;
+            font-weight: 700;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .prematricula-documento-nombre {
+            display: block;
+            margin-top: 4px;
+            overflow: hidden;
+            color: #94a3b8;
+            font-size: 9px;
+            line-height: 1.3;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .prematricula-documentos-vacio {
+            min-height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 11px;
+            text-align: center;
+        }
+
+
+        /* NOTA FINAL */
+
+        .prematricula-documentos-nota {
+            margin-top: 18px;
+            padding: 11px 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #475569;
+            font-size: 11px;
+            line-height: 1.45;
+        }
+
+        .prematricula-documentos-nota svg {
+            width: 17px;
+            height: 17px;
+            flex: 0 0 17px;
+            color: #3b82f6;
+        }
+
+
+        /* RESPONSIVE */
+
+        @media (max-width: 1050px) {
+            .prematricula-documentos-grid {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 850px) {
+            .prematricula-documentos-pasos {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .prematricula-documento-button {
+                margin-top: 0;
+            }
+            .prematricula-documentos-form {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .prematricula-documento-button {
+                grid-column: 1 / -1;
+                width: 100%;
+            }
+
+            .prematricula-documentos-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 560px) {
+            .prematricula-documentos-intro {
+                padding: 13px;
+            }
+
+            .prematricula-documentos-form {
+                grid-template-columns: 1fr;
+            }
+
+            .prematricula-documento-button {
+                grid-column: auto;
+            }
+
+            .prematricula-documentos-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .prematricula-documento-preview {
+                height: 100px;
+            }
+
+            .prematricula-file-button {
+            min-width: 135px;
+            padding: 0 10px;
+        }
+
+        .prematricula-file-button span {
+            font-size: 10px;
+        }
+
+        .prematricula-file-name {
+            padding: 0 10px;
+            font-size: 10px;
+        }
+        }
+
+        /* Celulares pequeños */
+        @media (max-width: 400px) {
+            .prematricula-documentos-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        /* =========================================================
+        SELECTOR PERSONALIZADO DE ARCHIVO
+        ========================================================= */
+
+        .prematricula-file-control {
+            min-height: 39px;
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+
+            background: #ffffff;
+
+            transition:
+                border-color .15s ease,
+                box-shadow .15s ease;
+        }
+
+        .prematricula-file-control:focus-within {
+            border-color: #c71922;
+            box-shadow: 0 0 0 1px rgba(199, 25, 34, .08);
+        }
+
+
+        /* INPUT REAL: SIGUE EXISTIENDO PARA LIVEWIRE */
+
+        .prematricula-file-input {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+
+            white-space: nowrap;
+            border: 0;
+        }
+
+
+        /* BOTÓN VISUAL */
+
+        .prematricula-file-button {
+            min-width: 155px;
+            padding: 0 14px;
+
+            display: inline-flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 7px;
+
+            border-right: 1px solid #e2e8f0;
+
+            background: #f8fafc;
+            color: #475569;
+
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+
+            cursor: pointer;
+            white-space: nowrap;
+
+            transition:
+                background .15s ease,
+                color .15s ease;
+        }
+
+        .prematricula-file-button:hover {
+            background: #fff1f2;
+            color: #b91c1c;
+        }
+
+        .prematricula-file-button svg {
+            display: block !important;
+            width: 15px !important;
+            height: 15px !important;
+            min-width: 15px;
+            flex: 0 0 15px;
+            margin: 0 !important;
+        }
+
+        .prematricula-file-button span {
+            display: inline-block;
+            line-height: 1;
+            margin: 0;
+        }
+
+
+        /* NOMBRE DEL ARCHIVO */
+
+        .prematricula-file-name {
+            min-width: 0;
+            flex: 1;
+
+            padding: 0 13px;
+
+            display: flex;
+            align-items: center;
+
+            color: #94a3b8;
+
+            font-size: 11px;
+        }
+
+        .prematricula-file-name span {
+            display: block;
+
+            width: 100%;
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .prematricula-file-name.tiene-archivo {
+            color: #334155;
+            font-weight: 500;
+        }
+
+
+        /* MENSAJE DURANTE CARGA TEMPORAL LIVEWIRE */
+
+        .prematricula-file-loading {
+            margin-top: 5px;
+
+            color: #64748b;
+
+            font-size: 10px;
+        }
+
+
+        .prematricula-documento-preview-link {
+            width: 100%;
+            height: 100%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .prematricula-documento-preview-link img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+
+            transition: transform .18s ease;
+        }
+
+        .prematricula-documento-preview-link:hover img {
+            transform: scale(1.035);
+        }
+
+        .prematricula-documento-preview-generico:hover {
+            background: #f1f5f9;
+        }
+
+
+        /* =========================================================
+        ACCIONES DE CADA DOCUMENTO
+        ========================================================= */
+
+        .prematricula-documento-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .prematricula-documento-action {
+            min-height: 30px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+
+            border: 0;
+            background: #ffffff;
+
+            color: #475569;
+
+            font-family: inherit;
+            font-size: 9px;
+            font-weight: 700;
+
+            text-decoration: none;
+            cursor: pointer;
+
+            transition:
+                background .15s ease,
+                color .15s ease;
+        }
+
+        .prematricula-documento-action:first-child {
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .prematricula-documento-action:hover {
+            background: #f8fafc;
+            color: #1e293b;
+        }
+
+        .prematricula-documento-action svg {
+            width: 13px;
+            height: 13px;
+            flex: 0 0 13px;
+        }
+
+        .prematricula-documento-action-delete {
+            color: #dc2626;
+        }
+
+        .prematricula-documento-action-delete:hover {
+            background: #fff1f2;
+            color: #b91c1c;
+        }
+
+
+        /* =========================================================
+        MODAL INICIAL DE DOCUMENTOS
+        ========================================================= */
+
+        .prematricula-modal-documentos {
+            width: min(760px, calc(100% - 30px));
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+
+        .prematricula-modal-icon-documentos {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .prematricula-modal-documentos-info {
+            margin-top: 16px;
+            padding: 14px 16px;
+
+            border: 1px solid #bfdbfe;
+            border-radius: 9px;
+
+            background: #f8fbff;
+
+            text-align: left;
+        }
+
+        .prematricula-modal-documentos-info strong {
+            display: block;
+
+            margin-bottom: 7px;
+
+            color: #1e3a8a;
+
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .prematricula-modal-documentos-info p {
+            margin: 0 0 7px;
+
+            color: #475569;
+
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .prematricula-modal-documentos-info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .prematricula-modal-documentos-recordatorio {
+            margin-top: 14px;
+            padding: 10px 12px;
+
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+
+            border-radius: 8px;
+
+            background: #f8fafc;
+
+            color: #64748b;
+
+            font-size: 11px;
+            line-height: 1.4;
+
+            text-align: left;
+        }
+
+        .prematricula-modal-documentos-recordatorio svg {
+            width: 17px;
+            height: 17px;
+
+            flex: 0 0 17px;
+
+            color: #3b82f6;
+        }
+
+        @media (max-width: 560px) {
+            .prematricula-modal-documentos
+            .prematricula-modal-actions {
+                flex-direction: column-reverse;
+            }
+
+            .prematricula-modal-documentos
+            .prematricula-modal-button {
+                width: 100%;
+            }
+        }
+
+        .prematricula-modal-documentos-intro {
+            margin-bottom: 12px !important;
+        }
+
+        .prematricula-modal-documentos-lista {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px 20px;
+
+            margin-top: 12px;
+        }
+
+        .prematricula-modal-documentos-grupo {
+            min-width: 0;
+        }
+
+        .prematricula-modal-documentos-grupo > span {
+            display: block;
+            margin-bottom: 7px;
+
+            color: #1e3a8a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .prematricula-modal-documentos-grupo ul {
+            margin: 0;
+            padding-left: 17px;
+        }
+
+        .prematricula-modal-documentos-grupo li {
+            margin-bottom: 4px;
+
+            color: #475569;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .prematricula-modal-documentos-grupo li:last-child {
+            margin-bottom: 0;
+        }
+
+        .prematricula-modal-documentos-final {
+            margin: 13px 0 0 !important;
+            padding-top: 10px;
+
+            border-top: 1px solid #dbeafe;
+
+            color: #475569;
+            font-size: 11px !important;
+            line-height: 1.45 !important;
+            font-weight: 600;
+        }
+
+        @media (max-width: 560px) {
+            .prematricula-modal-documentos-lista {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+
+
+        .prematricula-modal-documentos-resumen {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+
+            margin-top: 12px;
+        }
+
+        .prematricula-modal-documentos-resumen-item {
+            min-width: 0;
+        }
+
+        .prematricula-modal-documentos-resumen-titulo {
+            display: block;
+
+            margin-bottom: 7px;
+
+            color: #1e3a8a;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .prematricula-modal-documentos-resumen-item ul {
+            margin: 0;
+            padding-left: 17px;
+        }
+
+        .prematricula-modal-documentos-resumen-item li {
+            margin-bottom: 5px;
+
+            color: #475569;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .prematricula-modal-documentos-resumen-item li:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 560px) {
+            .prematricula-modal-documentos-resumen {
+                grid-template-columns: 1fr;
+                gap: 14px;
             }
         }
     </style>
@@ -1911,6 +2677,441 @@
         </div>
 
 
+
+        {{-- =====================================================
+            TARJETA: DOCUMENTOS PARA MATRÍCULA
+        ====================================================== --}}
+        <section class="prematricula-card">
+
+            <header class="prematricula-card-header">
+                <span class="prematricula-card-number">5</span>
+                <h2>Documentos para matrícula</h2>
+            </header>
+
+            <div class="prematricula-card-body">
+
+                {{-- =================================================
+                    INSTRUCCIONES
+                ================================================== --}}
+                <div class="prematricula-documentos-intro">
+
+                    <div class="prematricula-documentos-intro-title">
+                        <x-heroicon-o-light-bulb />
+
+                        <span>
+                            ¿Cómo agregar documentos?
+                        </span>
+                    </div>
+
+                    <div class="prematricula-documentos-pasos">
+
+                        <div class="prematricula-documentos-paso">
+                            <span class="prematricula-documentos-paso-numero">
+                                1
+                            </span>
+
+                            <div class="prematricula-documentos-paso-contenido">
+                                <strong>Paso 1</strong>
+
+                                <p>
+                                    Seleccione en la lista el tipo de documento
+                                    que desea adjuntar.
+                                </p>
+                            </div>
+                        </div>
+
+
+                        <div class="prematricula-documentos-paso">
+                            <span class="prematricula-documentos-paso-numero">
+                                2
+                            </span>
+
+                            <div class="prematricula-documentos-paso-contenido">
+                                <strong>Paso 2</strong>
+
+                                <p>
+                                    Seleccione el archivo desde su dispositivo.
+                                    Puede adjuntar PDF, JPG, JPEG, PNG o WebP.
+                                </p>
+                            </div>
+                        </div>
+
+
+                        <div class="prematricula-documentos-paso">
+                            <span class="prematricula-documentos-paso-numero">
+                                3
+                            </span>
+
+                            <div class="prematricula-documentos-paso-contenido">
+                                <strong>Paso 3</strong>
+
+                                <p>
+                                    Haga clic en <strong>Adjuntar</strong>.
+                                    Repita estos pasos con cada documento
+                                    que tenga disponible.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                {{-- =================================================
+                    SELECTOR + ARCHIVO + ADJUNTAR
+                ================================================== --}}
+                <div class="prematricula-documentos-form">
+
+                    <div class="prematricula-field">
+                        <label>
+                            Tipo de documento
+                        </label>
+
+                        <select
+                            class="prematricula-select"
+                            wire:model="tipoDocumentoSeleccionado"
+                        >
+                            <option value="">
+                                Seleccione el tipo de documento
+                            </option>
+
+                            @foreach(
+                                $documentosCatalogo
+                                as $codigo => $configuracion
+                            )
+                                <option value="{{ $codigo }}">
+                                    {{
+                                        $configuracion['nombre']
+                                        ?? $codigo
+                                    }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('tipoDocumentoSeleccionado')
+                            <span class="prematricula-error">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+
+
+                    <div
+                        class="prematricula-field"
+                        x-data="{ nombreArchivo: '' }"
+                    >
+                        <label>
+                            Archivo
+                        </label>
+
+                        <div class="prematricula-file-control">
+
+                            <label
+                                for="archivoDocumento"
+                                class="prematricula-file-button"
+                            >
+                                <x-heroicon-o-paper-clip />
+
+                                <span>
+                                    Seleccionar archivo
+                                </span>
+                            </label>
+
+                            <div
+                                class="prematricula-file-name"
+                                :class="{ 'tiene-archivo': nombreArchivo }"
+                            >
+                                <span
+                                    x-text="
+                                        nombreArchivo
+                                            ? nombreArchivo
+                                            : 'Ningún archivo seleccionado'
+                                    "
+                                ></span>
+                            </div>
+
+                            <input
+                                id="archivoDocumento"
+                                type="file"
+                                class="prematricula-file-input"
+                                wire:model="archivoDocumento"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                x-on:change="
+                                    nombreArchivo =
+                                        $event.target.files.length
+                                            ? $event.target.files[0].name
+                                            : ''
+                                "
+                            >
+
+                        </div>
+
+                        <div
+                            class="prematricula-file-loading"
+                            wire:loading
+                            wire:target="archivoDocumento"
+                        >
+                            Preparando archivo...
+                        </div>
+
+                        @error('archivoDocumento')
+                            <span class="prematricula-error">
+                                {{ $message }}
+                            </span>
+                        @enderror
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="prematricula-documento-button"
+                        wire:click="subirDocumento"
+                        wire:loading.attr="disabled"
+                        wire:target="
+                            archivoDocumento,
+                            subirDocumento
+                        "
+                    >
+                        <span
+                            wire:loading.remove
+                            wire:target="subirDocumento"
+                        >
+                            Adjuntar
+                        </span>
+
+                        <span
+                            wire:loading
+                            wire:target="subirDocumento"
+                        >
+                            Guardando...
+                        </span>
+                    </button>
+
+                </div>
+
+
+                {{-- =================================================
+                    DOCUMENTOS YA ADJUNTADOS
+                ================================================== --}}
+                <div class="prematricula-documentos-adjuntos">
+
+                    <h3 class="prematricula-documentos-adjuntos-titulo">
+                        Documentos adjuntos
+                        ({{ count($documentosCargados) }})
+                    </h3>
+
+
+                    @if(count($documentosCargados))
+
+                        <div class="prematricula-documentos-grid">
+
+                            @foreach(
+                                $documentosCargados
+                                as $documento
+                            )
+
+                                <article class="prematricula-documento-card">
+
+                                    <div class="prematricula-documento-preview">
+
+                                        @if(
+                                            str_starts_with(
+                                                strtolower(
+                                                    (string) (
+                                                        $documento['mime_type']
+                                                        ?? ''
+                                                    )
+                                                ),
+                                                'image/'
+                                            )
+                                        )
+
+                                            <a
+                                                href="{{ $documento['url_visualizacion'] }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="prematricula-documento-preview-link"
+                                                title="Ver documento"
+                                            >
+                                                <img
+                                                    src="{{ $documento['url_visualizacion'] }}"
+                                                    alt="{{ $documento['nombre_original'] }}"
+                                                    loading="lazy"
+                                                >
+                                            </a>
+
+                                        @elseif(
+                                            strtolower(
+                                                (string) (
+                                                    $documento['mime_type']
+                                                    ?? ''
+                                                )
+                                            ) === 'application/pdf'
+                                        )
+
+                                            <a
+                                                href="{{ $documento['url_visualizacion'] }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="
+                                                    prematricula-documento-preview-generico
+                                                    prematricula-documento-preview-pdf
+                                                    prematricula-documento-preview-link
+                                                "
+                                                title="Ver PDF"
+                                            >
+                                                <x-heroicon-o-document-text />
+
+                                                <span>
+                                                    Ver PDF
+                                                </span>
+                                            </a>
+
+                                        @else
+
+                                            <a
+                                                href="{{ $documento['url_visualizacion'] }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="
+                                                    prematricula-documento-preview-generico
+                                                    prematricula-documento-preview-link
+                                                "
+                                                title="Ver documento"
+                                            >
+                                                <x-heroicon-o-document />
+
+                                                <span>
+                                                    Ver documento
+                                                </span>
+                                            </a>
+
+                                        @endif
+
+                                    </div>
+
+
+                                    <div class="prematricula-documento-body">
+
+                                        <span
+                                            class="prematricula-documento-tipo"
+                                            title="{{
+                                                $documentosCatalogo[
+                                                    $documento['tipo_documento']
+                                                ]['nombre']
+                                                ?? $documento['tipo_documento']
+                                            }}"
+                                        >
+                                            {{
+                                                $documentosCatalogo[
+                                                    $documento['tipo_documento']
+                                                ]['nombre']
+                                                ?? $documento['tipo_documento']
+                                            }}
+                                        </span>
+
+
+                                        <span
+                                            class="prematricula-documento-nombre"
+                                            title="{{ $documento['nombre_original'] }}"
+                                        >
+                                            {{ $documento['nombre_original'] }}
+                                        </span>
+
+                                    </div>
+
+
+                                    {{-- =========================================
+                                        ACCIONES DEL DOCUMENTO
+                                    ========================================== --}}
+                                    <div class="prematricula-documento-actions">
+
+                                        <a
+                                            href="{{ $documento['url_visualizacion'] }}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="prematricula-documento-action"
+                                            title="Ver documento"
+                                        >
+                                            <x-heroicon-o-eye />
+
+                                            <span>
+                                                Ver
+                                            </span>
+                                        </a>
+
+
+                                        <button
+                                            type="button"
+                                            class="
+                                                prematricula-documento-action
+                                                prematricula-documento-action-delete
+                                            "
+                                            wire:click="
+                                                quitarDocumento(
+                                                    {{ $documento['id'] }}
+                                                )
+                                            "
+                                            wire:confirm="
+                                                ¿Está seguro de quitar este documento?
+                                            "
+                                            wire:loading.attr="disabled"
+                                            wire:target="
+                                                quitarDocumento(
+                                                    {{ $documento['id'] }}
+                                                )
+                                            "
+                                            title="Quitar documento"
+                                        >
+                                            <x-heroicon-o-trash />
+
+                                            <span>
+                                                Quitar
+                                            </span>
+                                        </button>
+
+                                    </div>
+
+                                </article>
+
+                            @endforeach
+
+                        </div>
+
+                    @else
+
+                        <div class="prematricula-documentos-vacio">
+                            Aún no ha adjuntado documentos.
+                        </div>
+
+                    @endif
+
+                        
+
+                </div>
+
+
+                {{-- =================================================
+                    ACLARACIÓN
+                ================================================== --}}
+                <div class="prematricula-documentos-nota">
+
+                    <x-heroicon-o-information-circle />
+
+                    <span>
+                        Adjunte los documentos que tenga disponibles.
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+
+
         {{-- =====================================================
             ERROR: RESPONSABLE REQUERIDO
         ====================================================== --}}
@@ -2018,6 +3219,189 @@
 
 
 
+
+
+
+
+
+
+
+            {{-- =========================================================
+                MODAL INICIAL - DOCUMENTOS
+            ========================================================== --}}
+            @if($mostrarModalDocumentosInicial)
+
+                <div class="prematricula-modal-backdrop">
+
+                    <section
+                        class="
+                            prematricula-modal
+                            prematricula-modal-documentos
+                        "
+                    >
+
+                        <div class="prematricula-modal-body">
+
+                            <span
+                                class="
+                                    prematricula-modal-icon
+                                    prematricula-modal-icon-documentos
+                                "
+                            >
+                                <x-heroicon-o-document-check />
+                            </span>
+
+                            <h3>
+                                Antes de comenzar
+                            </h3>
+
+                            <p>
+                                Para facilitar el proceso de inscripción,
+                                tenga a mano los documentos que tenga disponibles.
+                            </p>
+
+                            <div class="prematricula-modal-documentos-info">
+
+                                <strong>
+                                    Documentos que puede tener a mano
+                                </strong>
+
+                                <p class="prematricula-modal-documentos-intro">
+                                    No es necesario contar con todos para continuar.
+                                    Adjunte únicamente los documentos que tenga disponibles.
+                                </p>
+
+                                <div class="prematricula-modal-documentos-resumen">
+
+                                    <div class="prematricula-modal-documentos-resumen-item">
+                                        <span class="prematricula-modal-documentos-resumen-titulo">
+                                            Del estudiante
+                                        </span>
+
+                                        <ul>
+                                            <li>
+                                                -Fotocopia del registro civil de nacimiento legible.
+                                            </li>
+
+                                            <li>
+                                               -Fotocopia de la tarjeta de identidad para estudiantes
+                                                de 7 años cumplidos en adelante.
+                                            </li>
+
+                                            <li>
+                                                -Certificado médico del estudiante no mayor a 30 días.
+                                            </li>
+
+                                            <li>
+                                                -Fotocopia del carnet de vacunas para grados
+                                                pre-jardín a primero.
+                                            </li>
+
+                                            <li>
+                                                -Certificado de afiliación del niño a la EPS y/o Sisbén.
+                                            </li>
+
+                                            <li>
+                                                -Constancia de retiro del estudiante del SIMAT,
+                                                expedida por el colegio de procedencia.
+                                            </li>
+                                        </ul>
+                                    </div>
+
+
+                                    <div class="prematricula-modal-documentos-resumen-item">
+                                        <span class="prematricula-modal-documentos-resumen-titulo">
+                                            De padres, acudiente y codeudor
+                                        </span>
+
+                                        <ul>
+                                            <li>
+                                                -Copia del documento de identidad de los padres
+                                                de familia.
+                                            </li>
+
+                                            <li>
+                                                -Copia del documento de identidad del acudiente.
+                                            </li>
+
+                                            <li>
+                                                -Copia del documento de identidad del codeudor,
+                                                cuando aplique.
+                                            </li>
+
+                                            <li>
+                                                -Certificado laboral de los padres de familia
+                                                no mayor a 30 días.
+                                            </li>
+
+                                            <li>
+                                                -Certificado laboral del codeudor no mayor a
+                                                30 días, si aplica.
+                                            </li>
+
+                                            <li>
+                                                -Copia del recibo público del domicilio del padre
+                                                de familia y codeudor, si aplica.
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                </div>
+
+                                <div class="prematricula-modal-documentos-final">
+                                    Si algún documento no aplica o aún no lo tiene,
+                                    puede continuar con el formulario y entregarlo
+                                    posteriormente al colegio.
+                                </div>
+
+                            </div>
+
+                            <div class="prematricula-modal-documentos-recordatorio">
+
+                                <x-heroicon-o-information-circle />
+
+                                <span>
+                                    Puede adjuntar archivos PDF, JPG, JPEG,
+                                    PNG o WebP.
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <footer class="prematricula-modal-actions">
+
+                            <button
+                                type="button"
+                                class="
+                                    prematricula-modal-button
+                                    prematricula-modal-cancel
+                                "
+                                wire:click="cerrarSesionDesdeAvisoDocumentos"
+                            >
+                                Aún no estoy listo. Cerrar sesión
+                            </button>
+
+
+                            <button
+                                type="button"
+                                class="
+                                    prematricula-modal-button
+                                    prematricula-modal-confirm
+                                "
+                                wire:click="continuarDesdeAvisoDocumentos"
+                            >
+                                Continuar con el formulario
+                            </button>
+
+                        </footer>
+
+                    </section>
+
+                </div>
+
+            @endif
 
 
 

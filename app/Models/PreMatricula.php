@@ -128,6 +128,14 @@ class PreMatricula extends Model
         )->latest('created_at');
     }
 
+    public function documentos(): HasMany
+    {
+        return $this->hasMany(
+            PreMatriculaDocumento::class,
+            'pre_matricula_id'
+        )->latest();
+    }
+
     public function estaPendiente(): bool
     {
         return $this->estado === 'pendiente';

@@ -76,15 +76,6 @@ class UserResource extends Resource
             return $query->whereRaw('1 = 0');
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Admin y SuperAdmin
-        |--------------------------------------------------------------------------
-        |
-        | Pueden ver todos los usuarios, incluidos admin y superadmin.
-        |
-        */
-
         if ($usuarioActual->hasAnyRole([
             'admin',
             'superadmin',
@@ -92,27 +83,23 @@ class UserResource extends Resource
             return $query;
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Resto de usuarios
-        |--------------------------------------------------------------------------
-        |
-        | Aunque tengan todos los permisos del módulo Usuarios,
-        | nunca verán cuentas admin o superadmin.
-        |
-        */
+        if ($usuarioActual->hasRole('sistemas')) {
+            return $query->whereNotIn(
+                'name',
+                [
+                    'admin',
+                    'superadmin',
+                ]
+            );
+        }
 
-        return $query->whereDoesntHave(
-            'roles',
-            function (Builder $roles): void {
-                $roles->whereIn(
-                    'name',
-                    [
-                        'admin',
-                        'superadmin',
-                    ]
-                );
-            }
+        return $query->whereNotIn(
+            'name',
+            [
+                'admin',
+                'superadmin',
+                'sistemas',
+            ]
         );
     }
 
@@ -168,11 +155,22 @@ class UserResource extends Resource
                             return $query;
                         }
 
+                        if ($usuarioActual?->hasRole('sistemas')) {
+                            return $query->whereNotIn(
+                                'name',
+                                [
+                                    'admin',
+                                    'superadmin',
+                                ]
+                            );
+                        }
+
                         return $query->whereNotIn(
                             'name',
                             [
                                 'admin',
                                 'superadmin',
+                                'sistemas',
                             ]
                         );
                     }
@@ -332,10 +330,154 @@ class UserResource extends Resource
             return false;
         }
 
-        return $usuario->hasAnyRole([
+        /*
+        |--------------------------------------------------------------------------
+        | Admin y SuperAdmin
+        |--------------------------------------------------------------------------
+        */
+
+        if ($usuario->hasAnyRole([
             'superadmin',
             'admin',
-        ]) || $usuario->can('editar_usuarios');
+        ])) {
+            return true;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Cuenta Sistemas
+        |--------------------------------------------------------------------------
+        |
+        | Puede editarse a sí misma si tiene permiso de edición,
+        | pero no puede editar admin ni superadmin.
+        |
+        */
+
+        if ($usuario->hasRole('sistemas')) {
+
+            if (
+                $record->roles()
+                    ->whereIn(
+                        'name',
+                        [
+                            'admin',
+                            'superadmin',
+                        ]
+                    )
+                    ->exists()
+            ) {
+                return false;
+            }
+
+            return $usuario->can('editar_usuarios');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Usuarios normales
+        |--------------------------------------------------------------------------
+        |
+        | Nunca pueden editar cuentas protegidas.
+        |
+        */
+
+        if (
+            $record->roles()
+                ->whereIn(
+                    'name',
+                    [
+                        'admin',
+                        'superadmin',
+                        'sistemas',
+                    ]
+                )
+                ->exists()
+        ) {
+            return false;
+        }
+
+        return $usuario->can('editar_usuarios');
+    }
+
+    public static function canDelete(
+        \Illuminate\Database\Eloquent\Model $record
+    ): bool {
+        $usuario = auth()->user();
+
+        if (! $usuario) {
+            return false;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | SuperAdmin y Admin
+        |--------------------------------------------------------------------------
+        |
+        | Mantienen la capacidad normal de administración.
+        |
+        */
+
+        if ($usuario->hasAnyRole([
+            'superadmin',
+            'admin',
+        ])) {
+            return $usuario->can('eliminar_usuarios')
+                || $usuario->hasAnyRole([
+                    'superadmin',
+                    'admin',
+                ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sistemas
+        |--------------------------------------------------------------------------
+        |
+        | Nunca permitimos que Sistemas elimine admin o superadmin.
+        |
+        */
+
+        if ($usuario->hasRole('sistemas')) {
+
+            if (
+                $record->roles()
+                    ->whereIn(
+                        'name',
+                        [
+                            'admin',
+                            'superadmin',
+                        ]
+                    )
+                    ->exists()
+            ) {
+                return false;
+            }
+
+            return $usuario->can('eliminar_usuarios');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resto
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $record->roles()
+                ->whereIn(
+                    'name',
+                    [
+                        'admin',
+                        'superadmin',
+                        'sistemas',
+                    ]
+                )
+                ->exists()
+        ) {
+            return false;
+        }
+
+        return $usuario->can('eliminar_usuarios');
     }
 
     public static function tieneRolSeleccionado(

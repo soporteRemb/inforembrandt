@@ -26,9 +26,18 @@ class EditRole extends EditRecord
     /** Al guardar: sincroniza los permisos y actualiza el nombre si cambió */
     protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
     {
-        // Actualizar nombre del rol (solo si no es superadmin/admin)
-        if (!in_array($record->name, ['superadmin', 'admin']) && isset($data['name'])) {
-            $record->update(['name' => $data['name']]);
+        // Actualizar nombre del rol (solo si no es superadmin/admin/sistemas)
+        if (
+            ! in_array(
+                $record->name,
+                ['superadmin', 'admin', 'sistemas'],
+                true
+            )
+            && isset($data['name'])
+        ) {
+            $record->update([
+                'name' => $data['name'],
+            ]);
         }
 
         // Sincronizar permisos

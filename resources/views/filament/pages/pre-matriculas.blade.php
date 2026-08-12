@@ -771,6 +771,569 @@
 
 
 
+        /* =========================================================
+        DOCUMENTOS - DETALLE ADMINISTRATIVO
+        ========================================================= */
+
+        .pre-documents-body {
+            padding: 14px;
+        }
+
+        .pre-documents-current {
+            min-width: 0;
+        }
+
+        .pre-documents-subheader {
+            margin-bottom: 12px;
+
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .pre-documents-subheader > div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pre-documents-subheader strong {
+            color: #1e293b;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .pre-documents-subheader > div > span {
+            padding: 3px 7px;
+
+            border-radius: 999px;
+            background: #f1f5f9;
+
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .pre-documents-subheader p {
+            margin: 0;
+
+            color: #64748b;
+            font-size: 11px;
+        }
+
+
+        /* GALERÍA */
+
+        .pre-documents-grid {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fill, minmax(155px, 1fr));
+
+            gap: 12px;
+        }
+
+        .pre-document-card {
+            min-width: 0;
+            overflow: hidden;
+
+            display: flex;
+            flex-direction: column;
+
+            border: 1px solid #dbe3eb;
+            border-radius: 9px;
+
+            background: #ffffff;
+
+            box-shadow:
+                0 1px 2px rgba(15, 23, 42, .04);
+        }
+
+        .pre-document-preview {
+            height: 115px;
+
+            overflow: hidden;
+
+            border-bottom: 1px solid #e2e8f0;
+
+            background: #f8fafc;
+        }
+
+        .pre-document-preview-link {
+            width: 100%;
+            height: 100%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            text-decoration: none;
+        }
+
+        .pre-document-preview-link img {
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+
+            transition: transform .18s ease;
+        }
+
+        .pre-document-preview-link:hover img {
+            transform: scale(1.035);
+        }
+
+        .pre-document-preview-file {
+            flex-direction: column;
+            gap: 6px;
+
+            color: #64748b;
+
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .pre-document-preview-file svg {
+            width: 29px;
+            height: 29px;
+        }
+
+        .pre-document-preview-pdf {
+            color: #dc2626;
+        }
+
+
+        /* INFORMACIÓN */
+
+        .pre-document-info {
+            min-height: 94px;
+            padding: 9px 10px;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pre-document-type {
+            display: -webkit-box;
+
+            overflow: hidden;
+
+            color: #1e293b;
+
+            font-size: 10px;
+            line-height: 1.3;
+            font-weight: 800;
+
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .pre-document-name {
+            margin-top: 4px;
+
+            overflow: hidden;
+
+            color: #94a3b8;
+
+            font-size: 9px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pre-document-meta {
+            margin-top: auto;
+            padding-top: 7px;
+
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+
+            color: #94a3b8;
+
+            font-size: 8px;
+        }
+
+        .pre-document-origin {
+            padding: 2px 5px;
+
+            border-radius: 999px;
+
+            font-size: 8px;
+            font-weight: 800;
+        }
+
+        .pre-document-origin-family {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .pre-document-origin-admin {
+            background: #ecfdf5;
+            color: #15803d;
+        }
+
+        .pre-document-user {
+            display: block;
+
+            margin-top: 5px;
+
+            overflow: hidden;
+
+            color: #64748b;
+
+            font-size: 8px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+
+        /* ACCIONES */
+
+        .pre-document-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .pre-document-action {
+            min-height: 31px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+
+            border: 0;
+            background: #ffffff;
+
+            color: #475569;
+
+            font-family: inherit;
+            font-size: 9px;
+            font-weight: 700;
+
+            text-decoration: none;
+
+            cursor: pointer;
+        }
+
+        .pre-document-action:first-child {
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .pre-document-action:hover {
+            background: #f8fafc;
+        }
+
+        .pre-document-action svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .pre-document-action-delete {
+            color: #dc2626;
+        }
+
+        .pre-document-action-delete:hover {
+            background: #fff1f2;
+            color: #b91c1c;
+        }
+
+
+        /* SIN DOCUMENTOS */
+
+        .pre-documents-empty {
+            min-height: 90px;
+            padding: 18px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+
+            background: #f8fafc;
+
+            color: #64748b;
+        }
+
+        .pre-documents-empty > svg {
+            width: 25px;
+            height: 25px;
+
+            flex: 0 0 25px;
+        }
+
+        .pre-documents-empty strong {
+            display: block;
+
+            color: #475569;
+
+            font-size: 11px;
+        }
+
+        .pre-documents-empty span {
+            display: block;
+
+            margin-top: 2px;
+
+            font-size: 10px;
+        }
+
+
+        /* BLOQUE PARA AGREGAR */
+
+        .pre-documents-upload {
+            margin-top: 15px;
+            padding-top: 14px;
+
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .pre-documents-upload-title {
+            margin-bottom: 11px;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pre-documents-upload-title > svg {
+            width: 18px;
+            height: 18px;
+
+            flex: 0 0 18px;
+
+            color: #991b1b;
+        }
+
+        .pre-documents-upload-title strong {
+            display: block;
+
+            color: #1e293b;
+
+            font-size: 12px;
+        }
+
+        .pre-documents-upload-title span {
+            display: block;
+
+            margin-top: 1px;
+
+            color: #64748b;
+
+            font-size: 10px;
+        }
+
+        .pre-documents-upload-form {
+            display: grid;
+
+            grid-template-columns:
+                minmax(260px, 1fr)
+                minmax(300px, 1fr)
+                auto;
+
+            align-items: start;
+            gap: 10px;
+        }
+
+        .pre-documents-field {
+            min-width: 0;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pre-documents-field > label {
+            min-height: 17px;
+            margin-bottom: 5px;
+
+            color: #334155;
+
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+
+        /* SELECTOR DE ARCHIVO PERSONALIZADO */
+
+        .pre-admin-file {
+            height: 37px;
+
+            display: flex;
+            min-width: 0;
+
+            overflow: hidden;
+
+            border: 1px solid #d6dee7;
+            border-radius: 6px;
+
+            background: #ffffff;
+        }
+
+        .pre-admin-file-button {
+            padding: 0 11px;
+
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+
+            flex: 0 0 auto;
+
+            border-right: 1px solid #e2e8f0;
+
+            background: #f8fafc;
+            color: #475569;
+
+            font-size: 10px;
+            font-weight: 700;
+
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .pre-admin-file-button:hover {
+            background: #f1f5f9;
+        }
+
+        .pre-admin-file-button svg {
+            width: 14px;
+            height: 14px;
+
+            flex: 0 0 14px;
+        }
+
+        .pre-admin-file-button input {
+            display: none;
+        }
+
+        .pre-admin-file-name {
+            min-width: 0;
+            padding: 0 10px;
+
+            display: flex;
+            align-items: center;
+
+            overflow: hidden;
+
+            color: #94a3b8;
+
+            font-size: 10px;
+
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+
+        /* BOTÓN ADJUNTAR */
+
+        .pre-documents-upload-button {
+            min-height: 37px;
+            margin-top: 22px;
+            padding: 0 14px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid #991b1b;
+            border-radius: 6px;
+
+            background: #991b1b;
+            color: #ffffff;
+
+            font-size: 11px;
+            font-weight: 700;
+
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .pre-documents-upload-button:hover {
+            background: #7f1d1d;
+        }
+
+        .pre-documents-upload-button:disabled {
+            opacity: .65;
+            cursor: not-allowed;
+        }
+
+        .pre-documents-error {
+            min-height: 14px;
+            margin-top: 3px;
+
+            color: #dc2626;
+
+            font-size: 9px;
+        }
+
+        .pre-documents-help {
+            margin-top: 9px;
+
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            color: #64748b;
+
+            font-size: 9px;
+        }
+
+        .pre-documents-help svg {
+            width: 14px;
+            height: 14px;
+
+            flex: 0 0 14px;
+
+            color: #3b82f6;
+        }
+
+
+        /* RESPONSIVE */
+
+        @media (max-width: 900px) {
+            .pre-documents-upload-form {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .pre-documents-upload-button {
+                grid-column: 1 / -1;
+
+                width: 100%;
+                margin-top: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .pre-documents-subheader {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .pre-documents-upload-form {
+                grid-template-columns: 1fr;
+            }
+
+            .pre-documents-grid {
+                grid-template-columns:
+                    repeat(2, minmax(0, 1fr));
+            }
+
+            .pre-documents-upload-button {
+                grid-column: auto;
+            }
+        }
+
+
 
         @media (max-width: 1050px) {
             .pre-detail-fields,
@@ -1674,12 +2237,433 @@
                         </div>
                     </section>
                 
+                    {{-- =========================================================
+                        DOCUMENTOS PARA MATRÍCULA
+                    ========================================================== --}}
+                    <section class="pre-detail-section">
+
+                        <header class="pre-detail-section-header">
+                            <span class="pre-detail-section-number">
+                                5
+                            </span>
+
+                            <h3>
+                                Documentos adjuntos
+                            </h3>
+                        </header>
+
+
+                        <div class="pre-documents-body">
+
+                            {{-- ===============================================
+                                DOCUMENTOS YA RECIBIDOS
+                            ================================================ --}}
+                            <div class="pre-documents-current">
+
+                                <div class="pre-documents-subheader">
+
+                                    <div>
+                                        <strong>
+                                            Documentos recibidos
+                                        </strong>
+
+                                        <span>
+                                            {{ count($documentosActuales) }}
+                                            {{
+                                                count($documentosActuales) === 1
+                                                    ? 'documento'
+                                                    : 'documentos'
+                                            }}
+                                        </span>
+                                    </div>
+
+                                    
+
+                                </div>
+
+
+                                @if(count($documentosActuales))
+
+                                    <div class="pre-documents-grid">
+
+                                        @foreach(
+                                            $documentosActuales
+                                            as $documento
+                                        )
+
+                                            <article
+                                                class="pre-document-card"
+                                                wire:key="documento-admin-{{ $documento['id'] }}"
+                                            >
+
+                                                {{-- PREVISUALIZACIÓN --}}
+                                                <div class="pre-document-preview">
+
+                                                    @if($documento['es_imagen'])
+
+                                                        <a
+                                                            href="{{ $documento['url_visualizacion'] }}"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            class="pre-document-preview-link"
+                                                            title="Ver documento"
+                                                        >
+                                                            <img
+                                                                src="{{ $documento['url_visualizacion'] }}"
+                                                                alt="{{ $documento['nombre_original'] }}"
+                                                                loading="lazy"
+                                                            >
+                                                        </a>
+
+                                                    @elseif($documento['es_pdf'])
+
+                                                        <a
+                                                            href="{{ $documento['url_visualizacion'] }}"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            class="
+                                                                pre-document-preview-link
+                                                                pre-document-preview-file
+                                                                pre-document-preview-pdf
+                                                            "
+                                                            title="Ver PDF"
+                                                        >
+                                                            <x-heroicon-o-document-text />
+
+                                                            <span>
+                                                                Ver PDF
+                                                            </span>
+                                                        </a>
+
+                                                    @else
+
+                                                        <a
+                                                            href="{{ $documento['url_visualizacion'] }}"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            class="
+                                                                pre-document-preview-link
+                                                                pre-document-preview-file
+                                                            "
+                                                            title="Ver documento"
+                                                        >
+                                                            <x-heroicon-o-document />
+
+                                                            <span>
+                                                                Ver documento
+                                                            </span>
+                                                        </a>
+
+                                                    @endif
+
+                                                </div>
+
+
+                                                {{-- INFORMACIÓN --}}
+                                                <div class="pre-document-info">
+
+                                                    <strong
+                                                        class="pre-document-type"
+                                                        title="{{ $documento['tipo_nombre'] }}"
+                                                    >
+                                                        {{ $documento['tipo_nombre'] }}
+                                                    </strong>
+
+                                                    <span
+                                                        class="pre-document-name"
+                                                        title="{{ $documento['nombre_original'] }}"
+                                                    >
+                                                        {{ $documento['nombre_original'] }}
+                                                    </span>
+
+
+                                                    <div class="pre-document-meta">
+
+                                                        @if(
+                                                            $documento['origen']
+                                                            === 'temporal'
+                                                        )
+
+                                                            <span
+                                                                class="
+                                                                    pre-document-origin
+                                                                    pre-document-origin-family
+                                                                "
+                                                            >
+                                                                Familia
+                                                            </span>
+
+                                                        @else
+
+                                                            <span
+                                                                class="
+                                                                    pre-document-origin
+                                                                    pre-document-origin-admin
+                                                                "
+                                                            >
+                                                                Colegio
+                                                            </span>
+
+                                                        @endif
+
+
+                                                        @if(!empty($documento['fecha']))
+                                                            <span>
+                                                                {{ $documento['fecha'] }}
+                                                            </span>
+                                                        @endif
+
+                                                    </div>
+
+
+                                                    @if(!empty($documento['subido_por']))
+                                                        <span class="pre-document-user">
+                                                            Cargado por:
+                                                            {{ $documento['subido_por'] }}
+                                                        </span>
+                                                    @endif
+
+                                                </div>
+
+
+                                                {{-- ACCIONES --}}
+                                                <div class="pre-document-actions">
+
+                                                    <a
+                                                        href="{{ $documento['url_visualizacion'] }}"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        class="pre-document-action"
+                                                        title="Ver documento"
+                                                    >
+                                                        <x-heroicon-o-eye />
+
+                                                        <span>
+                                                            Ver
+                                                        </span>
+                                                    </a>
+
+
+                                                    <button
+                                                        type="button"
+                                                        class="
+                                                            pre-document-action
+                                                            pre-document-action-delete
+                                                        "
+                                                        wire:click="
+                                                            quitarDocumentoAdministrativo(
+                                                                {{ $documento['id'] }}
+                                                            )
+                                                        "
+                                                        wire:confirm="
+                                                            ¿Está seguro de quitar este documento?
+                                                        "
+                                                        wire:loading.attr="disabled"
+                                                        wire:target="
+                                                            quitarDocumentoAdministrativo(
+                                                                {{ $documento['id'] }}
+                                                            )
+                                                        "
+                                                        title="Quitar documento"
+                                                    >
+                                                        <x-heroicon-o-trash />
+
+                                                        <span>
+                                                            Quitar
+                                                        </span>
+                                                    </button>
+
+                                                </div>
+
+                                            </article>
+
+                                        @endforeach
+
+                                    </div>
+
+                                @else
+
+                                    <div class="pre-documents-empty">
+
+                                        <x-heroicon-o-document />
+
+                                        <div>
+                                            <strong>
+                                                Aún no hay documentos adjuntos
+                                            </strong>
+
+                                            <span>
+                                                La familia no adjuntó documentos.
+                                                Puede agregarlos desde esta sección.
+                                            </span>
+                                        </div>
+
+                                    </div>
+
+                                @endif
+
+                            </div>
+
+
+                            {{-- ===============================================
+                                AGREGAR DOCUMENTO DESDE EL COLEGIO
+                            ================================================ --}}
+                            <div class="pre-documents-upload">
+
+                                <div class="pre-documents-upload-title">
+
+                                    <x-heroicon-o-paper-clip />
+
+                                    <div>
+                                        <strong>
+                                            Agregar documento
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+
+                                <div class="pre-documents-upload-form">
+
+                                    <div class="pre-documents-field">
+
+                                        <label>
+                                            Tipo de documento
+                                        </label>
+
+                                        <select
+                                            class="pre-detail-select"
+                                            wire:model="tipoDocumentoSeleccionado"
+                                        >
+                                            <option value="">
+                                                Seleccione el tipo de documento
+                                            </option>
+
+                                            @foreach(
+                                                $documentosCatalogo
+                                                as $codigoDocumento => $datosDocumento
+                                            )
+                                                <option value="{{ $codigoDocumento }}">
+                                                    {{ $datosDocumento['nombre'] }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        @error('tipoDocumentoSeleccionado')
+                                            <span class="pre-documents-error">
+                                                {{ $message }}
+                                            </span>
+                                        @enderror
+
+                                    </div>
+
+
+                                    <div class="pre-documents-field">
+
+                                        <label>
+                                            Archivo
+                                        </label>
+
+                                        <div class="pre-admin-file">
+
+                                            <label class="pre-admin-file-button">
+
+                                                <x-heroicon-o-paper-clip />
+
+                                                <span>
+                                                    Seleccionar archivo
+                                                </span>
+
+                                                <input
+                                                    type="file"
+                                                    wire:model="archivoDocumento"
+                                                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                                >
+
+                                            </label>
+
+
+                                            <span
+                                                class="pre-admin-file-name"
+                                                title="{{
+                                                    $archivoDocumento
+                                                        ? $archivoDocumento
+                                                            ->getClientOriginalName()
+                                                        : 'Ningún archivo seleccionado'
+                                                }}"
+                                            >
+                                                {{
+                                                    $archivoDocumento
+                                                        ? $archivoDocumento
+                                                            ->getClientOriginalName()
+                                                        : 'Ningún archivo seleccionado'
+                                                }}
+                                            </span>
+
+                                        </div>
+
+                                        @error('archivoDocumento')
+                                            <span class="pre-documents-error">
+                                                {{ $message }}
+                                            </span>
+                                        @enderror
+
+                                    </div>
+
+
+                                    <button
+                                        type="button"
+                                        class="pre-documents-upload-button"
+                                        wire:click="subirDocumentoAdministrativo"
+                                        wire:loading.attr="disabled"
+                                        wire:target="
+                                            subirDocumentoAdministrativo,
+                                            archivoDocumento
+                                        "
+                                    >
+                                        <span
+                                            wire:loading.remove
+                                            wire:target="
+                                                subirDocumentoAdministrativo,
+                                                archivoDocumento
+                                            "
+                                        >
+                                            Adjuntar
+                                        </span>
+
+                                        <span
+                                            wire:loading
+                                            wire:target="
+                                                subirDocumentoAdministrativo,
+                                                archivoDocumento
+                                            "
+                                        >
+                                            Procesando...
+                                        </span>
+                                    </button>
+
+                                </div>
+
+                                <div class="pre-documents-help">
+                                    <x-heroicon-o-information-circle />
+
+                                    <span>
+                                        Formatos permitidos: PDF, JPG, JPEG, PNG o WebP.
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section> 
+
 
                 <section class="pre-detail-section">
 
                     <header class="pre-detail-section-header">
                         <span class="pre-detail-section-number">
-                            5
+                            6
                         </span>
 
                         <h3>

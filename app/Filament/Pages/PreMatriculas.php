@@ -4,11 +4,14 @@ namespace App\Filament\Pages;
 
 use App\Models\PeriodoLectivo;
 use App\Models\PreMatricula;
+use App\Models\PreMatriculaDocumento;
+
 
 use App\Services\PreMatriculas\PreMatriculaAdministracionService;
 use App\Services\PreMatriculas\PreMatriculaDashboardService;
 use App\Services\PreMatriculas\PreMatriculaFormularioService;
 use App\Services\PreMatriculas\PreMatriculaExportacionService;
+use App\Services\PreMatriculas\PreMatriculaDocumentoService;
 use App\Traits\HasPagePermissions;
 
 use Filament\Notifications\Notification;
@@ -16,6 +19,8 @@ use Filament\Pages\Page;
 
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+
+use Livewire\WithFileUploads;
 
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -30,6 +35,7 @@ class PreMatriculas extends Page
 {
 
         use HasPagePermissions;
+        use WithFileUploads;
        
 
     /*
@@ -130,6 +136,21 @@ class PreMatriculas extends Page
 
     public array $formularioEdicion = [];
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Documentos de la pre-matrícula
+    |--------------------------------------------------------------------------
+    */
+
+    public array $documentosCatalogo = [];
+
+    public array $documentosActuales = [];
+
+    public ?string $tipoDocumentoSeleccionado = null;
+
+    public $archivoDocumento = null;
+
     /*
     |--------------------------------------------------------------------------
     | Carga inicial
@@ -161,6 +182,10 @@ class PreMatriculas extends Page
             ->obtenerEpsActivas()
             ->pluck('nombre', 'id')
             ->toArray();
+
+        $this->documentosCatalogo = app(
+            PreMatriculaDocumentoService::class
+        )->tipos();
 
         $this->cargarPantalla($dashboardService);
     }
@@ -331,7 +356,280 @@ class PreMatriculas extends Page
                     $preMatricula
                 );
 
+        $this->cargarDocumentosActuales(
+            $preMatricula
+        );
+
         $this->mostrarModalDetalle = true;
+    }
+
+    private function cargarDocumentosActuales(
+        ?PreMatricula $preMatricula = null
+    ): void {
+        if (! $preMatricula) {
+            if (! $this->preMatriculaSeleccionadaId) {
+                $this->documentosActuales = [];
+
+                return;
+            }
+
+            $preMatricula = PreMatricula::query()
+                ->find($this->preMatriculaSeleccionadaId);
+        }
+
+        if (! $preMatricula) {
+            $this->documentosActuales = [];
+
+            return;
+        }
+
+        $servicio = app(
+            PreMatriculaDocumentoService::class
+        );
+
+        $this->documentosActuales = $servicio
+            ->documentos($preMatricula)
+            ->map(function (
+                PreMatriculaDocumento $documento
+            ) use ($servicio): array {
+                return [
+                    'id' => $documento->id,
+
+                    'tipo_documento' =>
+                        $documento->tipo_documento,
+
+                    'tipo_nombre' =>
+                        $servicio->nombreTipo(
+                            $documento->tipo_documento
+                        ),
+
+                    'nombre_original' =>
+                        $documento->nombre_original,
+
+                    'mime_type' =>
+                        $documento->mime_type,
+
+                    'tamano' =>
+                        $documento->tamano,
+
+                    'origen' =>
+                        $documento->origen,
+
+                    'es_imagen' =>
+                        $servicio->esImagen($documento),
+
+                    'es_pdf' =>
+                        $servicio->esPdf($documento),
+                    
+                    'url_visualizacion' =>
+                        route(
+                            'pre-matriculas.documentos.ver',
+                            $documento
+                        ),
+
+                    'subido_por' =>
+                        $documento->usuarioCarga?->name
+                        ?? 'Usuario no disponible',
+
+                    'fecha' =>
+                        $documento->created_at
+                            ?->format('d/m/Y H:i'),
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+
+    public function subirDocumentoAdministrativo(): void
+    {
+        $this->resetValidation([
+            'tipoDocumentoSeleccionado',
+            'archivoDocumento',
+        ]);
+
+        $this->validate([
+            'tipoDocumentoSeleccionado' => [
+                'required',
+                'string',
+            ],
+
+            'archivoDocumento' => [
+                'required',
+                'file',
+                'mimes:pdf,jpg,jpeg,png,webp',
+                'max:10240',
+            ],
+        ], [
+            'tipoDocumentoSeleccionado.required' =>
+                'Seleccione el tipo de documento.',
+
+            'archivoDocumento.required' =>
+                'Seleccione un archivo.',
+
+            'archivoDocumento.file' =>
+                'El archivo seleccionado no es válido.',
+
+            'archivoDocumento.mimes' =>
+                'Solo se permiten archivos PDF, JPG, JPEG, PNG o WebP.',
+
+            'archivoDocumento.max' =>
+                'El documento no puede superar los 10 MB.',
+        ]);
+
+        $usuario = auth()->user();
+
+        if (
+            ! $usuario
+            || ! $this->preMatriculaSeleccionadaId
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            return;
+        }
+
+        $preMatricula = PreMatricula::query()
+            ->whereKey(
+                $this->preMatriculaSeleccionadaId
+            )
+            ->where(
+                'sede_id',
+                $this->sede_id
+            )
+            ->where(
+                'periodo_lectivo_id',
+                $this->periodo_lectivo_id
+            )
+            ->first();
+
+        if (! $preMatricula) {
+            Notification::make()
+                ->title('Pre-matrícula no encontrada')
+                ->body(
+                    'No fue posible identificar el formulario dentro del contexto académico activo.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $servicioDocumentos = app(
+            PreMatriculaDocumentoService::class
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validar contra catálogo completo
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            ! $servicioDocumentos->tipoExiste(
+                $this->tipoDocumentoSeleccionado
+            )
+        ) {
+            $this->addError(
+                'tipoDocumentoSeleccionado',
+                'El tipo de documento seleccionado no es válido.'
+            );
+
+            return;
+        }
+
+        $servicioDocumentos->guardar(
+            $preMatricula,
+            $this->tipoDocumentoSeleccionado,
+            $this->archivoDocumento,
+            $usuario,
+            'administrativo'
+        );
+
+        $this->reset([
+            'tipoDocumentoSeleccionado',
+            'archivoDocumento',
+        ]);
+
+        $this->cargarDocumentosActuales(
+            $preMatricula
+        );
+
+        Notification::make()
+            ->title('Documento cargado')
+            ->body(
+                'El documento fue agregado correctamente a la pre-matrícula.'
+            )
+            ->success()
+            ->send();
+    }
+
+    public function quitarDocumentoAdministrativo(
+        int $documentoId
+    ): void {
+        $usuario = auth()->user();
+
+        if (
+            ! $usuario
+            || ! $this->preMatriculaSeleccionadaId
+            || ! $this->sede_id
+            || ! $this->periodo_lectivo_id
+        ) {
+            return;
+        }
+
+        $preMatricula = PreMatricula::query()
+            ->whereKey(
+                $this->preMatriculaSeleccionadaId
+            )
+            ->where(
+                'sede_id',
+                $this->sede_id
+            )
+            ->where(
+                'periodo_lectivo_id',
+                $this->periodo_lectivo_id
+            )
+            ->first();
+
+        if (! $preMatricula) {
+            Notification::make()
+                ->title('Pre-matrícula no encontrada')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $documento = $preMatricula
+            ->documentos()
+            ->whereKey($documentoId)
+            ->first();
+
+        if (! $documento) {
+            Notification::make()
+                ->title('Documento no encontrado')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        app(
+            PreMatriculaDocumentoService::class
+        )->eliminar(
+            $documento
+        );
+
+        $this->cargarDocumentosActuales(
+            $preMatricula
+        );
+
+        Notification::make()
+            ->title('Documento retirado')
+            ->body(
+                'El documento fue eliminado correctamente.'
+            )
+            ->success()
+            ->send();
     }
 
     public function cerrarModalDetalle(): void
@@ -339,6 +637,10 @@ class PreMatriculas extends Page
         $this->mostrarModalDetalle = false;
         $this->formularioEdicion = [];
         $this->preMatriculaSeleccionadaId = null;
+
+        $this->documentosActuales = [];
+        $this->tipoDocumentoSeleccionado = null;
+        $this->archivoDocumento = null;
 
         $this->resetValidation();
     }

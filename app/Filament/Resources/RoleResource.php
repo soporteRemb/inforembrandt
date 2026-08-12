@@ -76,17 +76,84 @@ class RoleResource extends Resource
     public static function canEdit(
         \Illuminate\Database\Eloquent\Model $record
     ): bool {
-        $user = auth()->user();
+        $usuario = auth()->user();
 
-        if (! $user) {
+        if (! $usuario) {
             return false;
         }
 
-        if ($user->hasRole('superadmin')) {
+        $nombreRol = UserResource::normalizarNombreRol(
+            $record->name
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Superadmin y Admin
+        |--------------------------------------------------------------------------
+        |
+        | Pueden administrar todos los roles, incluidos los protegidos.
+        |
+        */
+
+        if ($usuario->hasAnyRole([
+            'superadmin',
+            'admin',
+        ])) {
             return true;
         }
 
-        return $user->can('editar_roles');
+        /*
+        |--------------------------------------------------------------------------
+        | Sistemas
+        |--------------------------------------------------------------------------
+        |
+        | Puede acceder al rol sistemas y a roles normales,
+        | pero nunca modificar admin o superadmin.
+        |
+        */
+
+        if ($usuario->hasRole('sistemas')) {
+            if (
+                in_array(
+                    $nombreRol,
+                    [
+                        'admin',
+                        'superadmin',
+                    ],
+                    true
+                )
+            ) {
+                return false;
+            }
+
+            return $usuario->can('editar_roles');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resto de usuarios
+        |--------------------------------------------------------------------------
+        |
+        | Aunque tengan editar_roles, nunca pueden modificar
+        | superadmin, admin ni sistemas.
+        |
+        */
+
+        if (
+            in_array(
+                $nombreRol,
+                [
+                    'superadmin',
+                    'admin',
+                    'sistemas',
+                ],
+                true
+            )
+        ) {
+            return false;
+        }
+
+        return $usuario->can('editar_roles');
     }
 
 
@@ -190,14 +257,12 @@ class RoleResource extends Resource
                 ->disabled(
                     fn ($record) => in_array(
                         UserResource::normalizarNombreRol($record?->name),
-                        ['superadmin', 'admin'],
+                        ['superadmin', 'admin', 'sistemas'],
                         true
                     )
-                )
-
-                ->helperText(
-                    'Los roles superadmin y admin no se pueden renombrar.'
                 ),
+
+                
 
             ViewField::make('filament.forms.role-filter-toolbar')
                 ->label('')

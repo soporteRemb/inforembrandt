@@ -6,14 +6,19 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 
 use App\Services\PreMatriculas\PreMatriculaFormularioService;
+use App\Services\PreMatriculas\PreMatriculaDocumentoService;
 
 use App\Models\PreMatricula;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
+use Livewire\WithFileUploads;
+
 class FormularioPreMatricula extends Page
 {
+    use WithFileUploads;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static ?string $navigationLabel = 'Formulario';
@@ -97,6 +102,20 @@ class FormularioPreMatricula extends Page
 
     /*
     |--------------------------------------------------------------------------
+    | Documentos para matrícula
+    |--------------------------------------------------------------------------
+    */
+
+    public array $documentosCatalogo = [];
+
+    public string $tipoDocumentoSeleccionado = '';
+
+    public $archivoDocumento = null;
+
+    public array $documentosCargados = [];
+
+    /*
+    |--------------------------------------------------------------------------
     | Padre
     |--------------------------------------------------------------------------
     */
@@ -167,6 +186,8 @@ class FormularioPreMatricula extends Page
 
     public bool $mostrarModalConfirmacion = false;
 
+    public bool $mostrarModalDocumentosInicial = false;
+
     
 
     /*
@@ -204,6 +225,254 @@ class FormularioPreMatricula extends Page
         return '';
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Documentos para matrícula
+    |--------------------------------------------------------------------------
+    */
+
+    public function cargarDocumentosActuales(): void
+    {
+        $this->documentosCargados = [];
+
+        if (! $this->preMatriculaId) {
+            return;
+        }
+
+        $preMatricula = PreMatricula::find(
+            $this->preMatriculaId
+        );
+
+        if (! $preMatricula) {
+            return;
+        }
+
+        $documentos = app(
+            PreMatriculaDocumentoService::class
+        )->documentos($preMatricula);
+
+        $this->documentosCargados = $documentos
+            ->map(function ($documento) {
+                return [
+                    'id' => $documento->id,
+
+                    'tipo_documento' =>
+                        $documento->tipo_documento,
+
+                    'nombre_original' =>
+                        $documento->nombre_original,
+
+                    'mime_type' =>
+                        $documento->mime_type,
+
+                    'tamano' =>
+                        $documento->tamano,
+
+                    'origen' =>
+                        $documento->origen,
+
+                    'url_visualizacion' =>
+                        route(
+                            'pre-matriculas.documentos.ver',
+                            $documento
+                        ),
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+
+
+    public function subirDocumento(): void
+    {
+        $this->resetValidation([
+            'tipoDocumentoSeleccionado',
+            'archivoDocumento',
+        ]);
+
+        $this->validate([
+            'tipoDocumentoSeleccionado' => [
+                'required',
+                'string',
+            ],
+
+            'archivoDocumento' => [
+                'required',
+                'file',
+                'mimes:pdf,jpg,jpeg,png,webp',
+                'max:10240',
+            ],
+        ], [
+            'tipoDocumentoSeleccionado.required' =>
+                'Seleccione el tipo de documento.',
+
+            'archivoDocumento.required' =>
+                'Seleccione un archivo.',
+
+            'archivoDocumento.file' =>
+                'El archivo seleccionado no es válido.',
+
+            'archivoDocumento.mimes' =>
+                'Solo se permiten archivos PDF, JPG, JPEG, PNG o WebP.',
+
+            'archivoDocumento.max' =>
+                'El documento no puede superar los 10 MB.',
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Servicio de documentos
+        |--------------------------------------------------------------------------
+        */
+        $servicioDocumentos = app(
+            PreMatriculaDocumentoService::class
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validar que el tipo esté permitido para el formulario temporal
+        |--------------------------------------------------------------------------
+        |
+        | Aunque alguien manipule manualmente el valor del select desde el
+        | navegador, solamente podrá cargar uno de los tipos habilitados
+        | específicamente para el formulario de pre-matrícula.
+        |
+        */
+        if (
+            ! $servicioDocumentos->tipoFormularioExiste(
+                $this->tipoDocumentoSeleccionado
+            )
+        ) {
+            $this->addError(
+                'tipoDocumentoSeleccionado',
+                'El tipo de documento seleccionado no está disponible para este formulario.'
+            );
+
+            return;
+        }
+
+        $usuario = auth()->user();
+
+        if (! $usuario || ! $this->preMatriculaId) {
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Verificar propiedad de la pre-matrícula
+        |--------------------------------------------------------------------------
+        */
+        $preMatricula = PreMatricula::query()
+            ->whereKey($this->preMatriculaId)
+            ->where('user_id', $usuario->id)
+            ->first();
+
+        if (! $preMatricula) {
+            $this->addError(
+                'archivoDocumento',
+                'No se encontró la pre-matrícula asociada a esta cuenta.'
+            );
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Guardar documento
+        |--------------------------------------------------------------------------
+        */
+        $servicioDocumentos->guardar(
+            $preMatricula,
+            $this->tipoDocumentoSeleccionado,
+            $this->archivoDocumento,
+            $usuario,
+            'temporal'
+        );
+
+        $this->reset([
+            'tipoDocumentoSeleccionado',
+            'archivoDocumento',
+        ]);
+
+        $this->cargarDocumentosActuales();
+
+        Notification::make()
+            ->title('Documento cargado')
+            ->body('El documento fue guardado correctamente.')
+            ->success()
+            ->send();
+    }
+
+    public function quitarDocumento(int $documentoId): void
+    {
+        $usuario = auth()->user();
+
+        if (
+            ! $usuario
+            || ! $usuario->hasRole('temporal')
+            || ! $this->preMatriculaId
+        ) {
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comprobar que la pre-matrícula pertenece al usuario
+        |--------------------------------------------------------------------------
+        */
+
+        $preMatricula = PreMatricula::query()
+            ->whereKey($this->preMatriculaId)
+            ->where('user_id', $usuario->id)
+            ->where('estado', 'pendiente')
+            ->first();
+
+        if (! $preMatricula) {
+            Notification::make()
+                ->title('Acción no permitida')
+                ->body(
+                    'El formulario ya no permite modificar documentos.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Buscar solamente un documento de esta pre-matrícula
+        |--------------------------------------------------------------------------
+        */
+
+        $documento = $preMatricula
+            ->documentos()
+            ->whereKey($documentoId)
+            ->first();
+
+        if (! $documento) {
+            Notification::make()
+                ->title('Documento no encontrado')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        app(
+            PreMatriculaDocumentoService::class
+        )->eliminar($documento);
+
+        $this->cargarDocumentosActuales();
+
+        Notification::make()
+            ->title('Documento retirado')
+            ->body(
+                'El documento fue eliminado correctamente.'
+            )
+            ->success()
+            ->send();
+    }
     /*
     |--------------------------------------------------------------------------
     | Edad calculada visualmente
@@ -503,6 +772,10 @@ class FormularioPreMatricula extends Page
             ->pluck('nombre', 'id')
             ->toArray();
 
+        $this->documentosCatalogo = app(
+            PreMatriculaDocumentoService::class
+        )->tiposFormulario();
+
         $usuario = auth()->user();
 
         if (! $usuario) {
@@ -521,6 +794,30 @@ class FormularioPreMatricula extends Page
         if ($usuario->hasAnyRole(['superadmin', 'admin'])) {
             return;
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Aviso inicial de documentos
+        |--------------------------------------------------------------------------
+        |
+        | Solo se muestra al usuario temporal.
+        | Una vez aceptado, no vuelve a aparecer durante la misma sesión.
+        |
+        */
+        if ($usuario->hasRole('temporal')) {
+            $claveSesion =
+                'prematricula_documentos_aviso_' . $usuario->id;
+
+            if (! session()->get($claveSesion, false)) {
+                $this->mostrarModalDocumentosInicial = true;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Obtener formulario del usuario temporal
+        |--------------------------------------------------------------------------
+        */
 
         $preMatricula = $formularioService
             ->obtenerFormularioUsuario($usuario);
@@ -543,6 +840,41 @@ class FormularioPreMatricula extends Page
             $formularioService->prepararDatosFormulario(
                 $preMatricula
             )
+        );
+
+        $this->cargarDocumentosActuales();
+    }
+
+    public function continuarDesdeAvisoDocumentos(): void
+    {
+        $usuario = auth()->user();
+
+        if (! $usuario || ! $usuario->hasRole('temporal')) {
+            $this->mostrarModalDocumentosInicial = false;
+
+            return;
+        }
+
+        session()->put(
+            'prematricula_documentos_aviso_' . $usuario->id,
+            true
+        );
+
+        $this->mostrarModalDocumentosInicial = false;
+    }
+
+
+    public function cerrarSesionDesdeAvisoDocumentos(): mixed
+    {
+        $this->mostrarModalDocumentosInicial = false;
+
+        Auth::logout();
+
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
+
+        return redirect(
+            filament()->getLoginUrl()
         );
     }
 

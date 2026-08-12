@@ -138,6 +138,42 @@ class AdminPanelProvider extends PanelProvider
                     background: rgba(255,255,255,0.15) !important;
                 }
 
+
+                /* =========================================================
+                BOTÓN MENÚ MÓVIL
+                Hace visible el botón hamburguesa de Filament en celular.
+                No modifica el funcionamiento del sidebar.
+                ========================================================= */
+
+                @media (max-width: 1023px) {
+
+                    .fi-topbar-open-sidebar-btn {
+                        display: flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+
+                        width: 40px !important;
+                        height: 40px !important;
+
+                        color: #334155 !important;
+                    }
+
+                    .fi-topbar-open-sidebar-btn svg,
+                    .fi-topbar-open-sidebar-btn .fi-icon {
+                        display: block !important;
+
+                        width: 24px !important;
+                        height: 24px !important;
+
+                        color: #334155 !important;
+                        stroke: #334155 !important;
+                    }
+
+                    .fi-topbar-open-sidebar-btn:hover {
+                        background: #f1f5f9 !important;
+                    }
+
+                }
                 /* TÍTULOS DE SECCIÓN — oscuros (como estaban) */
                 .fi-section-header-heading {
                     color: #1e293b !important;
