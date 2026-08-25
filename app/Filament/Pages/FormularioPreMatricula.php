@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 use Livewire\WithFileUploads;
+use Livewire\Attributes\Locked;
 
 class FormularioPreMatricula extends Page
 {
@@ -98,6 +99,7 @@ class FormularioPreMatricula extends Page
 
     public string $condicion_ingreso = '';
 
+    #[Locked]
     public ?int $preMatriculaId = null;
 
     /*
@@ -834,13 +836,13 @@ class FormularioPreMatricula extends Page
             $preMatricula
         );
 
-        $this->preMatriculaId = $preMatricula->id;
-
         $this->fill(
             $formularioService->prepararDatosFormulario(
                 $preMatricula
             )
         );
+
+        $this->preMatriculaId = $preMatricula->id;
 
         $this->cargarDocumentosActuales();
     }

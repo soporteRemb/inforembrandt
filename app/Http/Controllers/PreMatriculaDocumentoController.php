@@ -61,8 +61,8 @@ class PreMatriculaDocumentoController extends Controller
             ! $usuario->hasAnyRole([
                 'superadmin',
                 'admin',
-                'admisiones',
             ])
+            && ! $usuario->can('ver_pre_matriculas')
         ) {
             abort(403);
         }
