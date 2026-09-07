@@ -105,15 +105,27 @@ class AsignaturasRelationManager extends RelationManager
             ->headerActions([
 
                 Tables\Actions\CreateAction::make()
-                    ->label('Asignar materia'),
+                    ->label('Asignar materia')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('editar_docentes') ?? false
+                    ),
             ])
             ->actions([
 
                 Tables\Actions\EditAction::make()
-                    ->label('Editar'),
+                    ->label('Editar')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('editar_docentes') ?? false
+                    ),
 
                 Tables\Actions\DeleteAction::make()
-                    ->label('Eliminar'),
+                    ->label('Eliminar')
+                    ->visible(
+                        fn (): bool =>
+                            auth()->user()?->can('editar_docentes') ?? false
+                    ),
             ]);
     }
 }

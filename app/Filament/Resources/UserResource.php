@@ -76,6 +76,15 @@ class UserResource extends Resource
             return $query->whereRaw('1 = 0');
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Admin y SuperAdmin
+        |--------------------------------------------------------------------------
+        |
+        | Pueden visualizar todos los usuarios.
+        |
+        */
+
         if ($usuarioActual->hasAnyRole([
             'admin',
             'superadmin',
@@ -83,23 +92,51 @@ class UserResource extends Resource
             return $query;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Sistemas
+        |--------------------------------------------------------------------------
+        |
+        | Puede visualizar usuarios normales y su propia categoría,
+        | pero nunca usuarios que tengan rol admin o superadmin.
+        |
+        */
+
         if ($usuarioActual->hasRole('sistemas')) {
-            return $query->whereNotIn(
-                'name',
-                [
-                    'admin',
-                    'superadmin',
-                ]
+            return $query->whereDoesntHave(
+                'roles',
+                fn (Builder $query) =>
+                    $query->whereIn(
+                        'name',
+                        [
+                            'admin',
+                            'superadmin',
+                        ]
+                    )
             );
         }
 
-        return $query->whereNotIn(
-            'name',
-            [
-                'admin',
-                'superadmin',
-                'sistemas',
-            ]
+        /*
+        |--------------------------------------------------------------------------
+        | Resto de usuarios
+        |--------------------------------------------------------------------------
+        |
+        | Nunca pueden visualizar cuentas protegidas:
+        | superadmin, admin o sistemas.
+        |
+        */
+
+        return $query->whereDoesntHave(
+            'roles',
+            fn (Builder $query) =>
+                $query->whereIn(
+                    'name',
+                    [
+                        'admin',
+                        'superadmin',
+                        'sistemas',
+                    ]
+                )
         );
     }
 

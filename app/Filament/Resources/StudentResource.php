@@ -334,11 +334,16 @@ class StudentResource extends Resource
                             ->label('')
                             ->content(function (?Student $record) {
                                 if (!$record) return new HtmlString('');
-                                $url      = url("/students/{$record->id}/documentos-fisicos");
-                                $docs     = $record->documentos_fisicos ?? [];
-                                $total    = 14;
-                                $done     = count($docs);
-                                $pendiente = $total - $done;
+                                $url = url("/students/{$record->id}/documentos-fisicos");
+
+                                $total = count(config('pre_matricula_documentos.tipos', []));
+
+                                $done = $record->archivosDocumentos()
+                                    ->whereIn('tipo_documento', array_keys(config('pre_matricula_documentos.tipos', [])))
+                                    ->distinct()
+                                    ->count('tipo_documento');
+
+                                $pendiente = max(0, $total - $done);
                                 $badge = $pendiente === 0
                                     ? '<span style="background:#bbf7d0;color:#166534;padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;">✓ Completo</span>'
                                     : '<span style="background:#fca5a5;color:#7f1d1d;padding:2px 10px;border-radius:99px;font-size:0.75rem;font-weight:700;">' . $pendiente . ' pendiente' . ($pendiente !== 1 ? 's' : '') . '</span>';

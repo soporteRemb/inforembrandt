@@ -97,16 +97,34 @@ class AsignacionConceptoResource extends Resource
                             ->preload()
                             ->default(function (Forms\Get $get) {
                                 $sedeId = session('sede_id') ?? $get('sede_id');
+                                $anioActivo = session('anio');
 
-                                return session('periodo_lectivo_id')
-                                    ?? PeriodoLectivo::query()
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Periodo correspondiente al contexto de la sesión
+                                |--------------------------------------------------------------------------
+                                */
+                                if ($sedeId && $anioActivo) {
+                                    $periodoId = PeriodoLectivo::query()
                                         ->where('sede_id', $sedeId)
-                                        ->where('nombre', 'like', '%' . session('anio') . '%')
-                                        ->value('id')
-                                    ?? PeriodoLectivo::query()
-                                        ->where('sede_id', $sedeId)
-                                        ->orderByDesc('nombre')
+                                        ->where('nombre', (string) $anioActivo)
                                         ->value('id');
+
+                                    if ($periodoId) {
+                                        return $periodoId;
+                                    }
+                                }
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Compatibilidad con sesiones que guarden el periodo directamente
+                                |--------------------------------------------------------------------------
+                                */
+                                if (session('periodo_lectivo_id')) {
+                                    return (int) session('periodo_lectivo_id');
+                                }
+
+                                return null;
                             })
                             ->required()
                             ->live(),
@@ -451,17 +469,50 @@ class AsignacionConceptoResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $sedeId = session('sede_id');
+        $anioActivo = session('anio');
 
-        $periodoLectivoId = session('periodo_lectivo_id')
-            ?? PeriodoLectivo::query()
+        $periodoLectivoId = null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resolver periodo desde sede + año de la sesión
+        |--------------------------------------------------------------------------
+        */
+        if ($sedeId && $anioActivo) {
+            $periodoLectivoId = PeriodoLectivo::query()
                 ->where('sede_id', $sedeId)
-                ->where('estado', 'abierto')
-                ->orderByDesc('nombre')
+                ->where('nombre', (string) $anioActivo)
                 ->value('id');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compatibilidad con sesiones anteriores
+        |--------------------------------------------------------------------------
+        */
+        if (
+            ! $periodoLectivoId
+            && session('periodo_lectivo_id')
+        ) {
+            $periodoLectivoId = (int) session(
+                'periodo_lectivo_id'
+            );
+        }
 
         return parent::getEloquentQuery()
-            ->when($sedeId, fn ($query) => $query->where('sede_id', $sedeId))
-            ->when($periodoLectivoId, fn ($query) => $query->where('periodo_lectivo_id', $periodoLectivoId))
+            ->when(
+                $sedeId,
+                fn ($query) =>
+                    $query->where('sede_id', $sedeId)
+            )
+            ->when(
+                $periodoLectivoId,
+                fn ($query) =>
+                    $query->where(
+                        'periodo_lectivo_id',
+                        $periodoLectivoId
+                    )
+            )
             ->with([
                 'sede',
                 'periodoLectivo',

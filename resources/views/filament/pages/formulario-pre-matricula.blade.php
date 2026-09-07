@@ -755,6 +755,25 @@
             margin: 0;
         }
 
+        .prematricula-validation-alert {
+            width: min(760px, 100%);
+            margin: 0 auto 16px;
+            padding: 14px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            background: #fef2f2;
+            color: #991b1b;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .prematricula-validation-alert strong {
+            font-weight: 700;
+        }
+
 
 
 
@@ -2799,6 +2818,9 @@
                     <div
                         class="prematricula-field"
                         x-data="{ nombreArchivo: '' }"
+                        x-on:prematricula-archivo-limpiado.window="
+                            nombreArchivo = ''
+                        "
                     >
                         <label>
                             Archivo
@@ -3163,6 +3185,14 @@
         {{-- =====================================================
             ACCIÓN FINAL
         ====================================================== --}}
+        @if($mostrarAvisoValidacion)
+            <div class="prematricula-validation-alert">
+                <strong>No fue posible enviar el formulario.</strong>
+                <span>
+                    Revise los campos marcados con asterisco en rojo y complete la información obligatoria faltante antes de continuar.
+                </span>
+            </div>
+        @endif
         <section class="prematricula-actions">
             <button
                 type="button"

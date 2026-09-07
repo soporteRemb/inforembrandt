@@ -135,15 +135,37 @@ class CausacionCostos extends Page
 
     public function mount(): void
     {
-        $this->sede_id = session('sede_id');
+        $this->sede_id = (int) session('sede_id');
 
-        $this->periodo_lectivo_id = session('periodo_lectivo_id');
+        $anioActivo = session('anio');
 
-        if (! $this->periodo_lectivo_id) {
-            $this->periodo_lectivo_id = PeriodoLectivo::query()
-                ->where('sede_id', $this->sede_id)
-                ->orderByDesc('nombre')
-                ->value('id');
+        $this->periodo_lectivo_id = null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resolver periodo desde el contexto real de la sesión
+        |--------------------------------------------------------------------------
+        */
+        if ($this->sede_id && $anioActivo) {
+            $this->periodo_lectivo_id =
+                PeriodoLectivo::query()
+                    ->where('sede_id', $this->sede_id)
+                    ->where('nombre', (string) $anioActivo)
+                    ->value('id');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compatibilidad con sesiones anteriores
+        |--------------------------------------------------------------------------
+        */
+        if (
+            ! $this->periodo_lectivo_id
+            && session('periodo_lectivo_id')
+        ) {
+            $this->periodo_lectivo_id = (int) session(
+                'periodo_lectivo_id'
+            );
         }
 
         $this->cargarHistorialCausaciones();
@@ -482,10 +504,22 @@ class CausacionCostos extends Page
 
     public function updatedSedeId(): void
     {
-        $this->periodo_lectivo_id = PeriodoLectivo::query()
-            ->where('sede_id', $this->sede_id)
-            ->where('estado', 'abierto')
-            ->value('id');
+        $anioActivo = session('anio');
+
+        $this->periodo_lectivo_id = null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Mantener el año de trabajo al cambiar de sede
+        |--------------------------------------------------------------------------
+        */
+        if ($this->sede_id && $anioActivo) {
+            $this->periodo_lectivo_id =
+                PeriodoLectivo::query()
+                    ->where('sede_id', $this->sede_id)
+                    ->where('nombre', (string) $anioActivo)
+                    ->value('id');
+        }
 
         $this->grado_obligatorio = null;
         $this->concepto_obligatorio_id = null;
@@ -497,6 +531,8 @@ class CausacionCostos extends Page
 
         $this->resetResumenes();
     }
+
+
 
     public function updatedPeriodoLectivoId(): void
     {

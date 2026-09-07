@@ -25,9 +25,18 @@ class Login extends BaseLogin
     public function mount(): void
     {
         parent::mount();
+        $anioActual = (string) now()->year;
+
         $this->anio = PeriodoLectivo::query()
-            ->orderByDesc('nombre')
-            ->value('nombre') ?? date('Y');
+            ->where('nombre', $anioActual)
+            ->exists()
+                ? $anioActual
+                : (
+                    PeriodoLectivo::query()
+                        ->orderByDesc('nombre')
+                        ->value('nombre')
+                    ?? $anioActual
+                );
         $sede = Sede::where('activa', true)->first();
         $this->sede_id = $sede ? (string) $sede->id : '';
     }

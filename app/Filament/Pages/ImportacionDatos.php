@@ -107,12 +107,44 @@ class ImportacionDatos extends Page
 
     public function mount(): void
     {
-        $this->sedeId = session('sede_id');
+        $this->sedeId = (int) session('sede_id');
 
-        $this->periodoLectivoId = PeriodoLectivo::query()
-            ->where('sede_id', session('sede_id'))
-            ->where('estado', 'abierto')
-            ->value('id');
+        $anioActivo = session('anio');
+
+        $this->periodoLectivoId = null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Contexto académico principal: sede + año de sesión
+        |--------------------------------------------------------------------------
+        */
+
+        if ($this->sedeId && $anioActivo) {
+            $this->periodoLectivoId = PeriodoLectivo::query()
+                ->where('sede_id', $this->sedeId)
+                ->where('nombre', (string) $anioActivo)
+                ->value('id');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compatibilidad con sesiones anteriores
+        |--------------------------------------------------------------------------
+        */
+
+        if (! $this->periodoLectivoId) {
+            $periodoSesion = session('periodo_lectivo_id');
+
+            if (
+                $periodoSesion
+                && PeriodoLectivo::query()
+                    ->whereKey($periodoSesion)
+                    ->where('sede_id', $this->sedeId)
+                    ->exists()
+            ) {
+                $this->periodoLectivoId = (int) $periodoSesion;
+            }
+        }
     }
 
     private function guardarHistorialImportacion(string $clave, array $resultado): void

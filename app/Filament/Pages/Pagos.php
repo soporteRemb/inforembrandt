@@ -219,14 +219,45 @@ class Pagos extends Page
 
     public function mount(): void
     {
-        $this->sede_id = session('sede_id');
-        $this->periodo_lectivo_id = session('periodo_lectivo_id');
+        $this->sede_id = (int) session('sede_id');
 
-        if ($this->sede_id && ! $this->periodo_lectivo_id) {
+        $anioActivo = session('anio');
+
+        $this->periodo_lectivo_id = null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resolver el periodo lectivo desde el contexto real de la sesión
+        |--------------------------------------------------------------------------
+        |
+        | La pantalla de Pagos debe trabajar exactamente con la sede y el año
+        | con los que inició sesión el usuario.
+        |
+        | Ejemplo:
+        | Rembrandt 2026 → periodo Rembrandt 2026
+        |
+        | Nunca debe tomar simplemente el periodo más reciente, porque podrían
+        | existir periodos futuros como 2027.
+        */
+        if ($this->sede_id && $anioActivo) {
             $this->periodo_lectivo_id = PeriodoLectivo::query()
                 ->where('sede_id', $this->sede_id)
-                ->orderByDesc('nombre')
+                ->where('nombre', (string) $anioActivo)
                 ->value('id');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compatibilidad con sesiones que ya guarden directamente el periodo
+        |--------------------------------------------------------------------------
+        */
+        if (
+            ! $this->periodo_lectivo_id
+            && session('periodo_lectivo_id')
+        ) {
+            $this->periodo_lectivo_id = (int) session(
+                'periodo_lectivo_id'
+            );
         }
 
         $this->formasPago = app(PagosService::class)

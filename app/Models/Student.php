@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Matricula;
 use App\Models\StudentDocumento;
 use App\Models\FichaCostoEstudiante;
+use App\Models\DocumentoEstudiante;
+use App\Services\Estudiantes\GenerarCodigoEstudianteService;
 
 class Student extends Model
 {
@@ -79,24 +81,49 @@ class Student extends Model
         $this->attributes['primer_nombre'] = trim($parts[0] ?? '');
         $this->attributes['segundo_nombre'] = trim($parts[1] ?? '');
     }
+
     protected static function booted(): void
     {
         static::creating(function (Student $student) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Respetar código institucional existente
+            |--------------------------------------------------------------------------
+            |
+            | Si el estudiante ya llega con código —por ejemplo desde un Excel
+            | histórico o desde Pre-matrícula— se conserva exactamente.
+            |
+            */
 
             if (! empty($student->codigo)) {
                 return;
             }
 
-            $anio = date('Y');
+            /*
+            |--------------------------------------------------------------------------
+            | Generar código institucional para estudiante nuevo
+            |--------------------------------------------------------------------------
+            |
+            | El año se obtiene del periodo lectivo al que pertenece el estudiante.
+            | No depende de la fecha actual del servidor.
+            |
+            | El mismo generador será utilizado por Pre-matrículas, garantizando
+            | una única secuencia institucional.
+            |
+            */
 
-            // max() compara como texto y falla con 10+; usamos orden numérico
-            $ultimo = Student::whereYear('created_at', $anio)
-                ->orderByRaw('CAST(codigo AS UNSIGNED) DESC')
-                ->value('codigo');
+            if (empty($student->periodo_lectivo_id)) {
+                throw new \RuntimeException(
+                    'No es posible generar el código del estudiante sin periodo lectivo.'
+                );
+            }
 
-            $numero = $ultimo ? (intval(substr($ultimo, 4)) + 1) : 1;
-
-            $student->codigo = $anio . $numero;
+            $student->codigo = app(
+                GenerarCodigoEstudianteService::class
+            )->generarParaPeriodo(
+                (int) $student->periodo_lectivo_id
+            );
         });
     }
     public function sede()
@@ -184,4 +211,11 @@ class Student extends Model
         return $this->hasMany(ExtractoEstudiante::class);
     }
 
+    public function archivosDocumentos()
+    {
+        return $this->hasMany(
+            DocumentoEstudiante::class,
+            'student_id'
+        );
+    }
 }

@@ -4,6 +4,9 @@ namespace App\Services\PreMatriculas;
 
 use App\Models\PreMatricula;
 
+
+use App\Services\Estudiantes\GenerarCodigoEstudianteService;
+
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 
@@ -16,6 +19,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PreMatriculaExportacionService
 {
+    public function __construct(
+        private GenerarCodigoEstudianteService $generarCodigoEstudianteService
+    ) {
+    }
     /*
     |--------------------------------------------------------------------------
     | Exportar estudiantes
@@ -137,7 +144,16 @@ class PreMatriculaExportacionService
             );
 
             $hoja->setCellValue("K{$fila}", '');
-            $hoja->setCellValue("L{$fila}", '');
+
+            $codigo = $this->asegurarCodigoEstudiante(
+                $formulario
+            );
+
+            $this->escribirTexto(
+                $hoja,
+                "L{$fila}",
+                $codigo
+            );
 
             /*
             |--------------------------------------------------------------------------
@@ -583,6 +599,57 @@ class PreMatriculaExportacionService
             ->orderByDesc('fecha_envio')
             ->orderByDesc('id')
             ->get();
+    }
+
+    private function asegurarCodigoEstudiante(
+        PreMatricula $formulario
+    ): string {
+        /*
+        |--------------------------------------------------------------------------
+        | Código ya asignado
+        |--------------------------------------------------------------------------
+        |
+        | Puede ser el código histórico de un estudiante antiguo o un código
+        | previamente reservado para un estudiante nuevo.
+        |
+        | Una vez existe, nunca se vuelve a generar.
+        |
+        */
+
+        if (filled($formulario->codigo)) {
+            return trim(
+                (string) $formulario->codigo
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Estudiante nuevo
+        |--------------------------------------------------------------------------
+        |
+        | Si la pre-matrícula no tiene código, se genera uno para el periodo
+        | de destino y se guarda inmediatamente. Las próximas exportaciones
+        | reutilizarán exactamente este mismo código.
+        |
+        */
+
+        if (empty($formulario->periodo_destino_id)) {
+            throw new \RuntimeException(
+                'No es posible generar el código del estudiante porque la pre-matrícula no tiene periodo lectivo de destino.'
+            );
+        }
+
+        $codigo = $this
+            ->generarCodigoEstudianteService
+            ->generarParaPeriodo(
+                (int) $formulario->periodo_destino_id
+            );
+
+        $formulario->forceFill([
+            'codigo' => $codigo,
+        ])->save();
+
+        return $codigo;
     }
 
     /*

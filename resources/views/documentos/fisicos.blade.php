@@ -95,6 +95,162 @@
         .progress-fill { height: 100%; background: #16a34a; border-radius: 99px; transition: width 0.3s; }
         .progress-text { font-size: 0.83rem; font-weight: 600; color: #475569; white-space: nowrap; }
 
+        .doc-row {
+            cursor: default;
+            align-items: flex-start;
+        }
+
+        .doc-row:hover {
+            background: white;
+        }
+
+        .doc-row.checked:hover {
+            background: #f0fdf4;
+        }
+
+        .doc-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .doc-files {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .doc-file {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+
+        .doc-file-name {
+            max-width: 310px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .doc-origin {
+            background: #dcfce7;
+            color: #166534;
+            border-radius: 99px;
+            padding: 2px 7px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .doc-origin.admin {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .doc-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-doc {
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #475569;
+            border-radius: 6px;
+            padding: 5px 9px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-doc:hover {
+            background: #f8fafc;
+        }
+
+        .btn-doc.danger {
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+
+        .btn-doc.danger:hover {
+            background: #fef2f2;
+        }
+
+        .upload-box {
+            margin-top: 8px;
+            padding: 9px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+        }
+
+        .upload-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-form input[type="file"] {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.75rem;
+        }
+
+        .btn-upload {
+            border: none;
+            background: #82211d;
+            color: white;
+            border-radius: 6px;
+            padding: 6px 11px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-upload:hover {
+            background: #6f1c19;
+        }
+
+        .upload-help {
+            margin-top: 5px;
+            color: #94a3b8;
+            font-size: 0.7rem;
+        }
+
+        .flash-success,
+        .flash-error {
+            margin-bottom: 16px;
+            padding: 11px 14px;
+            border-radius: 9px;
+            font-size: 0.83rem;
+            font-weight: 600;
+        }
+
+        .flash-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .flash-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
         .toast {
             position: fixed; bottom: 24px; right: 24px;
             background: #1e293b; color: white;
@@ -118,6 +274,18 @@
 </div>
 
 <div class="container">
+
+    @if(session('success'))
+        <div class="flash-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="flash-error">
+            {{ $errors->first() }}
+        </div>
+    @endif
 
     {{-- Tarjeta del estudiante --}}
     <div class="student-card">
@@ -162,82 +330,177 @@
         </div>
 
         @foreach($items as $key => $label)
-        @php $isChecked = in_array($key, $checked); @endphp
-        <div class="doc-row {{ $isChecked ? 'checked' : '' }}"
-             id="row-{{ $key }}"
-             onclick="toggle('{{ $key }}')">
-            <div class="checkbox">
-                <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="white" width="12" height="12">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                </svg>
+
+            @php
+                $documentosTipo = $documentosPorTipo->get(
+                    $key,
+                    collect()
+                );
+
+                $isChecked = $documentosTipo->isNotEmpty();
+            @endphp
+
+            <div
+                class="doc-row {{ $isChecked ? 'checked' : '' }}"
+                id="row-{{ $key }}"
+            >
+                <div class="checkbox">
+                    @if($isChecked)
+                        <svg
+                            class="check-icon"
+                            style="display:block;"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2.5"
+                            stroke="white"
+                            width="12"
+                            height="12"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M4.5 12.75l6 6 9-13.5"
+                            />
+                        </svg>
+                    @endif
+                </div>
+
+                <div class="doc-content">
+
+                    <div class="doc-main">
+
+                        <span class="doc-label">
+                            {{ $label }}
+                        </span>
+
+                    </div>
+
+                    @if($isChecked)
+
+                        <div class="doc-files">
+
+                            @foreach($documentosTipo as $documento)
+
+                                <div class="doc-file">
+
+                                    <span
+                                        class="doc-file-name"
+                                        title="{{ $documento->nombre_original }}"
+                                    >
+                                        {{ $documento->nombre_original }}
+                                    </span>
+
+                                    @if($documento->origen === 'pre_matricula')
+                                        <span class="doc-origin">
+                                            Pre-matrícula
+                                        </span>
+                                    @else
+                                        <span class="doc-origin admin">
+                                            Colegio
+                                        </span>
+                                    @endif
+
+                                    <div class="doc-actions">
+
+                                        <a
+                                            href="{{ route(
+                                                'estudiantes.documentos.archivos.ver',
+                                                $documento
+                                            ) }}"
+                                            target="_blank"
+                                            class="btn-doc"
+                                        >
+                                            Ver
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ route(
+                                                'estudiantes.documentos.archivos.quitar',
+                                                [
+                                                    'student' => $student,
+                                                    'documento' => $documento,
+                                                ]
+                                            ) }}"
+                                            onsubmit="return confirm(
+                                                '¿Desea quitar este documento del expediente del estudiante?'
+                                            );"
+                                        >
+                                            @csrf
+                                            @method('DELETE')
+
+                                            <button
+                                                type="submit"
+                                                class="btn-doc danger"
+                                            >
+                                                Quitar
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                </div>
+
+                            @endforeach
+
+                        </div>
+
+                    @else
+
+                        <div class="upload-box">
+
+                            <form
+                                method="POST"
+                                enctype="multipart/form-data"
+                                action="{{ route(
+                                    'estudiantes.documentos.archivos.adjuntar',
+                                    $student
+                                ) }}"
+                                class="upload-form"
+                            >
+                                @csrf
+
+                                <input
+                                    type="hidden"
+                                    name="tipo_documento"
+                                    value="{{ $key }}"
+                                >
+
+                                <input
+                                    type="file"
+                                    name="documento"
+                                    accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                    required
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="btn-upload"
+                                >
+                                    Adjuntar
+                                </button>
+
+                            </form>
+
+                            <div class="upload-help">
+                                PDF, JPG, JPEG, PNG o WebP · Máximo 10 MB
+                            </div>
+
+                        </div>
+
+                    @endif
+
+                </div>
             </div>
-            <span class="doc-label">{{ $label }}</span>
-            <div class="spinner" id="spin-{{ $key }}"></div>
-        </div>
+
         @endforeach
     </div>
 
 </div>
 
-<div class="toast" id="toast"></div>
 
-<script>
-const studentId = {{ $student->id }};
-const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-const total = {{ $total }};
 
-function updateProgress() {
-    const done = document.querySelectorAll('.doc-row.checked').length;
-    const pct  = total > 0 ? Math.round(done / total * 100) : 0;
-    document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('progress-text').textContent  = done + ' / ' + total + ' entregados';
-    const badge = document.getElementById('badge-count');
-    const pend  = total - done;
-    if (pend === 0) {
-        badge.textContent = '✓ Completo';
-        badge.className = 'badge-done';
-    } else {
-        badge.textContent = pend + ' pendiente' + (pend !== 1 ? 's' : '');
-        badge.className = 'badge-pend';
-    }
-}
 
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-async function toggle(key) {
-    const row  = document.getElementById('row-' + key);
-    const spin = document.getElementById('spin-' + key);
-    if (row.classList.contains('loading')) return;
-
-    row.classList.add('loading');
-    spin.style.display = 'block';
-
-    try {
-        const res = await fetch(`/students/${studentId}/documentos-fisicos/${key}/toggle`, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json' },
-        });
-        const data = await res.json();
-        if (data.ok) {
-            if (data.checked) {
-                row.classList.add('checked');
-                showToast('✓ Documento marcado como entregado');
-            } else {
-                row.classList.remove('checked');
-                showToast('Documento desmarcado');
-            }
-            updateProgress();
-        }
-    } finally {
-        row.classList.remove('loading');
-        spin.style.display = 'none';
-    }
-}
-</script>
 </body>
 </html>

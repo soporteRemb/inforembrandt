@@ -21,6 +21,7 @@ class PreMatricula extends Model
         'user_id',
         'sede_id',
         'periodo_lectivo_id',
+        'periodo_destino_id',
         'estado',
         'fecha_habilitacion',
         'fecha_limite',
@@ -32,6 +33,7 @@ class PreMatricula extends Model
         'apellidos',
         'tipo_documento',
         'documento',
+        'codigo',
         'ciudad_expedicion',
         'fecha_nacimiento',
         'edad',
@@ -105,6 +107,13 @@ class PreMatricula extends Model
         return $this->belongsTo(PeriodoLectivo::class);
     }
 
+    public function periodoDestino(): BelongsTo
+    {
+        return $this->belongsTo(
+            PeriodoLectivo::class,
+            'periodo_destino_id'
+        );
+    }
     public function eps(): BelongsTo
     {
         return $this->belongsTo(Eps::class);

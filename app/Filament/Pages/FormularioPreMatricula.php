@@ -190,7 +190,7 @@ class FormularioPreMatricula extends Page
 
     public bool $mostrarModalDocumentosInicial = false;
 
-    
+    public bool $mostrarAvisoValidacion = false;
 
     /*
     |--------------------------------------------------------------------------
@@ -249,9 +249,24 @@ class FormularioPreMatricula extends Page
             return;
         }
 
-        $documentos = app(
+        $servicioDocumentos = app(
             PreMatriculaDocumentoService::class
-        )->documentos($preMatricula);
+        );
+
+        $tiposPermitidos = array_keys(
+            $servicioDocumentos->tiposFormulario()
+        );
+
+        $documentos = $servicioDocumentos
+            ->documentos($preMatricula)
+            ->filter(
+                fn ($documento): bool =>
+                    in_array(
+                        $documento->tipo_documento,
+                        $tiposPermitidos,
+                        true
+                    )
+            );
 
         $this->documentosCargados = $documentos
             ->map(function ($documento) {
@@ -378,6 +393,23 @@ class FormularioPreMatricula extends Page
             return;
         }
 
+        $yaExisteDocumento = $servicioDocumentos
+            ->documentos($preMatricula)
+            ->contains(
+                fn ($documento): bool =>
+                    $documento->tipo_documento ===
+                    $this->tipoDocumentoSeleccionado
+            );
+
+        if ($yaExisteDocumento) {
+            $this->addError(
+                'tipoDocumentoSeleccionado',
+                'Ya existe un documento cargado de este tipo. '
+                . 'Si desea cambiarlo, primero escoja la opción quitar del documento actual, para retirar el antiguo y poder adjuntar el nuevo'
+            );
+
+            return;
+        }
         /*
         |--------------------------------------------------------------------------
         | Guardar documento
@@ -396,6 +428,7 @@ class FormularioPreMatricula extends Page
             'archivoDocumento',
         ]);
 
+        $this->dispatch('prematricula-archivo-limpiado');
         $this->cargarDocumentosActuales();
 
         Notification::make()
@@ -455,6 +488,26 @@ class FormularioPreMatricula extends Page
         if (! $documento) {
             Notification::make()
                 ->title('Documento no encontrado')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $servicioDocumentos = app(
+            PreMatriculaDocumentoService::class
+        );
+
+        if (
+            ! $servicioDocumentos->tipoFormularioExiste(
+                $documento->tipo_documento
+            )
+        ) {
+            Notification::make()
+                ->title('Acción no permitida')
+                ->body(
+                    'Este documento pertenece al expediente institucional y no puede ser eliminado desde el formulario de pre-matrícula.'
+                )
                 ->warning()
                 ->send();
 
@@ -578,11 +631,21 @@ class FormularioPreMatricula extends Page
     {
         $this->resetErrorBag();
 
+        $this->mostrarAvisoValidacion = false;
+
         $this->sincronizarAcudienteSeleccionado();
 
-        $this->validate();
+        try {
+            $this->validate();
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->mostrarAvisoValidacion = true;
+
+            throw $exception;
+        }
 
         if (! $this->validarCamposResponsablesIniciados()) {
+            $this->mostrarAvisoValidacion = true;
+
             return;
         }
 
@@ -591,6 +654,8 @@ class FormularioPreMatricula extends Page
                 'responsable',
                 'Debe registrar al menos un responsable del estudiante: padre, madre o acudiente.'
             );
+
+            $this->mostrarAvisoValidacion = true;
 
             return;
         }
@@ -836,10 +901,14 @@ class FormularioPreMatricula extends Page
             $preMatricula
         );
 
-        $this->fill(
+       $this->fill(
             $formularioService->prepararDatosFormulario(
                 $preMatricula
             )
+        );
+
+        $this->edad = $formularioService->calcularEdad(
+            $this->fecha_nacimiento
         );
 
         $this->preMatriculaId = $preMatricula->id;

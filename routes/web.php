@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CostosEstudianteController;
 use App\Http\Controllers\ReciboPdfController;
 use App\Http\Controllers\PreMatriculaDocumentoController;
+use App\Http\Controllers\DocumentoEstudianteController;
 
 Route::redirect('/', '/admin/login');
 
@@ -54,10 +55,6 @@ Route::middleware('auth')->group(function () {
         [StudentPdfController::class, 'documentosFisicos']
     )->name('students.documentos.fisicos');
 
-    Route::post(
-        '/students/{student}/documentos-fisicos/{item}/toggle',
-        [StudentPdfController::class, 'toggleDocumentoFisico']
-    )->name('students.documentos.fisicos.toggle');
 
 
     /*
@@ -73,6 +70,36 @@ Route::middleware('auth')->group(function () {
             'ver',
         ]
     )->name('pre-matriculas.documentos.ver');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Documentos privados del expediente del estudiante
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/estudiantes/documentos/{documento}/ver',
+        [
+            DocumentoEstudianteController::class,
+            'ver',
+        ]
+    )->name('estudiantes.documentos.archivos.ver');
+
+    Route::post(
+        '/estudiantes/{student}/documentos/adjuntar',
+        [
+            DocumentoEstudianteController::class,
+            'adjuntar',
+        ]
+    )->name('estudiantes.documentos.archivos.adjuntar');
+
+    Route::delete(
+        '/estudiantes/{student}/documentos/{documento}',
+        [
+            DocumentoEstudianteController::class,
+            'quitar',
+        ]
+    )->name('estudiantes.documentos.archivos.quitar');
 });
 
 Route::get(

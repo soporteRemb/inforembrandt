@@ -84,7 +84,18 @@ class User extends Authenticatable implements FilamentUser
 
     public function preMatricula()
     {
-        return $this->hasOne(PreMatricula::class, 'user_id');
+        return $this->hasOne(
+            PreMatricula::class,
+            'user_id'
+        )->latestOfMany();
+    }
+
+    public function preMatriculas()
+    {
+        return $this->hasMany(
+            PreMatricula::class,
+            'user_id'
+        );
     }
 
     public function preMatriculasCreadas()

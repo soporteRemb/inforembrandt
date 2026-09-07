@@ -95,10 +95,16 @@ class PermissionsSeeder extends Seeder
 
             'Pensum Académico' => [
                 'ver_pensum',
+                'crear_pensum',
+                'editar_pensum',
+                'eliminar_pensum',
             ],
 
             'Docentes' => [
                 'ver_docentes',
+                'crear_docentes',
+                'editar_docentes',
+                'eliminar_docentes',
             ],
 
             'Desempeños' => [

@@ -536,6 +536,24 @@ class PreMatriculas extends Page
             return;
         }
 
+        $yaExisteDocumento = $servicioDocumentos
+            ->documentos($preMatricula)
+            ->contains(
+                fn ($documento): bool =>
+                    $documento->tipo_documento ===
+                    $this->tipoDocumentoSeleccionado
+            );
+
+        if ($yaExisteDocumento) {
+            $this->addError(
+                'tipoDocumentoSeleccionado',
+                'Ya existe un documento cargado de este tipo. '
+                . 'Si desea cambiarlo, primero retire el documento actual.'
+            );
+
+            return;
+        }
+
         $servicioDocumentos->guardar(
             $preMatricula,
             $this->tipoDocumentoSeleccionado,
@@ -993,8 +1011,8 @@ class PreMatriculas extends Page
 
     public function exportarEstudiantes(): ?BinaryFileResponse
     {
-        [$sedeId, $periodoLectivoId] =
-            $this->obtenerContextoAcademicoActivo();
+        $sedeId = $this->sede_id;
+        $periodoLectivoId = $this->periodo_lectivo_id;
 
         if (! $sedeId || ! $periodoLectivoId) {
             Notification::make()
@@ -1018,8 +1036,8 @@ class PreMatriculas extends Page
 
     public function exportarAcudientes(): ?BinaryFileResponse
     {
-        [$sedeId, $periodoLectivoId] =
-            $this->obtenerContextoAcademicoActivo();
+        $sedeId = $this->sede_id;
+        $periodoLectivoId = $this->periodo_lectivo_id;
 
         if (! $sedeId || ! $periodoLectivoId) {
             Notification::make()

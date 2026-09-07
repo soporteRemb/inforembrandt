@@ -85,6 +85,45 @@ class PreMatriculaAdministracionService
             ->values()
             ->toArray();
 
+        $acudienteOrigen = filled($preMatricula->acudiente_origen)
+            ? mb_strtolower(
+                trim((string) $preMatricula->acudiente_origen),
+                'UTF-8'
+            )
+            : 'otro';
+
+        $documentoAcudiente = trim(
+            (string) ($preMatricula->acudiente_documento ?? '')
+        );
+
+        $documentoPadre = trim(
+            (string) ($preMatricula->padre_documento ?? '')
+        );
+
+        $documentoMadre = trim(
+            (string) ($preMatricula->madre_documento ?? '')
+        );
+
+        if (
+            $documentoAcudiente !== ''
+            && $documentoPadre !== ''
+            && strcasecmp(
+                $documentoAcudiente,
+                $documentoPadre
+            ) === 0
+        ) {
+            $acudienteOrigen = 'padre';
+        } elseif (
+            $documentoAcudiente !== ''
+            && $documentoMadre !== ''
+            && strcasecmp(
+                $documentoAcudiente,
+                $documentoMadre
+            ) === 0
+        ) {
+            $acudienteOrigen = 'madre';
+        }
+
         return [
             'id' => $preMatricula->id,
             'numero_formulario' => $preMatricula->numero_formulario,
@@ -130,9 +169,12 @@ class PreMatriculaAdministracionService
                 $preMatricula->ciudad_nacimiento ?? ''
             ),
 
-            'genero' => (string) (
-                $preMatricula->genero ?? ''
-            ),
+            'genero' => filled($preMatricula->genero)
+                ? mb_strtolower(
+                    trim((string) $preMatricula->genero),
+                    'UTF-8'
+                )
+                : '',
 
             'numero_hermanos' =>
                 $preMatricula->numero_hermanos ?? 0,
@@ -262,9 +304,7 @@ class PreMatriculaAdministracionService
             | Acudiente
             |--------------------------------------------------------------------------
             */
-            'acudiente_origen' => (string) (
-                $preMatricula->acudiente_origen ?? 'otro'
-            ),
+            'acudiente_origen' => $acudienteOrigen,
 
             'acudiente_parentesco' => (string) (
                 $preMatricula->acudiente_parentesco ?? ''

@@ -28,17 +28,49 @@ class PreMatriculaService
             $creadoPor
         ): PreMatricula {
             $preMatricula = PreMatricula::create([
-                'numero_formulario' => 'PRE-' . $usuarioTemporal->email,
+
+                'numero_formulario' => null,
+
                 'user_id' => $usuarioTemporal->id,
+
                 'sede_id' => $sedeId,
+
                 'periodo_lectivo_id' => $periodoLectivoId,
+
+                'periodo_destino_id' => $periodoLectivoId,
+
                 'estado' => 'pendiente',
+
                 'fecha_habilitacion' => now(),
+
                 'fecha_limite' => $usuarioTemporal->expires_at,
+
                 'documento' => $usuarioTemporal->email,
+
                 'creado_por' => $creadoPor->id,
+
                 'actualizado_por' => $creadoPor->id,
+
             ]);
+
+            $numero = (int) $preMatricula->id;
+
+            do {
+                $numeroFormulario = 'PRE-' . $numero;
+
+                $existe = PreMatricula::query()
+                    ->where('numero_formulario', $numeroFormulario)
+                    ->where('id', '!=', $preMatricula->id)
+                    ->exists();
+
+                if ($existe) {
+                    $numero++;
+                }
+            } while ($existe);
+
+            $preMatricula->forceFill([
+                'numero_formulario' => $numeroFormulario,
+            ])->save();
 
             $this->historialService->registrarEvento(
                 $preMatricula,
@@ -133,6 +165,44 @@ class PreMatriculaService
                 $preMatricula,
                 'vencimiento',
                 'El plazo del formulario finalizó.'
+            );
+
+            return $preMatricula->fresh();
+        });
+    }
+
+    public function reactivarFormularioVencido(
+        PreMatricula $preMatricula,
+        User $actualizadoPor,
+        \DateTimeInterface|string|null $fechaLimite
+    ): PreMatricula {
+        if (! $preMatricula->estaVencida()) {
+            return $preMatricula;
+        }
+
+        if (blank($fechaLimite)) {
+            throw ValidationException::withMessages([
+                'data.expires_at' =>
+                    'Debe establecer una nueva fecha de vencimiento para reactivar el formulario.',
+            ]);
+        }
+
+        return DB::transaction(function () use (
+            $preMatricula,
+            $actualizadoPor,
+            $fechaLimite
+        ): PreMatricula {
+            $preMatricula->forceFill([
+                'estado' => 'pendiente',
+                'fecha_limite' => $fechaLimite,
+                'actualizado_por' => $actualizadoPor->id,
+            ])->save();
+
+            $this->historialService->registrarEvento(
+                $preMatricula,
+                'reactivacion',
+                'Formulario vencido habilitado nuevamente.',
+                $actualizadoPor
             );
 
             return $preMatricula->fresh();

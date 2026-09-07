@@ -68,7 +68,10 @@ class ConceptoCobroResource extends Resource
                             ->options(fn () => Sede::query()->pluck('nombre', 'id'))
                             ->searchable()
                             ->preload()
-                            ->default(fn () => Sede::query()->orderBy('id')->value('id'))
+                            ->default(fn () =>
+                                session('sede_id')
+                                    ?: Sede::query()->orderBy('id')->value('id')
+                            )
                             ->required()
                             ->live(),
 
@@ -87,10 +90,23 @@ class ConceptoCobroResource extends Resource
                             )
                             ->searchable()
                             ->preload()
-                            ->default(fn () => PeriodoLectivo::query()
-                                ->where('estado', 'abierto')
-                                ->orderByDesc('nombre')
-                                ->value('id'))
+                            ->default(function () {
+                                $sedeId = session('sede_id');
+                                $anioActivo = session('anio');
+
+                                if ($sedeId && $anioActivo) {
+                                    $periodoLectivoId = PeriodoLectivo::query()
+                                        ->where('sede_id', $sedeId)
+                                        ->where('nombre', (string) $anioActivo)
+                                        ->value('id');
+
+                                    if ($periodoLectivoId) {
+                                        return $periodoLectivoId;
+                                    }
+                                }
+
+                                return session('periodo_lectivo_id');
+                            })
                             ->required(),
                     ]),
 
@@ -318,8 +334,55 @@ class ConceptoCobroResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        $sedeId = session('sede_id');
+        $anioActivo = session('anio');
+
+        $periodoLectivoId = null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Resolver periodo desde sede + año de la sesión
+        |--------------------------------------------------------------------------
+        */
+        if ($sedeId && $anioActivo) {
+            $periodoLectivoId = PeriodoLectivo::query()
+                ->where('sede_id', $sedeId)
+                ->where('nombre', (string) $anioActivo)
+                ->value('id');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compatibilidad con sesiones anteriores
+        |--------------------------------------------------------------------------
+        */
+        if (
+            ! $periodoLectivoId
+            && session('periodo_lectivo_id')
+        ) {
+            $periodoLectivoId = (int) session(
+                'periodo_lectivo_id'
+            );
+        }
+
         return parent::getEloquentQuery()
-            ->with(['sede', 'periodoLectivo']);
+            ->when(
+                $sedeId,
+                fn ($query) =>
+                    $query->where('sede_id', $sedeId)
+            )
+            ->when(
+                $periodoLectivoId,
+                fn ($query) =>
+                    $query->where(
+                        'periodo_lectivo_id',
+                        $periodoLectivoId
+                    )
+            )
+            ->with([
+                'sede',
+                'periodoLectivo',
+            ]);
     }
 
     public static function getPages(): array

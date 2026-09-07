@@ -5,6 +5,7 @@ namespace App\Services\Importacion\Estudiantes;
 use App\Models\Course;
 use App\Models\Matricula;
 use App\Models\Student;
+use App\Services\DocumentosEstudiante\IncorporarDocumentosPreMatriculaService;
 use App\Services\Importacion\BaseImportService;
 use App\Services\Importacion\Contracts\ImportadorInterface;
 use App\Services\Importacion\DTO\ResultadoImportacion;
@@ -58,12 +59,22 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
         );
 
         $esArchivoPreMatricula =
-            $encabezadoNumeroFormulario === 'NUMERO_FORMULARIO';
+    $encabezadoNumeroFormulario === 'NUMERO_FORMULARIO';
 
+    /*
+    |--------------------------------------------------------------------------
+    | Documentos provenientes de pre-matrícula
+    |--------------------------------------------------------------------------
+    |
+    | Se guardan solamente los ID de los estudiantes procesados.
+    | Los archivos se incorporarán DESPUÉS del commit para no mezclar
+    | operaciones físicas de archivos con la transacción de base de datos.
+    |
+    */
 
+    $estudiantesParaIncorporarDocumentos = [];
 
-
-        DB::beginTransaction();
+    DB::beginTransaction();
 
         try {
             for ($fila = 2; $fila <= $ultimaFila; $fila++) {
@@ -346,97 +357,139 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
                     ->filter()
                     ->implode("\n");
 
+                /*
+                |--------------------------------------------------------------------------
+                | Buscar estudiante histórico por documento
+                |--------------------------------------------------------------------------
+                |
+                | El documento identifica a la persona.
+                | El código institucional debe conservarse durante toda su permanencia
+                | en el colegio, aunque cambie de periodo lectivo.
+                |
+                */
+
                 $studentExistente = Student::query()
                     ->where('documento', $documento)
-                    ->where(
-                        'periodo_lectivo_id',
-                        $periodoLectivoId
-                    )
+                    ->where('sede_id', $sedeId)
+                    ->where('periodo_lectivo_id', $periodoLectivoId)
                     ->first();
 
                 /*
                 |--------------------------------------------------------------------------
-                | Crear o actualizar estudiante
+                | Datos comunes del estudiante
                 |--------------------------------------------------------------------------
                 */
 
-                $student = Student::updateOrCreate(
-                    [
-                        'documento' => $documento,
-                        'periodo_lectivo_id' => $periodoLectivoId,
-                    ],
-                    [
-                        'sede_id' => $sedeId,
-                        'course_id' => $course?->id,
-                        'codigo' => $codigoExcel ?: null,
+                $datosStudent = [
+                    'sede_id' => $sedeId,
+                    'periodo_lectivo_id' => $periodoLectivoId,
 
-                        /*
-                        | Archivo ampliado: usa M.
-                        | Archivo antiguo: conserva TI.
-                        */
-                        'tipo_documento' => $tipoDocumento,
+                    'course_id' =>
+                        $course?->id
+                        ?? $studentExistente?->course_id,
 
-                        'primer_nombre' => $primerNombre,
-                        'segundo_nombre' => $segundoNombre,
-                        'primer_apellido' => $primerApellido,
-                        'segundo_apellido' => $segundoApellido,
+                    /*
+                    | Archivo ampliado: usa M.
+                    | Archivo antiguo: conserva TI.
+                    */
+                    'tipo_documento' => $tipoDocumento,
 
-                        'sexo' => $sexo,
-                        'fecha_nacimiento' => $fechaNacimiento,
+                    'primer_nombre' => $primerNombre,
+                    'segundo_nombre' => $segundoNombre,
+                    'primer_apellido' => $primerApellido,
+                    'segundo_apellido' => $segundoApellido,
 
-                        /*
-                        | Archivo ampliado: usa N, O, Q y P.
-                        | Archivo antiguo: conserva el valor obligatorio anterior.
-                        */
-                        'ciudad_expedicion' =>
-                            $ciudadExpedicion !== ''
-                                ? $ciudadExpedicion
-                                : $this->obligatorio(null),
+                    'sexo' => $sexo,
+                    'fecha_nacimiento' => $fechaNacimiento,
 
-                        'ciudad_nacimiento' =>
-                            $ciudadNacimiento !== ''
-                                ? $ciudadNacimiento
-                                : $this->obligatorio(null),
+                    'ciudad_expedicion' =>
+                        $ciudadExpedicion !== ''
+                            ? $ciudadExpedicion
+                            : $this->obligatorio(null),
 
-                        'eps' =>
-                            $eps !== ''
-                                ? $eps
-                                : $this->obligatorio(null),
+                    'ciudad_nacimiento' =>
+                        $ciudadNacimiento !== ''
+                            ? $ciudadNacimiento
+                            : $this->obligatorio(null),
 
-                        'rh' =>
-                            $rh !== ''
-                                ? $rh
-                                : $this->obligatorio(null),
+                    'eps' =>
+                        $eps !== ''
+                            ? $eps
+                            : $this->obligatorio(null),
 
-                        /*
-                        | Este dato aún no viene en ninguno de los dos archivos.
-                        */
-                        'parentesco_matricula' =>
-                            $this->obligatorio(null),
+                    'rh' =>
+                        $rh !== ''
+                            ? $rh
+                            : $this->obligatorio(null),
 
-                        'correo' => $correo ?: null,
+                    'parentesco_matricula' =>
+                        $this->obligatorio(null),
 
-                        /*
-                        | Archivo ampliado: usa R.
-                        | Archivo antiguo: conserva el teléfono de F.
-                        */
-                        'telefono_emergencia' =>
-                            $telefonoEmergencia !== ''
-                                ? $telefonoEmergencia
-                                : ($telefono ?: null),
+                    'correo' => $correo ?: null,
 
-                        'estado' => 'activo',
-                        'fecha_matricula' => now()->toDateString(),
-                        'ultimo_grado' => $gradoExcel ?: null,
+                    'telefono_emergencia' =>
+                        $telefonoEmergencia !== ''
+                            ? $telefonoEmergencia
+                            : ($telefono ?: null),
 
-                        'observaciones' =>
-                            $observacionesImportacion ?: null,
-                    ]
-                );
+                    'estado' => 'activo',
+                    'fecha_matricula' => now()->toDateString(),
+                    'ultimo_grado' => $gradoExcel ?: null,
+
+                    'observaciones' =>
+                        $observacionesImportacion ?: null,
+                ];
+
+                /*
+                |--------------------------------------------------------------------------
+                | Estudiante existente
+                |--------------------------------------------------------------------------
+                |
+                | Actualizamos los datos, pero NUNCA modificamos su código histórico.
+                |
+                */
 
                 if ($studentExistente) {
+
+                    $studentExistente->fill(
+                        $datosStudent
+                    );
+
+                    $studentExistente->save();
+
+                    $student = $studentExistente;
+
                     $resultado->actualizados++;
+
+                /*
+                |--------------------------------------------------------------------------
+                | Estudiante nuevo
+                |--------------------------------------------------------------------------
+                |
+                | Si el formato histórico trae código, se respeta.
+                | Si viene desde Pre-matrícula sin código, no enviamos código y el modelo
+                | Student genera automáticamente el consecutivo del año.
+                |
+                */
+
                 } else {
+
+                    $datosNuevoStudent = array_merge(
+                        [
+                            'documento' => $documento,
+                        ],
+                        $datosStudent
+                    );
+
+                    if ($codigoExcel !== '') {
+                        $datosNuevoStudent['codigo'] =
+                            $codigoExcel;
+                    }
+
+                    $student = Student::create(
+                        $datosNuevoStudent
+                    );
+
                     $resultado->creados++;
                 }
 
@@ -471,9 +524,73 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
 
                     $resultado->matriculas++;
                 }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Preparar incorporación de documentos
+                |--------------------------------------------------------------------------
+                |
+                | Solo aplica al Excel exportado desde Pre-matrículas.
+                | Los Excel históricos continúan funcionando exactamente como antes.
+                |
+                */
+
+                if ($esArchivoPreMatricula) {
+                    $estudiantesParaIncorporarDocumentos[$student->id] =
+                        $student->id;
+                }
             }
 
             DB::commit();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Incorporar documentos de pre-matrícula
+            |--------------------------------------------------------------------------
+            |
+            | Se realiza después del commit:
+            |
+            | - la importación de estudiantes ya quedó confirmada;
+            | - no alteramos la transacción histórica;
+            | - un problema con un archivo no revierte estudiantes ni matrículas;
+            | - DocumentoEstudianteService mantiene la operación idempotente.
+            |
+            */
+
+            if (
+                $esArchivoPreMatricula
+                && $estudiantesParaIncorporarDocumentos !== []
+            ) {
+                $servicioDocumentos = app(
+                    IncorporarDocumentosPreMatriculaService::class
+                );
+
+                foreach (
+                    $estudiantesParaIncorporarDocumentos
+                    as $studentId
+                ) {
+                    try {
+                        $studentDocumentos = Student::find(
+                            $studentId
+                        );
+
+                        if (! $studentDocumentos) {
+                            continue;
+                        }
+
+                        $servicioDocumentos->ejecutar(
+                            $studentDocumentos
+                        );
+                    } catch (\Throwable $e) {
+                        $resultado->agregarError(
+                            'El estudiante fue importado correctamente, '
+                            . 'pero no fue posible incorporar todos sus documentos '
+                            . "al expediente. Estudiante ID {$studentId}: "
+                            . $e->getMessage()
+                        );
+                    }
+                }
+            }
 
             return $resultado;
         } catch (\Throwable $e) {

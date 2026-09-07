@@ -168,49 +168,71 @@ class StudentPdfController extends Controller
         return response()->json(['ok' => true, 'estado' => 'marcado', 'quien' => Auth::user()->name, 'cuando' => now()->format('d/m/Y H:i')]);
     }
 
-    // ── Documentos físicos (checklist 14 ítems) ──────────────────────────────
+
     public static function itemsFisicos(): array
     {
-        return [
-            'fotocopia_documento'  => 'Fotocopia del documento de identidad',
-            'registro_civil'       => 'Registro civil de nacimiento',
-            'cert_salud'           => 'Certificado de afiliación a salud (EPS)',
-            'cert_estudios'        => 'Certificados de estudios anteriores',
-            'acta_grado'           => 'Acta o diploma de grado (si aplica)',
-            'formulario_matricula' => 'Formulario de matrícula firmado',
-            'fotografias'          => 'Fotografías tipo documento',
-            'pago_matricula'       => 'Comprobante de pago de matrícula',
-            'carne_vacunacion'     => 'Carné de vacunación',
-            'doc_acudiente'        => 'Copia del documento del acudiente',
-            'contrato'             => 'Contrato o compromiso estudiantil firmado',
-            'cert_residencia'      => 'Certificado de residencia',
-            'autorizacion_datos'   => 'Autorización de uso de datos personales',
-            'examen_medico'        => 'Exámenes médicos o aptitud física',
-        ];
+        return collect(
+            config(
+                'pre_matricula_documentos.tipos',
+                []
+            )
+        )
+            ->mapWithKeys(
+                function ($configuracion, $tipo) {
+                    return [
+                        $tipo => $configuracion['nombre']
+                            ?? $tipo,
+                    ];
+                }
+            )
+            ->all();
     }
 
-    public function documentosFisicos(Student $student): \Illuminate\View\View
-    {
-        $student->load(['course', 'periodoLectivo', 'sede']);
-        $items   = self::itemsFisicos();
-        $checked = $student->documentos_fisicos ?? [];
-        return view('documentos.fisicos', compact('student', 'items', 'checked'));
+    public function documentosFisicos(
+        Student $student
+    ): \Illuminate\View\View {
+
+        $student->load([
+            'course',
+            'periodoLectivo',
+            'sede',
+            'archivosDocumentos.usuarioCarga',
+        ]);
+
+        $items = self::itemsFisicos();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Documentos reales agrupados por tipo
+        |--------------------------------------------------------------------------
+        */
+
+        $documentosPorTipo = $student
+            ->archivosDocumentos
+            ->groupBy('tipo_documento');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tipos entregados
+        |--------------------------------------------------------------------------
+        */
+
+        $checked = $documentosPorTipo
+            ->keys()
+            ->values()
+            ->all();
+
+        return view(
+            'documentos.fisicos',
+            compact(
+                'student',
+                'items',
+                'checked',
+                'documentosPorTipo'
+            )
+        );
     }
 
-    public function toggleDocumentoFisico(Student $student, string $item): \Illuminate\Http\JsonResponse
-    {
-        if (!array_key_exists($item, self::itemsFisicos())) {
-            return response()->json(['error' => 'Ítem inválido'], 422);
-        }
-        $docs = $student->documentos_fisicos ?? [];
-        if (in_array($item, $docs)) {
-            $docs = array_values(array_filter($docs, fn($d) => $d !== $item));
-        } else {
-            $docs[] = $item;
-        }
-        $student->update(['documentos_fisicos' => $docs]);
-        return response()->json(['ok' => true, 'checked' => in_array($item, $docs)]);
-    }
 
     private function getHistorial(Student $student): array
     {
