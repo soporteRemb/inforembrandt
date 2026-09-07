@@ -633,16 +633,36 @@ class PreMatriculaExportacionService
         |
         */
 
-        if (empty($formulario->periodo_destino_id)) {
+        /*
+        |--------------------------------------------------------------------------
+        | Resolver periodo de destino
+        |--------------------------------------------------------------------------
+        |
+        | Las pre-matrículas creadas con el modelo actual tienen
+        | periodo_destino_id y ese valor siempre tiene prioridad.
+        |
+        | Los registros históricos fueron creados antes de existir esa columna.
+        | En aquella versión, periodo_lectivo_id era el único periodo asociado
+        | al formulario y representaba el periodo para el cual se habilitaba
+        | la pre-matrícula.
+        |
+        | Este fallback existe únicamente por compatibilidad histórica.
+        |
+        */
+
+        $periodoDestinoId = $formulario->periodo_destino_id
+            ?: $formulario->periodo_lectivo_id;
+
+        if (empty($periodoDestinoId)) {
             throw new \RuntimeException(
-                'No es posible generar el código del estudiante porque la pre-matrícula no tiene periodo lectivo de destino.'
+                'No es posible generar el código del estudiante porque la pre-matrícula no tiene un periodo lectivo asociado.'
             );
         }
 
         $codigo = $this
             ->generarCodigoEstudianteService
             ->generarParaPeriodo(
-                (int) $formulario->periodo_destino_id
+                (int) $periodoDestinoId
             );
 
         $formulario->forceFill([

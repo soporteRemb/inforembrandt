@@ -49,8 +49,37 @@ class CreateUser extends CreateRecord
    
     protected function afterCreate(): void
     {
-        $tipoUsuario = UserResource::tipoUsuarioDesdeRoles(
+        /*
+        |--------------------------------------------------------------------------
+        | Sincronizar roles seleccionados
+        |--------------------------------------------------------------------------
+        */
+
+        $rolesSeleccionados = collect(
             $this->data['roles'] ?? []
+        )
+            ->filter()
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        $nombresRoles = \Spatie\Permission\Models\Role::query()
+            ->whereIn('id', $rolesSeleccionados)
+            ->pluck('name')
+            ->all();
+
+        $this->record->syncRoles(
+            $nombresRoles
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sincronizar tipo_usuario
+        |--------------------------------------------------------------------------
+        */
+
+        $tipoUsuario = UserResource::tipoUsuarioDesdeRoles(
+            $rolesSeleccionados
         );
 
         if ($tipoUsuario) {

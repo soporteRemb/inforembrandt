@@ -333,14 +333,62 @@ class UserResource extends Resource
             ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (
+                        Tables\Actions\DeleteAction $action,
+                        User $record
+                    ): void {
+                        if (! $record->preMatriculas()->exists()) {
+                            return;
+                        }
+
+                        \Filament\Notifications\Notification::make()
+                            ->title('No se puede eliminar el usuario')
+                            ->body(
+                                'Este usuario tiene un formulario de pre-matrícula asociado.'
+                            )
+                            ->warning()
+                            ->send();
+
+                        $action->halt();
+                    }),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
-    }
+                        ->bulkActions([
+                            Tables\Actions\BulkActionGroup::make([
+                                Tables\Actions\DeleteBulkAction::make()
+                                    ->action(function (
+                                        \Illuminate\Database\Eloquent\Collection $records
+                                    ): void {
+                                        $usuariosConFormulario = $records->filter(
+                                            fn (User $record): bool =>
+                                                $record->preMatriculas()->exists()
+                                        );
+
+                                        if ($usuariosConFormulario->isNotEmpty()) {
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('No se pueden eliminar los usuarios seleccionados')
+                                                ->body(
+                                                    'Uno o más usuarios tienen un formulario de pre-matrícula asociado. No se eliminó ningún usuario.'
+                                                )
+                                                ->warning()
+                                                ->send();
+
+                                            return;
+                                        }
+
+                                        $records->each(
+                                            fn (User $record) => $record->delete()
+                                        );
+
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Usuarios eliminados')
+                                            ->success()
+                                            ->send();
+                                    }),
+                            ]),
+                        ]);
+                }
 
     
 
