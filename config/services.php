@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'qpdf' => [
+        'binary' => env('QPDF_BINARY', 'qpdf'),
+    ],
+
 ];

@@ -175,8 +175,9 @@ class UserResource extends Resource
                 ),
 
             Select::make('roles')
-                ->label('Roles')
+                ->label('Rol')
                 ->multiple()
+                ->maxItems(1)
                 ->relationship(
                     name: 'roles',
                     titleAttribute: 'name',

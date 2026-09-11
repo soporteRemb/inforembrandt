@@ -113,10 +113,8 @@ class StudentResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
-
             // ── GRID PRINCIPAL: izquierda (2/3) + derecha (1/3) ──────────────
             Grid::make(['default' => 1, 'xl' => 3])->schema([
-
                 // ═══════════════ COLUMNA IZQUIERDA ═══════════════════════════
                 Group::make([
 
@@ -159,7 +157,7 @@ class StudentResource extends Resource
                         );
                     })->schema([
                         // ── Fila superior: Foto (1 col) + 12 campos (4 cols) ──────────
-                        Grid::make(['default' => 1, 'lg' => 5])->schema([
+                        Grid::make(['default' => 1, '2xl' => 5])->schema([
 
                             // Foto + botón cámara (columna 1)
                             Group::make([
@@ -221,7 +219,7 @@ class StudentResource extends Resource
                                 DatePicker::make('fecha_nacimiento')->label('Fec. nacimiento')->native(false)->displayFormat('d/m/Y'),
                                 TextInput::make('edad')->numeric(),
                                 TextInput::make('ciudad_nacimiento')->label('C. nacimiento')->required(),
-                            ])->columnSpan(['default' => 1, 'lg' => 4]),
+                            ])->columnSpan(['default' => 1, '2xl' => 4]),
 
                         ]),
 
@@ -262,10 +260,17 @@ class StudentResource extends Resource
                                 ->label('Grado')
                                 ->options(function (callable $get) {
                                     $sedeId = $get('sede_id') ?? session('sede_id');
+
                                     return \App\Models\Course::where('sede_id', $sedeId)
-                                        ->distinct()->orderBy('grado')
+                                        ->distinct()
+                                        ->orderBy('grado')
                                         ->pluck('grado', 'grado')
                                         ->mapWithKeys(fn($v, $k) => [$k => $k . '°']);
+                                })
+                                ->afterStateHydrated(function ($component, ?Student $record) {
+                                    $component->state(
+                                        $record?->course?->grado
+                                    );
                                 })
                                 ->reactive()
                                 ->dehydrated(false),

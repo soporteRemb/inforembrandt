@@ -41,6 +41,16 @@ Route::middleware('auth')->group(function () {
     )->name('students.pdf.formato');
 
     Route::get(
+        '/students/{student}/pdf/paquete',
+        [StudentPdfController::class, 'paquete']
+    )->name('students.pdf.paquete');
+
+    Route::get(
+        '/plantillas-documentos/{tipo}',
+        [StudentPdfController::class, 'plantillaDocumento']
+    )->name('students.pdf.plantilla');
+
+    Route::get(
         '/students/{student}/documentos',
         [StudentPdfController::class, 'documentos']
     )->name('students.documentos');
@@ -100,6 +110,11 @@ Route::middleware('auth')->group(function () {
             'quitar',
         ]
     )->name('estudiantes.documentos.archivos.quitar');
+
+    Route::post(
+        '/students/{student}/pdf/paquete/unir',
+        [StudentPdfController::class, 'unirPaquete']
+    )->name('students.pdf.paquete.unir');
 });
 
 Route::get(

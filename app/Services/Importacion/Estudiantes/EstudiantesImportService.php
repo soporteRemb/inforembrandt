@@ -4,7 +4,9 @@ namespace App\Services\Importacion\Estudiantes;
 
 use App\Models\Course;
 use App\Models\Matricula;
+use App\Models\PeriodoLectivo;
 use App\Models\Student;
+
 use App\Services\DocumentosEstudiante\IncorporarDocumentosPreMatriculaService;
 use App\Services\Importacion\BaseImportService;
 use App\Services\Importacion\Contracts\ImportadorInterface;
@@ -60,6 +62,22 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
 
         $esArchivoPreMatricula =
     $encabezadoNumeroFormulario === 'NUMERO_FORMULARIO';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Periodo destino para inter-operabilidad con Pre-matrículas
+    |--------------------------------------------------------------------------
+    |
+    | Se utiliza únicamente para localizar el último registro histórico
+    | anterior del estudiante. Nunca se determina el periodo por su ID.
+    |
+    */
+
+    $periodoLectivoDestino = $esArchivoPreMatricula
+        ? PeriodoLectivo::query()
+            ->select('id', 'fecha_inicio')
+            ->find($periodoLectivoId)
+        : null;
 
     /*
     |--------------------------------------------------------------------------
@@ -241,7 +259,22 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
                     continue;
                 }
 
-                
+                /*
+                |--------------------------------------------------------------------------
+                | Buscar estudiante histórico por documento
+                |--------------------------------------------------------------------------
+                |
+                | El documento identifica a la persona.
+                | El código institucional debe conservarse durante toda su permanencia
+                | en el colegio, aunque cambie de periodo lectivo.
+                |
+                */
+
+                $studentExistente = Student::query()
+                    ->where('documento', $documento)
+                    ->where('sede_id', $sedeId)
+                    ->where('periodo_lectivo_id', $periodoLectivoId)
+                    ->first();
 
                 /*
                 |--------------------------------------------------------------------------
@@ -267,6 +300,17 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
 
                 $course = null;
 
+                /*
+                |--------------------------------------------------------------------------
+                | Curso indicado expresamente en el Excel
+                |--------------------------------------------------------------------------
+                |
+                | Este comportamiento corresponde a los formatos normales de estudiantes
+                | y se conserva exactamente: si el curso indicado no existe, la fila
+                | presenta inconsistencia.
+                |
+                */
+
                 if ($cursoExcel !== '') {
                     $course = Course::query()
                         ->where('sede_id', $sedeId)
@@ -287,6 +331,150 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
 
                         continue;
                     }
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Curso automático desde Pre-matrícula
+                |--------------------------------------------------------------------------
+                |
+                | La columna J contiene el grado al que aspira el estudiante.
+                |
+                | Estudiante antiguo:
+                | conserva la sección de su último curso anterior (01, 02, etc.).
+                |
+                | Estudiante nuevo:
+                | comienza intentando la sección 01.
+                |
+                | Si el curso propuesto no existe, el estudiante se importa sin curso
+                | para que el colegio pueda asignarlo posteriormente.
+                |
+                | Si el estudiante ya tiene curso en el periodo destino, se conserva:
+                | puede haber sido modificado manualmente por el colegio.
+                |
+                */
+
+                elseif (
+                    $esArchivoPreMatricula
+                    && ! $studentExistente?->course_id
+                    && $gradoExcel !== ''
+                ) {
+                    $gradoDestino = $this->normalizarGradoPreMatricula(
+                        $gradoExcel
+                    );
+
+                    $seccionPreferida = '01';
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Buscar el último estudiante histórico anterior
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $studentHistorico = null;
+
+                    if ($periodoLectivoDestino?->fecha_inicio) {
+                        $studentHistorico = Student::query()
+                            ->select('students.*')
+                            ->with([
+                                'course:id,grado,curso',
+                            ])
+                            ->join(
+                                'periodos_lectivos as periodo_historico',
+                                'periodo_historico.id',
+                                '=',
+                                'students.periodo_lectivo_id'
+                            )
+                            ->where(
+                                'students.documento',
+                                $documento
+                            )
+                            ->where(
+                                'students.sede_id',
+                                $sedeId
+                            )
+                            ->where(
+                                'students.periodo_lectivo_id',
+                                '<>',
+                                $periodoLectivoId
+                            )
+                            ->where(
+                                'periodo_historico.fecha_inicio',
+                                '<',
+                                $periodoLectivoDestino->fecha_inicio
+                            )
+                            ->orderByDesc(
+                                'periodo_historico.fecha_inicio'
+                            )
+                            ->first();
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Conservar sección histórica
+                    |--------------------------------------------------------------------------
+                    |
+                    | No utilizamos nombres o descripciones del grado.
+                    |
+                    | Ejemplos:
+                    | grado 9  + curso 902  -> sección 02
+                    | grado 10 + curso 1001 -> sección 01
+                    | grado J  + curso J01  -> sección 01
+                    |
+                    */
+
+                    if ($studentHistorico?->course) {
+                        $gradoHistorico = mb_strtoupper(
+                            trim(
+                                (string) $studentHistorico->course->grado
+                            ),
+                            'UTF-8'
+                        );
+
+                        $cursoHistorico = mb_strtoupper(
+                            trim(
+                                (string) $studentHistorico->course->curso
+                            ),
+                            'UTF-8'
+                        );
+
+                        if (
+                            $gradoHistorico !== ''
+                            && str_starts_with(
+                                $cursoHistorico,
+                                $gradoHistorico
+                            )
+                        ) {
+                            $seccionHistorica = substr(
+                                $cursoHistorico,
+                                strlen($gradoHistorico)
+                            );
+
+                            if ($seccionHistorica !== '') {
+                                $seccionPreferida =
+                                    $seccionHistorica;
+                            }
+                        }
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Buscar curso propuesto real
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $cursoPreferido =
+                        $gradoDestino . $seccionPreferida;
+
+                    $course = Course::query()
+                        ->where('sede_id', $sedeId)
+                        ->where(
+                            'periodo_lectivo_id',
+                            $periodoLectivoId
+                        )
+                        ->where('grado', $gradoDestino)
+                        ->where('curso', $cursoPreferido)
+                        ->first();
                 }
 
                 /*
@@ -356,24 +544,6 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
                 ])
                     ->filter()
                     ->implode("\n");
-
-                /*
-                |--------------------------------------------------------------------------
-                | Buscar estudiante histórico por documento
-                |--------------------------------------------------------------------------
-                |
-                | El documento identifica a la persona.
-                | El código institucional debe conservarse durante toda su permanencia
-                | en el colegio, aunque cambie de periodo lectivo.
-                |
-                */
-
-                $studentExistente = Student::query()
-                    ->where('documento', $documento)
-                    ->where('sede_id', $sedeId)
-                    ->where('periodo_lectivo_id', $periodoLectivoId)
-                    ->first();
-
                 /*
                 |--------------------------------------------------------------------------
                 | Datos comunes del estudiante
@@ -603,8 +773,90 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
 
             return $resultado;
         }
-    }
+        }
+        /*
+        |--------------------------------------------------------------------------
+        | Normalizar grado proveniente de Pre-matrícula
+        |--------------------------------------------------------------------------
+        |
+        | La pre-matrícula almacena el nombre visible del grado, mientras Course
+        | utiliza un código estructural. Esta conversión solamente se aplica al
+        | archivo identificado como proveniente de Pre-matrículas.
+        |
+        */
 
+        private function normalizarGradoPreMatricula(
+            string $grado
+        ): string {
+            $gradoNormalizado = mb_strtoupper(
+                trim($grado),
+                'UTF-8'
+            );
+
+            return match ($gradoNormalizado) {
+                'PREESCOLAR',
+                'PREJARDÍN',
+                'PREJARDIN',
+                'PJ',
+                'P' => 'P',
+
+                'JARDÍN',
+                'JARDIN',
+                'J' => 'J',
+
+                'TRANSICIÓN',
+                'TRANSICION',
+                'T' => 'T',
+
+                'PRIMERO',
+                '1',
+                '01' => '1',
+
+                'SEGUNDO',
+                '2',
+                '02' => '2',
+
+                'TERCERO',
+                '3',
+                '03' => '3',
+
+                'CUARTO',
+                '4',
+                '04' => '4',
+
+                'QUINTO',
+                '5',
+                '05' => '5',
+
+                'SEXTO',
+                '6',
+                '06' => '6',
+
+                'SÉPTIMO',
+                'SEPTIMO',
+                '7',
+                '07' => '7',
+
+                'OCTAVO',
+                '8',
+                '08' => '8',
+
+                'NOVENO',
+                '9',
+                '09' => '9',
+
+                'DÉCIMO',
+                'DECIMO',
+                '10' => '10',
+
+                'UNDÉCIMO',
+                'UNDECIMO',
+                'ONCE',
+                '11' => '11',
+
+                default => $gradoNormalizado,
+            };
+        }
     /*
     |--------------------------------------------------------------------------
     | Normalizar género

@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 class EditStudent extends EditRecord
 {
     protected static string $resource = StudentResource::class;
+    protected ?string $maxContentWidth = 'full';
 
     protected function getHeaderActions(): array
     {

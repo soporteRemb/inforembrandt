@@ -22,9 +22,7 @@ class ContratoServicioPdf
         return view('documentos.contrato-servicios', [
             'student'       => $student,
             'campos'        => $datos['campos'],
-            'plantillaUrl'  => asset(
-                'formatos/Contrato de servicios año 2026.pdf'
-            ),
+            'plantillaUrl' => $this->obtenerPlantillaUrl(),
             'nombreArchivo' => 'contrato-servicios-'
                 . $student->codigo
                 . '.pdf',
@@ -35,7 +33,7 @@ class ContratoServicioPdf
      * Prepara toda la información que será enviada
      * a los campos AcroForm del contrato.
      */
-    private function prepararDatos(Student $student): array
+    public function prepararDatos(Student $student): array
     {
         $student->loadMissing([
             'guardians',
@@ -203,12 +201,12 @@ class ContratoServicioPdf
                 $student->course?->curso
             ),
 
-            'Nombre1' => $this->limpiarTexto(
-                $contratantePrincipal?->nombre
+            'Nombre1' => $this->obtenerNombreResponsable(
+                $contratantePrincipal
             ),
 
-            'Nombre2' => $this->limpiarTexto(
-                $madre?->nombre
+            'Nombre2' => $this->obtenerNombreResponsable(
+                $madre
             ),
 
             // ── Página 5: fecha actual de firma ─────────────────────────
@@ -290,12 +288,32 @@ class ContratoServicioPdf
     private function obtenerNombreEstudiante(
         Student $student
     ): string {
-        return $this->limpiarTexto(
+        $nombreCompleto = $this->limpiarTexto(
             implode(' ', array_filter([
                 $student->primer_nombre,
                 $student->segundo_nombre,
                 $student->primer_apellido,
                 $student->segundo_apellido,
+            ]))
+        );
+
+        /*
+        * El contrato conserva siempre el nombre completo
+        * cuando cabe correctamente en el campo.
+        */
+        if (mb_strlen($nombreCompleto) <= 36) {
+            return $nombreCompleto;
+        }
+
+        /*
+        * En nombres excepcionalmente largos se omite
+        * únicamente el segundo apellido.
+        */
+        return $this->limpiarTexto(
+            implode(' ', array_filter([
+                $student->primer_nombre,
+                $student->segundo_nombre,
+                $student->primer_apellido,
             ]))
         );
     }
@@ -449,6 +467,53 @@ class ContratoServicioPdf
         ];
     }
 
+    private function obtenerNombreResponsable(
+        ?Guardian $guardian
+    ): string {
+        $nombre = $this->limpiarTexto(
+            $guardian?->nombre
+        );
+
+        if ($nombre === '') {
+            return '';
+        }
+
+        /*
+        * Mantener nombre completo cuando cabe.
+        */
+        if (mb_strlen($nombre) <= 32) {
+            return $nombre;
+        }
+
+        /*
+        * Para nombres largos, omitir solo
+        * el último apellido.
+        */
+        $partes = preg_split(
+            '/\s+/u',
+            $nombre
+        );
+
+        if (!$partes || count($partes) < 4) {
+            return $nombre;
+        }
+
+        array_pop($partes);
+
+        return $this->limpiarTexto(
+            implode(' ', $partes)
+        );
+    }
+
+    public function obtenerPlantillaUrl(): string
+    {
+        return route(
+            'students.pdf.plantilla',
+            [
+                'tipo' => 'contrato_servicios',
+            ]
+        );
+    }
     /**
      * Convierte valores nulos en texto vacío y elimina
      * espacios repetidos.

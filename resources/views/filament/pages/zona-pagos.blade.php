@@ -660,6 +660,27 @@
             border: 1px solid #fecaca;
         }
 
+
+        .zp-payment-clickable {
+            cursor: pointer;
+        }
+
+        .zp-recent-table tr.zp-payment-clickable td {
+            transition: background-color .15s ease;
+        }
+
+        .zp-recent-table tr.zp-payment-clickable:hover td {
+            background: #f9fafb;
+        }
+
+        .zp-payment-card.zp-payment-clickable {
+            transition: background-color .15s ease;
+        }
+
+        .zp-payment-card.zp-payment-clickable:hover {
+            background: #f9fafb;
+        }
+
         /*
         |--------------------------------------------------------------------------
         | MODAL HISTORIAL
@@ -724,6 +745,135 @@
             overflow: auto;
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | MODAL DETALLE DEL PAGO
+        |--------------------------------------------------------------------------
+        */
+
+        .zp-detail-modal {
+            width: min(760px, 100%);
+        }
+
+        .zp-detail-reference {
+            margin-top: 3px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .zp-detail-body {
+            padding: 18px;
+        }
+
+        .zp-detail-summary {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .zp-detail-summary-item {
+            padding: 11px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 9px;
+            background: #fafafa;
+        }
+
+        .zp-detail-summary-label {
+            margin-bottom: 5px;
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .zp-detail-summary-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .zp-detail-total {
+            font-size: 17px;
+            font-weight: 800;
+            color: #b91c1c;
+        }
+
+        .zp-detail-section-title {
+            margin-bottom: 9px;
+            font-size: 14px;
+            font-weight: 750;
+            color: #111827;
+        }
+
+        .zp-detail-list {
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+        }
+
+        .zp-detail-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .zp-detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .zp-detail-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .zp-detail-student {
+            margin-bottom: 3px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #166534;
+        }
+
+        .zp-detail-concept {
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .zp-detail-item-value {
+            flex-shrink: 0;
+            font-size: 14px;
+            font-weight: 750;
+            color: #111827;
+        }
+
+        .zp-detail-pending {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 12px 13px;
+            border: 1px solid #fde68a;
+            border-radius: 9px;
+            background: #fffbeb;
+            color: #92400e;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+
+        .zp-detail-pending svg {
+            width: 19px;
+            height: 19px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 700px) {
+            .zp-detail-summary {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .zp-detail-body {
+                padding: 14px;
+            }
+        }
         /*
         |--------------------------------------------------------------------------
         | TARJETAS MÓVILES DE PAGOS
@@ -1454,7 +1604,10 @@
                                                 };
                                         @endphp
 
-                                        <tr>
+                                        <tr
+                                            wire:click="abrirDetallePago({{ $pago['id'] }})"
+                                            class="zp-payment-clickable"
+                                        >
                                             <td>
                                                 {{ $pago['fecha'] }}
                                             </td>
@@ -1537,7 +1690,10 @@
                                     };
                             @endphp
 
-                            <div class="zp-payment-card">
+                            <div
+                                class="zp-payment-card zp-payment-clickable"
+                                wire:click="abrirDetallePago({{ $pago['id'] }})"
+                            >
 
                                 <div class="zp-payment-card-top">
 
@@ -1716,7 +1872,10 @@
                                                     };
                                             @endphp
 
-                                            <tr>
+                                            <tr
+                                                wire:click="abrirDetallePago({{ $pago['id'] }})"
+                                                class="zp-payment-clickable"
+                                            >
 
                                                 <td>
                                                     {{ $pago['fecha'] }}
@@ -1801,7 +1960,10 @@
                                         };
                                 @endphp
 
-                                <div class="zp-payment-card">
+                                <div
+                                    class="zp-payment-card zp-payment-clickable"
+                                    wire:click="abrirDetallePago({{ $pago['id'] }})"
+                                >
 
                                     <div class="zp-payment-card-top">
 
@@ -1880,6 +2042,255 @@
                         </div>
 
                     @endif
+
+                </div>
+
+            </div>
+
+        </div>
+
+    @endif
+
+
+
+
+
+
+
+
+
+
+
+    {{-- MODAL DETALLE DEL PAGO --}}
+    @if($mostrarDetallePago)
+
+        <div
+            class="zp-modal-backdrop"
+            wire:click.self="cerrarDetallePago"
+        >
+
+            <div class="zp-modal zp-detail-modal">
+
+                <div class="zp-modal-header">
+
+                    <div>
+
+                        <div class="zp-modal-title">
+                            Detalle del pago
+                        </div>
+
+                        @if(! empty($detallePago['referencia']))
+                            <div class="zp-detail-reference">
+                                Orden {{ $detallePago['referencia'] }}
+                            </div>
+                        @endif
+
+                    </div>
+
+                    <button
+                        type="button"
+                        wire:click="cerrarDetallePago"
+                        class="zp-modal-close"
+                        aria-label="Cerrar"
+                    >
+                        <x-heroicon-o-x-mark />
+                    </button>
+
+                </div>
+
+                <div class="zp-modal-body">
+
+                    @php
+                        $estadoDetalle =
+                            $detallePago['estado']
+                            ?? 'pendiente';
+
+                        $textoEstadoDetalle =
+                            match ($estadoDetalle) {
+                                'aprobada' =>
+                                    'Pago confirmado',
+
+                                'procesando' =>
+                                    'Procesando',
+
+                                'pendiente' =>
+                                    'Pendiente',
+
+                                'rechazada' =>
+                                    'Rechazado',
+
+                                'cancelada' =>
+                                    'Cancelado',
+
+                                'expirada' =>
+                                    'Expirado',
+
+                                default =>
+                                    ucfirst($estadoDetalle),
+                            };
+                    @endphp
+
+                    <div class="zp-detail-body">
+
+                        <div class="zp-detail-summary">
+
+                            <div class="zp-detail-summary-item">
+
+                                <div class="zp-detail-summary-label">
+                                    Fecha
+                                </div>
+
+                                <div class="zp-detail-summary-value">
+                                    {{ $detallePago['fecha'] ?? '-' }}
+                                </div>
+
+                            </div>
+
+                            <div class="zp-detail-summary-item">
+
+                                <div class="zp-detail-summary-label">
+                                    Método
+                                </div>
+
+                                <div class="zp-detail-summary-value">
+                                    {{ $detallePago['metodo_pago'] ?? 'PSE' }}
+                                </div>
+
+                            </div>
+
+                            <div class="zp-detail-summary-item">
+
+                                <div class="zp-detail-summary-label">
+                                    Estado
+                                </div>
+
+                                <div class="zp-detail-summary-value">
+
+                                    <span
+                                        class="
+                                            zp-status
+                                            zp-status-{{ $estadoDetalle }}
+                                        "
+                                    >
+                                        {{ $textoEstadoDetalle }}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                            <div class="zp-detail-summary-item">
+
+                                <div class="zp-detail-summary-label">
+                                    Total solicitado
+                                </div>
+
+                                <div class="zp-detail-total">
+                                    $ {{ number_format(
+                                        (float) (
+                                            $detallePago['total']
+                                            ?? 0
+                                        ),
+                                        0,
+                                        ',',
+                                        '.'
+                                    ) }}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="zp-detail-section-title">
+                            Conceptos seleccionados
+                        </div>
+
+                        <div class="zp-detail-list">
+
+                            @forelse(
+                                $detallePago['detalles'] ?? []
+                                as $detalle
+                            )
+
+                                <div class="zp-detail-item">
+
+                                    <div class="zp-detail-item-header">
+
+                                        <div>
+
+                                            <div class="zp-detail-student">
+                                                {{ $detalle['estudiante'] }}
+                                            </div>
+
+                                            <div class="zp-detail-concept">
+
+                                                {{ $detalle['concepto'] }}
+
+                                                @if(! empty($detalle['mes']))
+                                                    · {{ $detalle['mes'] }}
+                                                @endif
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="zp-detail-item-value">
+
+                                            $ {{ number_format(
+                                                (float) (
+                                                    $detalle['valor_a_pagar']
+                                                    ?? 0
+                                                ),
+                                                0,
+                                                ',',
+                                                '.'
+                                            ) }}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            @empty
+
+                                <div class="zp-empty">
+                                    No se encontraron conceptos para esta orden.
+                                </div>
+
+                            @endforelse
+
+                        </div>
+
+                        @if(
+                            in_array(
+                                $estadoDetalle,
+                                ['pendiente', 'procesando'],
+                                true
+                            )
+                        )
+
+                            <div class="zp-detail-pending">
+
+                                <x-heroicon-o-clock />
+
+                                <div>
+
+                                    <strong>
+                                        Pendiente de validación bancaria
+                                    </strong>
+
+                                    <div>
+                                        Los valores mostrados corresponden a la intención de pago registrada antes de ingresar al portal de pagos.
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        @endif
+
+                    </div>
 
                 </div>
 

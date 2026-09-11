@@ -8,6 +8,7 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateStudent extends CreateRecord
 {
     protected static string $resource = StudentResource::class;
+    protected ?string $maxContentWidth = 'full';
 
     protected function afterCreate(): void
     {

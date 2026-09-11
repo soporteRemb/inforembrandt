@@ -78,6 +78,10 @@ class ZonaPagos extends Page
 
     public bool $mostrarHistorialPagos = false;
 
+    public bool $mostrarDetallePago = false;
+
+    public array $detallePago = [];
+
     /*
     |--------------------------------------------------------------------------
     | ÚLTIMA ORDEN
@@ -390,8 +394,10 @@ class ZonaPagos extends Page
                 ->send();
 
             return redirect()->away(
-                'https://www.zonapagos.com/PagosN3/Vistas/Logins/LoginCliente.aspx'
+                'https://www.zonapagos.com/t_Colegiorembrandt'
             );
+
+            return;
 
         } catch (
             ValidationException $exception
@@ -481,6 +487,114 @@ class ZonaPagos extends Page
     {
         $this->mostrarHistorialPagos =
             false;
+    }
+
+    public function abrirDetallePago(int $ordenId): void
+    {
+        $orden = $this->consultaOrdenesUsuario()
+            ->whereKey($ordenId)
+            ->first();
+
+        if (! $orden) {
+            Notification::make()
+                ->title('Orden no disponible')
+                ->body(
+                    'No fue posible consultar la orden de pago.'
+                )
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        $detalles = $orden->detalles
+            ->map(function ($detalle) {
+                $estudiante = $detalle->estudiante;
+
+                $nombreEstudiante = $estudiante
+                    ? trim(
+                        $estudiante->primer_nombre
+                        . ' '
+                        . $estudiante->segundo_nombre
+                        . ' '
+                        . $estudiante->primer_apellido
+                        . ' '
+                        . $estudiante->segundo_apellido
+                    )
+                    : 'Estudiante';
+
+                return [
+                    'id' =>
+                        $detalle->id,
+
+                    'student_id' =>
+                        $detalle->student_id,
+
+                    'estudiante' =>
+                        $nombreEstudiante,
+
+                    'concepto' =>
+                        $detalle->concepto
+                        ?? $detalle->descripcion
+                        ?? 'Concepto',
+
+                    'descripcion' =>
+                        $detalle->descripcion,
+
+                    'mes' =>
+                        $detalle->mes,
+
+                    'valor_obligacion' =>
+                        (float) $detalle->valor_obligacion,
+
+                    'saldo_al_seleccionar' =>
+                        (float) $detalle->saldo_al_seleccionar,
+
+                    'valor_a_pagar' =>
+                        (float) $detalle->valor_a_pagar,
+
+                    'estado' =>
+                        $detalle->estado,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        $this->detallePago = [
+            'id' =>
+                $orden->id,
+
+            'referencia' =>
+                $orden->referencia,
+
+            'fecha' =>
+                $orden->created_at
+                    ?->format('d/m/Y h:i a'),
+
+            'metodo_pago' =>
+                strtoupper($orden->metodo_pago),
+
+            'estado' =>
+                $orden->estado,
+
+            'subtotal' =>
+                (float) $orden->subtotal,
+
+            'total' =>
+                (float) $orden->total,
+
+            'detalles' =>
+                $detalles,
+        ];
+
+        $this->mostrarDetallePago = true;
+    }
+
+    public function cerrarDetallePago(): void
+    {
+        $this->mostrarDetallePago = false;
+
+        $this->detallePago = [];
     }
 
     /*

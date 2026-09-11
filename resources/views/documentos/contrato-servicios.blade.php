@@ -106,6 +106,9 @@
         nombreArchivo: @json($nombreArchivo),
         campos: @json($campos),
     };
+    const modoPaquete = new URLSearchParams(
+        window.location.search
+    ).get('modo') === 'paquete';
 
     async function generarContrato() {
         const spinner = document.getElementById('spinner');
@@ -198,16 +201,129 @@
                         nombreCampo
                     );
 
-                    campo.setText(
-                        String(valorCampo ?? '')
-                    );
+                    const valor = String(valorCampo ?? '');
+
+                    campo.setText(valor);
 
                     /*
-                    * Tamaño de letra de los campos del formulario.
-                    * El PDF original utiliza una letra pequeña; la aumentamos
-                    * aproximadamente un punto para mejorar la lectura.
+                    * Tamaño normal del contrato.
                     */
-                    campo.setFontSize(11);
+                    let tamanoFuente = 11;
+
+                    /*
+                    * Nombres del contrato.
+                    *
+                    * El estudiante ya llega abreviado desde el servicio
+                    * cuando su nombre completo es excepcionalmente largo,
+                    * por lo que no necesitamos reducir tanto la fuente.
+                    */
+                    if ([
+                        'Estudiante',
+                        'Nombre1',
+                        'Nombre2',
+                    ].includes(nombreCampo)) {
+                        if (valor.length > 36) {
+                            tamanoFuente = 9;
+                        } else if (valor.length > 28) {
+                            tamanoFuente = 10;
+                        }
+                    }
+
+                    /*
+                    * Correos.
+                    *
+                    * Se amplía moderadamente el campo, sin invadir
+                    * la columna siguiente.
+                    *
+                    * Si aun así el correo es largo, se reduce
+                    * progresivamente el tamaño de fuente.
+                    */
+                    if ([
+                        'Correo',
+                        'Correo_2',
+                        'Correo_3',
+                    ].includes(nombreCampo)) {
+                        const widgets = campo.acroField.getWidgets();
+
+                        for (const widget of widgets) {
+                            const rectangulo = widget.getRectangle();
+
+                            widget.setRectangle({
+                                x: rectangulo.x,
+                                y: rectangulo.y,
+                                width: rectangulo.width + 35,
+                                height: rectangulo.height,
+                            });
+                        }
+
+                        if (valor.length > 42) {
+                            tamanoFuente = 7;
+                        } else if (valor.length > 34) {
+                            tamanoFuente = 8;
+                        } else if (valor.length > 26) {
+                            tamanoFuente = 9;
+                        } else {
+                            tamanoFuente = 10;
+                        }
+                    }
+                    /*
+                    * Direcciones del contrato.
+                    *
+                    * Este formato dispone de poco espacio horizontal,
+                    * especialmente en los bloques de madre y codeudor.
+                    *
+                    * Se amplían únicamente unos puntos y las direcciones
+                    * largas reducen progresivamente su fuente.
+                    */
+                    if ([
+                        'Dirección',
+                        'Dirección_2',
+                        'Dirección_3',
+                    ].includes(nombreCampo)) {
+                        let ampliacion = 0;
+
+                        if (nombreCampo === 'Dirección') {
+                            // Padre / acudiente principal:
+                            // dispone de algo más de espacio.
+                            ampliacion = 45;
+                        }
+
+                        if (nombreCampo === 'Dirección_2') {
+                            // Madre:
+                            // no invadir la columna del codeudor.
+                            ampliacion = 75;
+                        }
+
+                        if (nombreCampo === 'Dirección_3') {
+                            // Codeudor:
+                            // puede crecer ligeramente hacia la derecha.
+                            ampliacion = 58;
+                        }
+
+                        const widgets = campo.acroField.getWidgets();
+
+                        for (const widget of widgets) {
+                            const rectangulo = widget.getRectangle();
+
+                            widget.setRectangle({
+                                x: rectangulo.x,
+                                y: rectangulo.y,
+                                width: rectangulo.width + ampliacion,
+                                height: rectangulo.height,
+                            });
+                        }
+
+                        if (valor.length > 40) {
+                            tamanoFuente = 7;
+                        } else if (valor.length > 32) {
+                            tamanoFuente = 8;
+                        } else if (valor.length > 24) {
+                            tamanoFuente = 9;
+                        } else {
+                            tamanoFuente = 10;
+                        }
+                    }
+                    campo.setFontSize(tamanoFuente);
                 } catch (campoError) {
                     camposNoEncontrados.push(nombreCampo);
 
@@ -243,6 +359,23 @@
                 addDefaultPage: false,
                 updateFieldAppearances: false,
             });
+            if (modoPaquete) {
+                window.parent.postMessage(
+                    {
+                        tipo: 'documento-pdf-generado',
+                        documento: 'contrato',
+                        bytes: Array.from(pdfFinal),
+                    },
+                    window.location.origin
+                );
+
+                titulo.textContent = 'Contrato preparado';
+
+                mensaje.textContent =
+                    'Documento preparado para el paquete.';
+
+                return;
+            }
 
             const archivo = new Blob(
                 [pdfFinal],
