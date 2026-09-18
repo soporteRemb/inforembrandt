@@ -8,6 +8,7 @@ use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -136,6 +137,209 @@ class DocumentoEstudianteService
 
             throw $e;
         }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Guardar matrícula electrónica firmada
+    |--------------------------------------------------------------------------
+    |
+    | Guarda el PDF final recibido directamente desde Click & Sign.
+    |
+    | Esta operación es idempotente: si el estudiante ya tiene una
+    | matrícula electrónica registrada, devuelve ese mismo documento
+    | y no crea una segunda copia.
+    |
+    */
+
+    public function guardarMatriculaElectronicaFirmada(
+        Student $student,
+        string $contenidoPdf,
+        ?User $usuario = null,
+        ?string $nombreOriginal = null
+    ): DocumentoEstudiante {
+
+        $tipoDocumento = 'matricula_electronica';
+
+        $this->validarTipoDocumento(
+            $tipoDocumento
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validar PDF recibido
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $contenidoPdf === ''
+            || ! str_starts_with(
+                ltrim($contenidoPdf),
+                '%PDF-'
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'documento' =>
+                    'Click & Sign no devolvió un archivo PDF válido.',
+            ]);
+        }
+
+        if (
+            strlen($contenidoPdf)
+            > 25 * 1024 * 1024
+        ) {
+            throw ValidationException::withMessages([
+                'documento' =>
+                    'El PDF firmado supera el tamaño máximo permitido.',
+            ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Operación idempotente y protegida contra concurrencia
+        |--------------------------------------------------------------------------
+        */
+
+        return DB::transaction(function () use (
+            $student,
+            $contenidoPdf,
+            $usuario,
+            $nombreOriginal,
+            $tipoDocumento
+        ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Bloquear la fila del estudiante
+            |--------------------------------------------------------------------------
+            |
+            | Dos Jobs del mismo estudiante no pueden superar simultáneamente
+            | la comprobación de existencia.
+            |
+            */
+
+            Student::query()
+                ->whereKey($student->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Comprobar documento canónico existente
+            |--------------------------------------------------------------------------
+            */
+
+            $existente = DocumentoEstudiante::query()
+                ->where(
+                    'student_id',
+                    $student->id
+                )
+                ->where(
+                    'tipo_documento',
+                    $tipoDocumento
+                )
+                ->latest('id')
+                ->first();
+
+            if ($existente) {
+                return $existente;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Preparar ruta privada
+            |--------------------------------------------------------------------------
+            */
+
+            $directorio = sprintf(
+                'estudiantes/%d/documentos',
+                $student->id
+            );
+
+            $nombreFisico = sprintf(
+                '%s_%s.pdf',
+                $tipoDocumento,
+                Str::uuid()
+            );
+
+            $ruta = $directorio
+                . '/'
+                . $nombreFisico;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Guardar archivo
+            |--------------------------------------------------------------------------
+            */
+
+            $guardado = Storage::disk('local')->put(
+                $ruta,
+                $contenidoPdf
+            );
+
+            if (! $guardado) {
+                throw ValidationException::withMessages([
+                    'documento' =>
+                        'No fue posible guardar el PDF firmado.',
+                ]);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Registrar documento
+            |--------------------------------------------------------------------------
+            */
+
+            try {
+                return DocumentoEstudiante::create([
+                    'student_id' =>
+                        $student->id,
+
+                    'tipo_documento' =>
+                        $tipoDocumento,
+
+                    'nombre_original' =>
+                        $nombreOriginal
+                        ?: 'MATRICULA-ELECTRONICA-FIRMADA.pdf',
+
+                    'ruta_archivo' =>
+                        $ruta,
+
+                    'mime_type' =>
+                        'application/pdf',
+
+                    'tamano' =>
+                        strlen($contenidoPdf),
+
+                    'origen' =>
+                        'firma_electronica',
+
+                    'subido_por' =>
+                        $usuario?->id,
+
+                    'pre_matricula_documento_id' =>
+                        null,
+                ]);
+            } catch (\Throwable $e) {
+                /*
+                |--------------------------------------------------------------------------
+                | La transacción revierte BD, pero Storage no es transaccional
+                |--------------------------------------------------------------------------
+                */
+
+                if (
+                    Storage::disk('local')->exists(
+                        $ruta
+                    )
+                ) {
+                    Storage::disk('local')->delete(
+                        $ruta
+                    );
+                }
+
+                throw $e;
+            }
+        });
     }
 
     /*

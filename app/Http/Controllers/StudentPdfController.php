@@ -80,8 +80,36 @@ class StudentPdfController extends Controller
     // ── Página de documentos ──────────────────────────────────────────────────
     public function documentos(Student $student)
     {
-        $student->load(['guardians', 'course', 'periodoLectivo', 'sede', 'documentos']);
-        return view('documentos.estudiante', compact('student'));
+        $student->load([
+            'guardians',
+            'course',
+            'periodoLectivo',
+            'sede',
+            'documentos',
+        ]);
+
+        $documentoFirma = $student
+            ->archivosDocumentos()
+            ->where(
+                'tipo_documento',
+                'matricula_electronica'
+            )
+            ->latest()
+            ->first();
+
+        $firmaElectronica = $student
+            ->firmasElectronicas()
+            ->latest()
+            ->first();
+
+        return view(
+            'documentos.estudiante',
+            compact(
+                'student',
+                'documentoFirma',
+                'firmaElectronica'
+            )
+        );
     }
 
     // ── PDF genérico para los 6 formatos ────────────────────────────────────

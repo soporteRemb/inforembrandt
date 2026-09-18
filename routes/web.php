@@ -7,6 +7,8 @@ use App\Http\Controllers\CostosEstudianteController;
 use App\Http\Controllers\ReciboPdfController;
 use App\Http\Controllers\PreMatriculaDocumentoController;
 use App\Http\Controllers\DocumentoEstudianteController;
+use App\Http\Controllers\FirmaElectronicaController;
+use App\Http\Controllers\ClickAndSignCallbackController;
 
 Route::redirect('/', '/admin/login');
 
@@ -54,6 +56,22 @@ Route::middleware('auth')->group(function () {
         '/students/{student}/documentos',
         [StudentPdfController::class, 'documentos']
     )->name('students.documentos');
+
+    Route::get(
+        '/students/{student}/firma-electronica/acudiente',
+        [
+            FirmaElectronicaController::class,
+            'datosAcudiente',
+        ]
+    )->name('students.firma-electronica.acudiente');
+
+    Route::post(
+        '/students/{student}/firma-electronica/preparar',
+        [
+            FirmaElectronicaController::class,
+            'prepararEnvio',
+        ]
+    )->name('students.firma-electronica.preparar');
 
     Route::post(
         '/students/{student}/documentos/{tipo}/toggle',
@@ -116,6 +134,20 @@ Route::middleware('auth')->group(function () {
         [StudentPdfController::class, 'unirPaquete']
     )->name('students.pdf.paquete.unir');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Callback público Click & Sign
+|--------------------------------------------------------------------------
+*/
+
+Route::post(
+    '/callbacks/click-and-sign/firma',
+    [
+        ClickAndSignCallbackController::class,
+        'firma',
+    ]
+)->name('callbacks.click-and-sign.firma');
 
 Route::get(
     '/admin/estudiantes/{student}/costos',

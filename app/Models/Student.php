@@ -218,4 +218,12 @@ class Student extends Model
             'student_id'
         );
     }
+
+    public function firmasElectronicas()
+    {
+        return $this->hasMany(
+            FirmaElectronicaEstudiante::class,
+            'student_id'
+        );
+    }
 }

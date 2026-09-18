@@ -39,4 +39,56 @@ return [
         'binary' => env('QPDF_BINARY', 'qpdf'),
     ],
 
+    'pdftk' => [
+        'binary' => env(
+            'PDFTK_BINARY',
+            'pdftk'
+        ),
+    ],
+
+    'click_and_sign' => [
+
+        'enabled' => env(
+            'CLICK_AND_SIGN_ENABLED',
+            false
+        ),
+
+        'url' => env(
+            'CLICK_AND_SIGN_URL',
+            'https://api.lleida.net/cs/v1'
+        ),
+
+        'user' => env(
+            'CLICK_AND_SIGN_USER'
+        ),
+
+        'api_key' => env(
+            'CLICK_AND_SIGN_API_KEY'
+        ),
+
+        'config_id' => env(
+            'CLICK_AND_SIGN_CONFIG_ID'
+        ),
+
+        'callback_passphrase' => env(
+            'CLICK_AND_SIGN_CALLBACK_PASSPHRASE'
+        ),
+
+        'company_name' => env(
+            'CLICK_AND_SIGN_COMPANY_NAME'
+        ),
+
+        'company_vat' => env(
+            'CLICK_AND_SIGN_COMPANY_VAT'
+        ),
+        'sms_sender' => env(
+            'CLICK_AND_SIGN_SMS_SENDER',
+            'Rembrandt'
+        ),
+
+        'callback_url' => env(
+            'CLICK_AND_SIGN_CALLBACK_URL'
+        ),
+    ],
+
 ];

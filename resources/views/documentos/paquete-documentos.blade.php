@@ -339,19 +339,34 @@
                     blobFinal
                 );
 
+            const enlace = document.createElement(
+                'a'
+            );
+
+            enlace.href = urlPdf;
+            enlace.download = nombreArchivo;
+
+            document.body.appendChild(
+                enlace
+            );
+
+            enlace.click();
+            enlace.remove();
+
+            setTimeout(
+                () => URL.revokeObjectURL(urlPdf),
+                1000
+            );
+
             document.getElementById(
                 'titulo'
             ).textContent =
-                'Documento preparado';
+                'Documento descargado';
 
             document.getElementById(
                 'mensaje'
             ).textContent =
-                'Abriendo el paquete de documentos...';
-
-            window.location.replace(
-                urlPdf
-            );
+                `El archivo ${nombreArchivo} fue generado y descargado correctamente. Ya puede cerrar esta pestaña.`;
         } catch (error) {
             console.error(error);
 

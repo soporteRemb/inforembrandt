@@ -173,6 +173,173 @@
         .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Modal de envío para firma electrónica */
+        .signature-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.48);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9998;
+        }
+
+        .signature-modal-backdrop.open {
+            display: flex;
+        }
+
+        .signature-modal {
+            width: 100%;
+            max-width: 560px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+            overflow: hidden;
+        }
+
+        .signature-modal-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .signature-modal-header h3 {
+            font-size: 1rem;
+            color: #1e293b;
+        }
+
+        .signature-modal-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 7px;
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        .signature-modal-body {
+            padding: 20px;
+        }
+
+        .signature-help {
+            padding: 10px 12px;
+            margin-bottom: 18px;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+
+        .signature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .signature-field {
+            margin-bottom: 14px;
+        }
+
+        .signature-field.full {
+            grid-column: 1 / -1;
+        }
+
+        .signature-field label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        .signature-field input {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            background: white;
+            color: #1e293b;
+            font-size: 0.84rem;
+            outline: none;
+        }
+
+        /* Texto de ejemplo: más claro que un dato real */
+        #firmaCorreo::placeholder,
+        #firmaTelefono::placeholder {
+            color: #c4cad3;
+            opacity: 1;
+        }
+
+        .signature-field input:focus {
+            border-color: #a52a24;
+            box-shadow: 0 0 0 2px rgba(165, 42, 36, 0.08);
+        }
+        .signature-field input[readonly] {
+            background: #f8fafc;
+            color: #64748b;
+        }
+
+        .signature-file {
+            padding: 12px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .signature-file input {
+            border: none;
+            padding: 0;
+            min-height: auto;
+            background: transparent;
+        }
+
+        .signature-modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .signature-cancel {
+            min-height: 40px;
+            padding: 0 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: white;
+            color: #475569;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .signature-submit {
+            min-height: 40px;
+            padding: 0 18px;
+            border: 1px solid #a52a24;
+            border-radius: 8px;
+            background: #a52a24;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .signature-submit:hover {
+            background: #92231f;
+        }
+
+        @media (max-width: 600px) {
+            .signature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
         .toast {
             position: fixed; bottom: 24px; right: 24px;
             background: #1e293b; color: white;
@@ -238,8 +405,27 @@
             @endphp
 
             @foreach($todos as $tipo => $doc)
-            @php $registro = $generados[$tipo] ?? null; @endphp
-            <div class="doc-row" id="row-{{ $tipo }}" data-generado="{{ $registro ? 'true' : 'false' }}">
+            @php
+                $registro = $generados[$tipo] ?? null;
+
+                /*
+                * Si existe el documento final de matrícula firmado,
+                * los seis documentos que lo componen se consideran
+                * entregados.
+                */
+                $entregadoPorFirma =
+                    $documentoFirma !== null;
+
+                $entregado =
+                    $entregadoPorFirma
+                    || $registro !== null;
+            @endphp
+
+            <div
+                class="doc-row"
+                id="row-{{ $tipo }}"
+                data-generado="{{ $entregado ? 'true' : 'false' }}"
+            >
 
                 {{-- Botón que abre el PDF --}}
                 <a
@@ -288,18 +474,54 @@
                 {{-- Toggle + meta --}}
                 <div class="toggle-wrap">
                     <div class="doc-meta" id="meta-{{ $tipo }}">
-                        @if($registro)
-                            <span class="done">✓ Entregado</span>
-                            <span class="who">{{ \Carbon\Carbon::parse($registro->generado_at)->format('d/m/Y H:i') }} · {{ $registro->generado_por }}</span>
+                        @if($entregadoPorFirma)
+
+                            <span class="done">
+                                ✓ Entregado
+                            </span>
+
+                            <span class="who">
+                                Documento de matrícula firmado
+                            </span>
+
+                        @elseif($registro)
+
+                            <span class="done">
+                                ✓ Entregado
+                            </span>
+
+                            <span class="who">
+                                {{ \Carbon\Carbon::parse(
+                                    $registro->generado_at
+                                )->format('d/m/Y H:i') }}
+                                ·
+                                {{ $registro->generado_por }}
+                            </span>
+
                         @else
-                            <span class="pend">Pendiente</span>
+
+                            <span class="pend">
+                                Pendiente
+                            </span>
+
                         @endif
                     </div>
                     <button
-                        class="toggle-btn {{ $registro ? 'on' : 'off' }}"
+                        class="toggle-btn {{ $entregado ? 'on' : 'off' }}"
                         id="toggle-{{ $tipo }}"
-                        onclick="toggleDoc('{{ $tipo }}')"
-                        title="{{ $registro ? 'Desmarcar como entregado' : 'Marcar como entregado' }}">
+                        @if(!$entregadoPorFirma)
+                            onclick="toggleDoc('{{ $tipo }}')"
+                        @endif
+                        @if($entregadoPorFirma)
+                            disabled
+                            title="Entregado mediante documento de matrícula firmado"
+                        @else
+                            title="{{ $registro
+                                ? 'Desmarcar como entregado'
+                                : 'Marcar como entregado'
+                            }}"
+                        @endif
+                    >
                     </button>
                 </div>
 
@@ -337,11 +559,41 @@
             Unificar documentos para firma
         </a>
 
+        @php
+            $firmaActiva = $firmaElectronica
+                && in_array(
+                    $firmaElectronica->estado,
+                    [
+                        'pendiente',
+                        'enviando',
+                        'en_proceso',
+                        'envio_incierto',
+                        'firmada_pendiente_documento',
+                    ],
+                    true
+                );
+
+            $bloquearEnvioFirma =
+                $documentoFirma !== null
+                || $firmaActiva;
+        @endphp
+
         <button
             type="button"
-            class="package-btn disabled"
-            disabled
-            title="Funcionalidad próximamente disponible"
+            class="package-btn"
+            @if(!$bloquearEnvioFirma)
+                onclick="abrirModalFirma()"
+            @endif
+            @disabled($bloquearEnvioFirma)
+            title="{{
+                $documentoFirma
+                    ? 'La matrícula electrónica ya fue incorporada'
+                    : (
+                        $firmaActiva
+                            ? 'Ya existe un proceso de firma electrónica activo'
+                            : 'Enviar documentos para firma electrónica'
+                    )
+            }}"
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -359,19 +611,525 @@
                 />
             </svg>
 
-            Enviar para firmar
+            @if($documentoFirma)
+                Firma completada
+            @elseif($firmaActiva)
+                Firma en proceso
+            @else
+                Enviar para firmar
+            @endif
         </button>
 
     </div>
+
+    @if($documentoFirma)
+
+        {{-- TARJETA VERDE ACTUAL --}}
+        <div
+            style="
+                margin-top: 14px;
+                padding: 12px 16px;
+                background: #f0fdf4;
+                border: 1px solid #bbf7d0;
+                border-radius: 9px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            "
+        >
+            <div style="flex:1; min-width:0;">
+                <div
+                    style="
+                        font-size: 0.82rem;
+                        font-weight: 700;
+                        color: #166534;
+                    "
+                >
+                    ✓ Documento de matrícula firmado
+                </div>
+
+                <div
+                    style="
+                        margin-top: 2px;
+                        font-size: 0.75rem;
+                        color: #64748b;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    "
+                    title="{{ $documentoFirma->nombre_original }}"
+                >
+                    {{ $documentoFirma->nombre_original }}
+                </div>
+            </div>
+
+            <a
+                href="{{ route(
+                    'estudiantes.documentos.archivos.ver',
+                    $documentoFirma
+                ) }}"
+                target="_blank"
+                class="doc-btn"
+                style="
+                    background: white;
+                    color: #166534;
+                    border: 1px solid #86efac;
+                "
+            >
+                Ver PDF
+            </a>
+        </div>
+
+    @elseif(
+        $firmaElectronica
+        && in_array(
+            $firmaElectronica->estado,
+            [
+                'pendiente',
+                'enviando',
+                'en_proceso',
+                'firmada_pendiente_documento',
+            ],
+            true
+        )
+    )
+
+        <div
+            style="
+                margin-top: 14px;
+                padding: 12px 16px;
+                background: #fffbeb;
+                border: 1px solid #fde68a;
+                border-radius: 9px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            "
+        >
+            <div
+                style="
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    background: #f59e0b;
+                    flex: 0 0 auto;
+                "
+            ></div>
+
+            <div style="flex:1; min-width:0;">
+                <div
+                    style="
+                        font-size: 0.82rem;
+                        font-weight: 700;
+                        color: #92400e;
+                    "
+                >
+                    En proceso de firma
+                </div>
+
+                <div
+                    style="
+                        margin-top: 2px;
+                        font-size: 0.75rem;
+                        color: #78716c;
+                    "
+                >
+                    @if(
+                        $firmaElectronica
+                        && $firmaElectronica->estado === 'firmada_pendiente_documento'
+                    )
+                        La firma electrónica fue completada. El documento firmado
+                        está pendiente de ser incorporado al expediente del estudiante.
+                    @else
+                        El documento fue enviado y está pendiente de completar
+                        las firmas electrónicas.
+                    @endif
+                </div>
+            </div>
+        </div>
+
+    @elseif(
+        $firmaElectronica
+        && $firmaElectronica->estado === 'envio_incierto'
+    )
+
+        <div
+            style="
+                margin-top: 14px;
+                padding: 12px 16px;
+                background: #fff7ed;
+                border: 1px solid #fed7aa;
+                border-radius: 9px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            "
+        >
+            <div
+                style="
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    background: #ea580c;
+                    flex: 0 0 auto;
+                "
+            ></div>
+
+            <div style="flex:1; min-width:0;">
+                <div
+                    style="
+                        font-size: 0.82rem;
+                        font-weight: 700;
+                        color: #9a3412;
+                    "
+                >
+                    Estado del envío por verificar
+                </div>
+
+                <div
+                    style="
+                        margin-top: 2px;
+                        font-size: 0.75rem;
+                        color: #78716c;
+                    "
+                >
+                    No fue posible confirmar la respuesta de Click & Sign.
+                    No realice un nuevo envío hasta verificar el estado
+                    de esta solicitud.
+                </div>
+            </div>
+        </div>
+
+    @endif
 
 </div>
 
 <div class="toast" id="toast"></div>
 
+<div
+    class="signature-modal-backdrop"
+    id="modalFirma"
+    onclick="cerrarModalFirmaDesdeFondo(event)"
+>
+    <div
+        class="signature-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tituloModalFirma"
+    >
+        <div class="signature-modal-header">
+            <h3 id="tituloModalFirma">
+                Enviar documentos para firma
+            </h3>
+
+            <button
+                type="button"
+                class="signature-modal-close"
+                onclick="cerrarModalFirma()"
+                title="Cerrar"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="signature-modal-body">
+
+            <div class="signature-help">
+                El acudiente recibirá el enlace de firma por
+                correo electrónico y SMS. El proceso requerirá
+                un código enviado al celular.
+            </div>
+
+            <div class="signature-grid">
+
+                <div class="signature-field">
+                    <label for="firmaNombre">
+                        Acudiente
+                    </label>
+
+                    <input
+                        type="text"
+                        id="firmaNombre"
+                        readonly
+                        placeholder="Se cargará automáticamente"
+                    >
+                </div>
+
+                <div class="signature-field">
+                    <label for="firmaDocumento">
+                        Documento
+                    </label>
+
+                    <input
+                        type="text"
+                        id="firmaDocumento"
+                        readonly
+                        placeholder="Se cargará automáticamente"
+                    >
+                </div>
+
+                <div class="signature-field">
+                    <label for="firmaCorreo">
+                        Correo para la firma
+                    </label>
+
+                    <input
+                        type="email"
+                        id="firmaCorreo"
+                        autocomplete="off"
+                        placeholder="Ej. correo@ejemplo.com"
+                    >
+                </div>
+
+                <div class="signature-field">
+                    <label for="firmaTelefono">
+                        Celular para SMS / OTP
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="firmaTelefono"
+                        autocomplete="off"
+                        placeholder="Ej. 3001234567"
+                    >
+                </div>
+
+                <div class="signature-field full">
+                    <label for="firmaPdf">
+                        Documento unificado
+                    </label>
+
+                    <div class="signature-file">
+                        <input
+                            type="file"
+                            id="firmaPdf"
+                            accept="application/pdf,.pdf"
+                        >
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="signature-modal-footer">
+            <button
+                type="button"
+                class="signature-cancel"
+                onclick="cerrarModalFirma()"
+            >
+                Cancelar
+            </button>
+
+            <button
+                type="button"
+                class="signature-submit"
+                onclick="prepararEnvioFirma()"
+            >
+                Enviar para firmar
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 const studentId = {{ $student->id }};
 const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 const userName  = '{{ auth()->user()->name }}';
+
+async function abrirModalFirma() {
+    const modal = document.getElementById('modalFirma');
+
+    const nombre = document.getElementById('firmaNombre');
+    const documento = document.getElementById('firmaDocumento');
+    const correo = document.getElementById('firmaCorreo');
+    const telefono = document.getElementById('firmaTelefono');
+
+    /*
+     * Limpiamos los datos de una apertura anterior.
+     */
+    nombre.value = '';
+    documento.value = '';
+    correo.value = '';
+    telefono.value = '';
+
+    nombre.placeholder = 'Cargando...';
+    documento.placeholder = 'Cargando...';
+
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        const respuesta = await fetch(
+            `/students/${studentId}/firma-electronica/acudiente`,
+            {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+            }
+        );
+
+        const datos = await respuesta.json();
+
+        if (! respuesta.ok || ! datos.ok) {
+            throw new Error(
+                datos.mensaje
+                || 'No fue posible cargar los datos del acudiente.'
+            );
+        }
+
+        nombre.value = datos.datos.nombre ?? '';
+        documento.value = datos.datos.documento ?? '';
+        correo.value = datos.datos.correo ?? '';
+        telefono.value = datos.datos.telefono ?? '';
+
+        nombre.placeholder = '';
+        documento.placeholder = '';
+
+    } catch (error) {
+        nombre.placeholder = 'No disponible';
+        documento.placeholder = 'No disponible';
+
+        showToast(
+            error.message
+            || 'No fue posible cargar los datos del acudiente.'
+        );
+    }
+}
+
+function cerrarModalFirma() {
+    const modal = document.getElementById('modalFirma');
+
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function cerrarModalFirmaDesdeFondo(event) {
+    if (event.target.id === 'modalFirma') {
+        cerrarModalFirma();
+    }
+}
+
+async function prepararEnvioFirma() {
+    const correo = document.getElementById('firmaCorreo');
+    const telefono = document.getElementById('firmaTelefono');
+    const pdf = document.getElementById('firmaPdf');
+
+    const boton = document.querySelector('.signature-submit');
+
+    const archivo = pdf.files[0] ?? null;
+
+    if (! correo.value.trim()) {
+        showToast('Debe indicar el correo electrónico para la firma.');
+        correo.focus();
+        return;
+    }
+
+    if (! telefono.value.trim()) {
+        showToast('Debe indicar el celular para SMS / OTP.');
+        telefono.focus();
+        return;
+    }
+
+    if (! /^3\d{9}$/.test(telefono.value.trim())) {
+        showToast(
+            'El celular debe tener 10 dígitos y comenzar por 3.'
+        );
+        telefono.focus();
+        return;
+    }
+
+    if (! archivo) {
+        showToast('Debe seleccionar el documento unificado.');
+        pdf.focus();
+        return;
+    }
+
+    if (
+        archivo.type !== 'application/pdf'
+        && ! archivo.name.toLowerCase().endsWith('.pdf')
+    ) {
+        showToast('El documento unificado debe ser un archivo PDF.');
+        pdf.focus();
+        return;
+    }
+
+    const datos = new FormData();
+
+    datos.append(
+        'correo',
+        correo.value.trim()
+    );
+
+    datos.append(
+        'telefono',
+        telefono.value.trim()
+    );
+
+    datos.append(
+        'pdf',
+        archivo
+    );
+
+    const textoOriginal = boton.textContent;
+
+    boton.disabled = true;
+    boton.innerHTML =
+        '<span class="spinner"></span> Preparando envío...';
+
+    try {
+        const respuesta = await fetch(
+            `/students/${studentId}/firma-electronica/preparar`,
+            {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: datos,
+            }
+        );
+
+        let resultado = {};
+
+        try {
+            resultado = await respuesta.json();
+        } catch (error) {
+            throw new Error(
+                'El servidor devolvió una respuesta no válida.'
+            );
+        }
+
+        if (! respuesta.ok || ! resultado.ok) {
+            throw new Error(
+                resultado.mensaje
+                || 'No fue posible preparar el envío para firma.'
+            );
+        }
+
+        cerrarModalFirma();
+
+        showToast(
+            resultado.mensaje
+            || 'Documentos enviados correctamente para firma.'
+        );
+
+    } catch (error) {
+        showToast(
+            error.message
+            || 'No fue posible preparar el envío para firma.'
+        );
+    } finally {
+        boton.disabled = false;
+        boton.textContent = textoOriginal;
+    }
+}
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        cerrarModalFirma();
+    }
+});
 
 function updateBadge() {
     const pendientes = document.querySelectorAll('.doc-row[data-generado="false"]').length;
