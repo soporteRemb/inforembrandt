@@ -40,7 +40,7 @@ class ConceptoCobro extends Model
         return $this->belongsTo(PeriodoLectivo::class);
     }
 
-public function recibosPago()
+    public function recibosPago()
     {
         return $this->hasMany(ReciboPago::class);
     }
@@ -50,4 +50,8 @@ public function recibosPago()
         return $this->hasMany(MovimientoCarteraEstudiante::class);
     }
 
+    public function asignacionesConcepto()
+    {
+        return $this->hasMany(AsignacionConcepto::class, 'concepto_cobro_id');
+    }
 }

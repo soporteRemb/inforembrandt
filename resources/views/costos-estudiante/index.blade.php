@@ -691,7 +691,7 @@
                     type="text"
                     name="saldo_anterior"
                     class="input-control money-input"
-                    value="{{ number_format($ficha->saldo_anterior ?? 0, 0, ',', '.') }}"
+                    value="{{ number_format($asignacionCostos?->saldo_anterior ?? 0, 0, ',', '.') }}"
                 >
             </div>
 
@@ -703,7 +703,7 @@
                     type="text"
                     name="matricula"
                     class="input-control money-input"
-                    value="{{ number_format($valorMatricula ?? 0, 0, ',', '.') }}"
+                    value="{{ number_format($asignacionCostos?->matricula ?? 0, 0, ',', '.') }}"
                     @disabled($movimientoMatricula?->tiene_pago_confirmado)
                 >
             </div>
@@ -716,7 +716,7 @@
                     type="text"
                     name="costos_academicos"
                     class="input-control money-input"
-                    value="{{ number_format($valorCostosAcademicos ?? 0, 0, ',', '.') }}"
+                    value="{{ number_format($asignacionCostos?->costos_academicos ?? 0, 0, ',', '.') }}"
                     @disabled($movimientoCostosAcademicos?->tiene_pago_confirmado)
                 >
             </div>
@@ -729,7 +729,8 @@
                     type="text"
                     name="deudas"
                     class="input-control money-input"
-                    value="{{ number_format($ficha->deudas ?? 0, 0, ',', '.') }}"
+                    value="{{ number_format($totalPensionesVisible ?? 0, 0, ',', '.') }}"
+                    readonly
                 >
             </div>
 
@@ -741,7 +742,7 @@
                     type="text"
                     name="otras_deudas"
                     class="input-control money-input"
-                    value="{{ number_format($totalOtrosCostos ?? 0, 0, ',', '.') }}"
+                    value="{{ number_format($totalOtrosCostosVisible ?? 0, 0, ',', '.') }}"
                     readonly
                 >
             </div>
@@ -754,7 +755,8 @@
                     type="text"
                     name="abonos"
                     class="input-control money-input"
-                    value="{{ number_format($ficha->abonos ?? 0, 0, ',', '.') }}"
+                    value="{{ number_format($totalAbonos ?? 0, 0, ',', '.') }}"
+                    readonly
                 >
             </div>
 
@@ -792,9 +794,28 @@
             </div>
 
             <div class="month-list">
+                @php
+                    $columnasPensiones = [
+                        2 => 'pension_febrero',
+                        3 => 'pension_marzo',
+                        4 => 'pension_abril',
+                        5 => 'pension_mayo',
+                        6 => 'pension_junio',
+                        7 => 'pension_julio',
+                        8 => 'pension_agosto',
+                        9 => 'pension_septiembre',
+                        10 => 'pension_octubre',
+                        11 => 'pension_noviembre',
+                    ];
+                @endphp
+
                 @foreach($meses as $numero => $mes)
                     @php
                         $pensionMes = $movimientosPension->firstWhere('mes_numero', $numero);
+                    @endphp
+                    @php
+                        $columnaPension = $columnasPensiones[$numero];
+                        $valorPensionAsignada = $asignacionCostos?->{$columnaPension} ?? 0;
                     @endphp
 
                     <div class="row-line">
@@ -811,7 +832,7 @@
                             type="text"
                             name="pensiones[{{ $numero }}]"
                             class="input-control money-input" 
-                            value="{{ number_format($pensionMes?->valor_personalizado ?? 0, 0, ',', '.') }}" 
+                            value="{{ number_format($valorPensionAsignada, 0, ',', '.') }}"
                             style="text-align:right;"
                         >
                     </div>

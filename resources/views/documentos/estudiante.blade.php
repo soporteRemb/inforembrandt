@@ -809,7 +809,6 @@
 <div
     class="signature-modal-backdrop"
     id="modalFirma"
-    onclick="cerrarModalFirmaDesdeFondo(event)"
 >
     <div
         class="signature-modal"

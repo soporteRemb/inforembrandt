@@ -164,10 +164,7 @@ class AsignacionConceptoResource extends Resource
                                     ])
                                     ->toArray();
 
-                                return [
-                                    'todos' => 'Todos los grados',
-                                    ...$grados,
-                                ];
+                                return ['todos' => 'Todos los grados'] + $grados;
                             })
                             ->searchable()
                             ->preload()

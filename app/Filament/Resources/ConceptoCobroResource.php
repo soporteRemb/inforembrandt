@@ -13,6 +13,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 
 
 use Illuminate\Database\Eloquent\Builder;
@@ -319,7 +320,21 @@ class ConceptoCobroResource extends Resource
                     ->label('Editar'),
                     
                 Tables\Actions\DeleteAction::make()
-                    ->label('Borrar'),
+                    ->label('Borrar')
+                    ->before(function (
+                        Tables\Actions\DeleteAction $action,
+                        ConceptoCobro $record
+                    ) {
+                        if ($record->asignacionesConcepto()->exists()) {
+                            Notification::make()
+                                ->title('No se puede eliminar el concepto')
+                                ->body('Este concepto tiene asignaciones asociadas. Elimine primero sus asignaciones para poder eliminarlo.')
+                                ->warning()
+                                ->send();
+
+                            $action->cancel();
+                        }
+                    }),
                     
             ])
             

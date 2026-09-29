@@ -331,7 +331,28 @@ class UserResource extends Resource
                     ->color('primary')
                     ->separator(','),
             ])
-            ->filters([])
+            ->filters([
+                Tables\Filters\SelectFilter::make('rol')
+                    ->label('Rol')
+                    ->options(
+                        Role::query()
+                            ->orderBy('name')
+                            ->pluck('name', 'name')
+                            ->toArray()
+                    )
+                    ->query(
+                        fn (Builder $query, array $data): Builder =>
+                            $query->when(
+                                $data['value'] ?? null,
+                                fn (Builder $query, $rol): Builder =>
+                                    $query->whereHas(
+                                        'roles',
+                                        fn (Builder $query) =>
+                                            $query->where('name', $rol)
+                                    )
+                            )
+                    ),
+            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
 

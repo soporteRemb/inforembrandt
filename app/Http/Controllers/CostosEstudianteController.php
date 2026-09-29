@@ -10,6 +10,7 @@ use App\Models\OtroCostoEstudiante;
 use App\Models\CostoMoraEstudiante;
 use App\Models\MovimientoCarteraEstudiante;
 use App\Models\ReciboPago;
+use App\Models\AsignacionCostosEstudiante;
 
 
 use App\Services\Financiero\ResumenCuentaEstudianteService;
@@ -57,6 +58,11 @@ class CostosEstudianteController extends Controller
                 'observaciones' => null,
             ]
         );
+
+        $asignacionCostos = AsignacionCostosEstudiante::query()
+            ->where('student_id', $student->id)
+            ->where('periodo_lectivo_id', $student->periodo_lectivo_id)
+            ->first();
 
         /*
         |--------------------------------------------------------------------------
@@ -238,12 +244,7 @@ class CostosEstudianteController extends Controller
             + $totalPensiones
             + $totalOtrosCostos;
 
-        $totalDeuda = max(
-            (float) ($ficha->saldo_anterior ?? 0)
-            + $totalCausado
-            - (float) ($ficha->abonos ?? 0),
-            0
-        );
+    
 
         /*
         |--------------------------------------------------------------------------
@@ -264,6 +265,30 @@ class CostosEstudianteController extends Controller
 
         $pagosRealizados = collect(
             $historialPagos['filas'] ?? []
+        );
+
+        $totalAbonos = $pagosRealizados->sum(
+            fn (array $pago) => (float) ($pago['valor_pagado'] ?? 0)
+        );
+
+        $tieneCostosAsignados = $asignacionCostos !== null;
+
+        $totalPensionesVisible = $tieneCostosAsignados
+            ? $totalPensiones
+            : 0;
+
+        $totalOtrosCostosVisible = $tieneCostosAsignados
+            ? $totalOtrosCostos
+            : 0;
+
+        $totalDeuda = max(
+            (float) ($asignacionCostos?->saldo_anterior ?? 0)
+            + (float) ($asignacionCostos?->matricula ?? 0)
+            + (float) ($asignacionCostos?->costos_academicos ?? 0)
+            + $totalPensionesVisible
+            + $totalOtrosCostosVisible
+            - $totalAbonos,
+            0
         );
 
         return view('costos-estudiante.index', [
@@ -302,9 +327,21 @@ class CostosEstudianteController extends Controller
 
             'totalDeuda' =>
                 $totalDeuda,
+            
+            'totalAbonos' =>
+                $totalAbonos,
 
             'pagosRealizados' =>
                 $pagosRealizados,
+            
+            'asignacionCostos' =>
+                $asignacionCostos,
+
+            'totalPensionesVisible' =>
+                $totalPensionesVisible,
+
+            'totalOtrosCostosVisible' =>
+                $totalOtrosCostosVisible,
         ]);
     }
 
@@ -414,6 +451,46 @@ class CostosEstudianteController extends Controller
                     );
                 }
             }
+        }
+        $asignacionCostos = AsignacionCostosEstudiante::query()
+            ->where('student_id', $student->id)
+            ->where('periodo_lectivo_id', $student->periodo_lectivo_id)
+            ->first();
+
+        if ($asignacionCostos) {
+            $columnasPensiones = [
+                2 => 'pension_febrero',
+                3 => 'pension_marzo',
+                4 => 'pension_abril',
+                5 => 'pension_mayo',
+                6 => 'pension_junio',
+                7 => 'pension_julio',
+                8 => 'pension_agosto',
+                9 => 'pension_septiembre',
+                10 => 'pension_octubre',
+                11 => 'pension_noviembre',
+            ];
+
+            $valoresAsignados = [
+                'saldo_anterior' => (float) $data['saldo_anterior'],
+                'matricula' => (float) $data['matricula'],
+                'costos_academicos' => (float) $data['costos_academicos'],
+            ];
+
+            foreach ($request->input('pensiones', []) as $mesNumero => $valor) {
+                $mesNumero = (int) $mesNumero;
+
+                if (! isset($columnasPensiones[$mesNumero])) {
+                    continue;
+                }
+
+                $valorLimpio = preg_replace('/\D/', '', $valor ?? '0');
+
+                $valoresAsignados[$columnasPensiones[$mesNumero]]
+                    = (float) $valorLimpio;
+            }
+
+            $asignacionCostos->update($valoresAsignados);
         }
         if ($ficha && $request->filled('otros_costos')) {
             foreach ($request->otros_costos as $otroCostoId => $valor) {
@@ -569,11 +646,9 @@ class CostosEstudianteController extends Controller
             10 => 'Octubre',
             11 => 'Noviembre',
         ];
-
         $valorMatricula = 0;
         $valorPension = 0;
         $valorCostosAcademicos = 0;
-
         foreach ($asignaciones as $asignacion) {
             $descripcion = Str::upper(Str::ascii($asignacion->conceptoCobro?->descripcion ?? ''));
             $valor = (int) $asignacion->tarifa_ordinaria;
@@ -609,6 +684,7 @@ class CostosEstudianteController extends Controller
                 continue;
             }
 
+            
             OtroCostoEstudiante::updateOrCreate(
                 [
                     'ficha_costo_estudiante_id' => $ficha->id,
@@ -651,6 +727,34 @@ class CostosEstudianteController extends Controller
             'pension_inicial' => $valorPension,
             'total_deuda' => max($totalDeuda, 0),
         ]);
+
+        AsignacionCostosEstudiante::updateOrCreate(
+            [
+                'student_id' => $student->id,
+                'periodo_lectivo_id' => $student->periodo_lectivo_id,
+            ],
+            [
+                'sede_id' => $student->sede_id,
+
+                'saldo_anterior' => (float) ($ficha->saldo_anterior ?? 0),
+
+                'matricula' => $valorMatricula,
+                'costos_academicos' => $valorCostosAcademicos,
+
+                'pension_febrero' => $valorPension,
+                'pension_marzo' => $valorPension,
+                'pension_abril' => $valorPension,
+                'pension_mayo' => $valorPension,
+                'pension_junio' => $valorPension,
+                'pension_julio' => $valorPension,
+                'pension_agosto' => $valorPension,
+                'pension_septiembre' => $valorPension,
+                'pension_octubre' => $valorPension,
+                'pension_noviembre' => $valorPension,
+
+                'otros_costos_academicos' => 0,
+            ]
+        );
 
         return redirect()
             ->route('costos.estudiante', $student)
