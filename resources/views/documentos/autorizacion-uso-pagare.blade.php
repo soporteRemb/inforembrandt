@@ -231,18 +231,21 @@
                     ].includes(nombreCampo)) {
                         const widgets = campo.acroField.getWidgets();
 
-                        for (const widget of widgets) {
+                        if (widgets.length > 0) {
+                            const widget = widgets[0];
                             const rectangulo = widget.getRectangle();
+
+                            // Aprovechar el espacio disponible hacia la derecha.
+                            // Mantener el correo dentro de su propia columna.
+                            const anchoMaximo = 155;
 
                             widget.setRectangle({
                                 x: rectangulo.x,
                                 y: rectangulo.y,
-                                width: rectangulo.width + 90,
+                                width: anchoMaximo,
                                 height: rectangulo.height,
                             });
                         }
-
-                        tamanoFuente = 8;
                     }
 
                     /*
@@ -263,18 +266,6 @@
                         'Dirección',
                         'Dirección_2',
                     ].includes(nombreCampo)) {
-                        const widgets = campo.acroField.getWidgets();
-
-                        for (const widget of widgets) {
-                            const rectangulo = widget.getRectangle();
-
-                            widget.setRectangle({
-                                x: rectangulo.x,
-                                y: rectangulo.y,
-                                width: rectangulo.width + 85,
-                                height: rectangulo.height,
-                            });
-                        }
 
                         if (valor.length > 40) {
                             tamanoFuente = 7;
@@ -284,9 +275,33 @@
                             tamanoFuente = 9;
                         }
                     }
-                    campo.setFontSize(
-                        tamanoFuente
-                    );
+                    // Ajustar el tamaño de letra al ancho real del campo.
+                    if (valor.trim() !== '') {
+                        const widgets = campo.acroField.getWidgets();
+
+                        if (widgets.length > 0) {
+                            const rectangulo = widgets[0].getRectangle();
+
+                            // Margen interno para evitar que el texto toque los bordes.
+                            const anchoDisponible = Math.max(
+                                1,
+                                rectangulo.width - 6
+                            );
+
+                            // Reducir progresivamente hasta que el texto quepa.
+                            while (
+                                tamanoFuente > 6 &&
+                                fuente.widthOfTextAtSize(
+                                    valor,
+                                    tamanoFuente
+                                ) > anchoDisponible
+                            ) {
+                                tamanoFuente -= 0.5;
+                            }
+                        }
+                    }
+
+                    campo.setFontSize(tamanoFuente);
 
                 } catch (campoError) {
                     camposNoEncontrados.push(
