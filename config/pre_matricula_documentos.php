@@ -108,6 +108,21 @@ return [
             'nombre' => 'Click and sign matrícula electrónica soporte firma electrónica (contrato, pagaré, tratamiento de datos, consulta de centrales de riesgos y RAE).',
         ],
 
+        'foto_familiar' => [
+            'nombre' => 'Foto familiar',
+        ],
+
+        'foto_alumno' => [
+            'nombre' => 'Foto de alumno',
+        ],
+
+        'extrajuicio' => [
+            'nombre' => 'Extrajuicio',
+        ],
+
+        'declaracion_juramentada_ingresos' => [
+            'nombre' => 'Declaración juramentada de ingresos',
+        ],
     ],
 
     'tipos_formulario' => [
@@ -160,6 +175,21 @@ return [
             'nombre' => 'Copia del recibo público del domicilio del padre de familia y Codeudor si aplica',
         ],
 
+        'foto_familiar' => [
+            'nombre' => 'Foto familiar',
+        ],
+
+        'foto_alumno' => [
+            'nombre' => 'Foto de alumno',
+        ],
+
+        'extrajuicio' => [
+            'nombre' => 'Extrajuicio',
+        ],
+
+        'declaracion_juramentada_ingresos' => [
+            'nombre' => 'Declaración juramentada de ingresos',
+        ],
     ],
 
 ];

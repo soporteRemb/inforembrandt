@@ -208,4 +208,48 @@ class PreMatriculaService
             return $preMatricula->fresh();
         });
     }
+
+    public function reactivarFormularioCompletado(
+        PreMatricula $preMatricula,
+        User $actualizadoPor,
+        \DateTimeInterface|string|null $fechaLimite
+    ): PreMatricula {
+        if (! $preMatricula->estaCompletada()) {
+            throw ValidationException::withMessages([
+                'data.is_active' =>
+                    'Solo se puede utilizar esta operación con formularios completados.',
+            ]);
+        }
+
+        if (
+            blank($fechaLimite)
+            || \Carbon\Carbon::parse($fechaLimite)->startOfDay()->lte(today())
+        ) {
+            throw ValidationException::withMessages([
+                'data.expires_at' =>
+                    'Debe establecer una fecha futura para reactivar el formulario.',
+            ]);
+        }
+
+        return DB::transaction(function () use (
+            $preMatricula,
+            $actualizadoPor,
+            $fechaLimite
+        ): PreMatricula {
+            $preMatricula->forceFill([
+                'estado' => 'pendiente',
+                'fecha_limite' => $fechaLimite,
+                'actualizado_por' => $actualizadoPor->id,
+            ])->save();
+
+            $this->historialService->registrarEvento(
+                $preMatricula,
+                'reactivacion',
+                'Formulario completado habilitado nuevamente para correcciones y documentos adicionales.',
+                $actualizadoPor
+            );
+
+            return $preMatricula->fresh();
+        });
+    }
 }

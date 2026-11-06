@@ -10,6 +10,10 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    protected ?bool $hasDatabaseTransactions = true;
+
+    protected bool $reactivacionTemporalSolicitada = false;
+
     protected function beforeSave(): void
     {
         $tipoUsuario = UserResource::tipoUsuarioDesdeRoles(
@@ -40,30 +44,56 @@ class EditUser extends EditRecord
 
         /*
         |--------------------------------------------------------------------------
-        | Un formulario enviado no puede reactivarse
+        | Validar reactivación del acceso temporal
         |--------------------------------------------------------------------------
+        |
+        | Se permite reactivar un formulario completado o vencido,
+        | siempre que el administrador establezca una fecha futura.
+        |
         */
+
         $seEstaActivando =
             (bool) ($this->data['is_active'] ?? false)
             && ! (bool) $this->record->is_active;
-
-        if (! $seEstaActivando) {
-            return;
-        }
+        $this->reactivacionTemporalSolicitada = $seEstaActivando;
 
         $preMatriculaActual = \App\Models\PreMatricula::query()
             ->where('user_id', $this->record->id)
             ->latest('id')
             ->first();
+        if (
+            $preMatriculaActual
+            && (int) $preMatriculaActual->sede_id !== (int) $sedeIds->first()
+        ) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'data.sedes' =>
+                    'Este usuario ya tiene una pre-matrícula asociada a otra sede. No es posible cambiar su sede desde esta edición.',
+            ]);
+        }
+
+        if (! $seEstaActivando) {
+            return;
+        }
 
         if (
             $preMatriculaActual
-            && $preMatriculaActual->estado === 'completado'
+            && in_array(
+                $preMatriculaActual->estado,
+                ['completado', 'vencido'],
+                true
+            )
         ) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'data.is_active' =>
-                    'No es posible reactivar este usuario porque su formulario de pre-matrícula ya fue enviado.',
-            ]);
+            $fechaVencimiento = $this->data['expires_at'] ?? null;
+
+            if (
+                blank($fechaVencimiento)
+                || \Carbon\Carbon::parse($fechaVencimiento)->startOfDay()->lte(today())
+            ) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'data.expires_at' =>
+                        'Debe seleccionar una fecha futura para reactivar el formulario.',
+                ]);
+            }
         }
     }
     protected function afterSave(): void
@@ -128,6 +158,110 @@ class EditUser extends EditRecord
             ->values();
 
         $sedeId = $sedeIds->first();
+        /*
+        |--------------------------------------------------------------------------
+        | Buscar primero el formulario existente del usuario
+        |--------------------------------------------------------------------------
+        |
+        | Se conserva su identificador, sede y período lectivo.
+        | Solo se crea un formulario cuando el usuario no tiene ninguno.
+        |
+        */
+
+        $preMatriculaExistente = \App\Models\PreMatricula::query()
+            ->where('user_id', $this->record->id)
+            ->latest('id')
+            ->first();
+
+        if ($preMatriculaExistente) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Evitar asociar el formulario a otra sede
+            |--------------------------------------------------------------------------
+            */
+
+            if ((int) $preMatriculaExistente->sede_id !== (int) $sedeId) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'data.sedes' =>
+                        'Este usuario ya tiene una pre-matrícula asociada a otra sede.',
+                ]);
+            }
+
+            $administrador = auth()->user();
+
+            if (! $administrador) {
+                throw new \RuntimeException(
+                    'No se pudo identificar al administrador que modificó el acceso temporal.'
+                );
+            }
+
+            $servicio = app(
+                \App\Services\PreMatriculas\PreMatriculaService::class
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reactivar formulario completado o vencido
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $this->reactivacionTemporalSolicitada
+                && (bool) $this->record->is_active
+            ) {
+
+                if ($preMatriculaExistente->estado === 'completado') {
+                    $servicio->reactivarFormularioCompletado(
+                        $preMatriculaExistente,
+                        $administrador,
+                        $this->record->expires_at
+                    );
+
+                    return;
+                }
+
+                if ($preMatriculaExistente->estado === 'vencido') {
+                    $servicio->reactivarFormularioVencido(
+                        $preMatriculaExistente,
+                        $administrador,
+                        $this->record->expires_at
+                    );
+
+                    return;
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Sincronizar fecha límite del formulario pendiente
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $preMatriculaExistente->estado === 'pendiente'
+                && $this->record->expires_at
+                && (
+                    ! $preMatriculaExistente->fecha_limite
+                    || ! $preMatriculaExistente->fecha_limite->equalTo(
+                        $this->record->expires_at
+                    )
+                )
+            ) {
+                $preMatriculaExistente->forceFill([
+                    'fecha_limite' => $this->record->expires_at,
+                    'actualizado_por' => $administrador->id,
+                ])->save();
+            }
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Crear formulario únicamente si no existe uno anterior
+        |--------------------------------------------------------------------------
+        */
 
         $periodoLectivo = \App\Models\PeriodoLectivo::query()
             ->where('sede_id', $sedeId)
@@ -141,83 +275,6 @@ class EditUser extends EditRecord
                     . now()->year . '.',
             ]);
         }
-
-        $preMatriculaExistente = \App\Models\PreMatricula::query()
-            ->where('user_id', $this->record->id)
-            ->where('sede_id', $sedeId)
-            ->where('periodo_lectivo_id', $periodoLectivo->id)
-            ->latest('id')
-            ->first();
-
-        if ($preMatriculaExistente) {
-        /*
-        |--------------------------------------------------------------------------
-        | Reactivar formulario vencido
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            $preMatriculaExistente->estado === 'vencido'
-            && (bool) $this->record->is_active
-        ) {
-            $administrador = auth()->user();
-
-            if (! $administrador) {
-                throw new \RuntimeException(
-                    'No se pudo identificar al usuario que reactivó el acceso temporal.'
-                );
-            }
-
-            app(
-                \App\Services\PreMatriculas\PreMatriculaService::class
-            )->reactivarFormularioVencido(
-                $preMatriculaExistente,
-                $administrador,
-                $this->record->expires_at
-            );
-
-            return;
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Sincronizar fecha límite del formulario pendiente
-        |--------------------------------------------------------------------------
-        |
-        | Cuando se modifica la fecha de vencimiento del usuario temporal,
-        | mantenemos sincronizada la fecha límite de su formulario pendiente.
-        |
-        | Los formularios completados no se modifican y los vencidos solamente
-        | cambian su fecha mediante el proceso normal de reactivación.
-        |
-        */
-
-        if (
-            $preMatriculaExistente->estado === 'pendiente'
-            && $this->record->expires_at
-            && (
-                ! $preMatriculaExistente->fecha_limite
-                || ! $preMatriculaExistente->fecha_limite->equalTo(
-                    $this->record->expires_at
-                )
-            )
-        ) {
-            $administrador = auth()->user();
-
-            if (! $administrador) {
-                throw new \RuntimeException(
-                    'No se pudo identificar al usuario que modificó el acceso temporal.'
-                );
-            }
-
-            $preMatriculaExistente->forceFill([
-                'fecha_limite' => $this->record->expires_at,
-                'actualizado_por' => $administrador->id,
-            ])->save();
-        }
-
-        return;
-    }
 
         $administrador = auth()->user();
 
