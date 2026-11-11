@@ -706,8 +706,10 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
                 */
 
                 if ($esArchivoPreMatricula) {
-                    $estudiantesParaIncorporarDocumentos[$student->id] =
-                        $student->id;
+                    $estudiantesParaIncorporarDocumentos[$student->id] = [
+                        'student_id' => $student->id,
+                        'numero_formulario' => $numeroFormulario,
+                    ];
                 }
             }
 
@@ -737,8 +739,11 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
 
                 foreach (
                     $estudiantesParaIncorporarDocumentos
-                    as $studentId
+                    as $datosIncorporacion
                 ) {
+                    $studentId = $datosIncorporacion['student_id'];
+                    $numeroFormulario = $datosIncorporacion['numero_formulario'];
+
                     try {
                         $studentDocumentos = Student::find(
                             $studentId
@@ -749,7 +754,8 @@ class EstudiantesImportService extends BaseImportService implements ImportadorIn
                         }
 
                         $servicioDocumentos->ejecutar(
-                            $studentDocumentos
+                            $studentDocumentos,
+                            $numeroFormulario
                         );
                     } catch (\Throwable $e) {
                         $resultado->agregarError(

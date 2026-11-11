@@ -21,10 +21,42 @@ class PreMatriculaService
         int $periodoLectivoId,
         User $creadoPor
     ): PreMatricula {
+        $periodoOrigen = \App\Models\PeriodoLectivo::query()
+            ->where('id', $periodoLectivoId)
+            ->where('sede_id', $sedeId)
+            ->first();
+
+        if (! $periodoOrigen) {
+            throw ValidationException::withMessages([
+                'data.sedes' => 'El período lectivo de origen no pertenece a la sede seleccionada.',
+            ]);
+        }
+
+        $anioOrigen = trim((string) $periodoOrigen->nombre);
+
+        if (! preg_match('/^\d{4}$/', $anioOrigen)) {
+            throw ValidationException::withMessages([
+                'data.sedes' => 'El período lectivo de origen debe corresponder a un año válido.',
+            ]);
+        }
+
+        $anioDestino = (string) ((int) $anioOrigen + 1);
+
+        $periodoDestino = \App\Models\PeriodoLectivo::query()
+            ->where('sede_id', $sedeId)
+            ->where('nombre', $anioDestino)
+            ->first();
+
+        if (! $periodoDestino) {
+            throw ValidationException::withMessages([
+                'data.sedes' => "La sede seleccionada no tiene configurado el período lectivo {$anioDestino}.",
+            ]);
+        }
         return DB::transaction(function () use (
             $usuarioTemporal,
             $sedeId,
             $periodoLectivoId,
+            $periodoDestino,
             $creadoPor
         ): PreMatricula {
             $preMatricula = PreMatricula::create([
@@ -37,7 +69,7 @@ class PreMatriculaService
 
                 'periodo_lectivo_id' => $periodoLectivoId,
 
-                'periodo_destino_id' => $periodoLectivoId,
+                'periodo_destino_id' => $periodoDestino->id,
 
                 'estado' => 'pendiente',
 

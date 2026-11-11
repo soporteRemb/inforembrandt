@@ -4,6 +4,8 @@ namespace App\Services\PreMatriculas;
 
 use App\Models\PreMatricula;
 
+use App\Models\Student;
+
 
 use App\Services\Estudiantes\GenerarCodigoEstudianteService;
 
@@ -606,56 +608,124 @@ class PreMatriculaExportacionService
     ): string {
         /*
         |--------------------------------------------------------------------------
-        | Código ya asignado
+        | Estudiante antiguo: conservar código institucional histórico
         |--------------------------------------------------------------------------
-        |
-        | Puede ser el código histórico de un estudiante antiguo o un código
-        | previamente reservado para un estudiante nuevo.
-        |
-        | Una vez existe, nunca se vuelve a generar.
-        |
         */
 
-        if (filled($formulario->codigo)) {
-            return trim(
-                (string) $formulario->codigo
+        if (
+            mb_strtolower(
+                trim((string) $formulario->condicion_ingreso),
+                'UTF-8'
+            ) === 'antiguo'
+        ) {
+            $estudiantesHistoricos = Student::query()
+                ->where('documento', $formulario->documento)
+                ->where('sede_id', $formulario->sede_id)
+                ->whereHas('periodoLectivo', function ($query) use ($formulario) {
+                    $query->where(
+                        'nombre',
+                        '<',
+                        (string) (
+                            (int) $formulario->periodoLectivo->nombre + 1
+                        )
+                    );
+                })
+                ->whereNotNull('codigo')
+                ->where('codigo', '!=', '')
+                ->orderByDesc('periodo_lectivo_id')
+                ->get();
+
+            $codigosHistoricos = $estudiantesHistoricos
+                ->pluck('codigo')
+                ->map(fn ($codigo) => trim((string) $codigo))
+                ->unique()
+                ->values();
+
+            if ($codigosHistoricos->count() > 1) {
+                throw new \RuntimeException(
+                    "El estudiante con documento {$formulario->documento} "
+                    . 'tiene diferentes códigos institucionales históricos. '
+                    . 'Debe revisarse antes de exportar.'
+                );
+            }
+
+            if ($codigosHistoricos->count() === 1) {
+                $codigoHistorico = $codigosHistoricos->first();
+
+                if (
+                    trim((string) $formulario->codigo)
+                    !== $codigoHistorico
+                ) {
+                    $formulario->forceFill([
+                        'codigo' => $codigoHistorico,
+                    ])->save();
+                }
+
+                return $codigoHistorico;
+            }
+
+            // Si no existe historial, conservar un código ya asignado.
+            // No generar automáticamente uno nuevo para un estudiante antiguo.
+            if (filled($formulario->codigo)) {
+                return trim((string) $formulario->codigo);
+            }
+
+            throw new \RuntimeException(
+                "No se encontró un código institucional histórico "
+                . "para el estudiante antiguo con documento {$formulario->documento}."
             );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Estudiante nuevo
+        | Estudiante nuevo: conservar código existente
         |--------------------------------------------------------------------------
-        |
-        | Si la pre-matrícula no tiene código, se genera uno para el periodo
-        | de destino y se guarda inmediatamente. Las próximas exportaciones
-        | reutilizarán exactamente este mismo código.
-        |
         */
+
+        if (filled($formulario->codigo)) {
+            return trim((string) $formulario->codigo);
+        }
 
         /*
         |--------------------------------------------------------------------------
-        | Resolver periodo de destino
+        | Estudiante nuevo: generar código para el período de destino
         |--------------------------------------------------------------------------
-        |
-        | Las pre-matrículas creadas con el modelo actual tienen
-        | periodo_destino_id y ese valor siempre tiene prioridad.
-        |
-        | Los registros históricos fueron creados antes de existir esa columna.
-        | En aquella versión, periodo_lectivo_id era el único periodo asociado
-        | al formulario y representaba el periodo para el cual se habilitaba
-        | la pre-matrícula.
-        |
-        | Este fallback existe únicamente por compatibilidad histórica.
-        |
         */
 
-        $periodoDestinoId = $formulario->periodo_destino_id
-            ?: $formulario->periodo_lectivo_id;
+        $periodoOrigen = \App\Models\PeriodoLectivo::query()
+            ->whereKey($formulario->periodo_lectivo_id)
+            ->where('sede_id', $formulario->sede_id)
+            ->first();
+
+        if (
+            ! $periodoOrigen
+            || ! preg_match('/^\d{4}$/', trim((string) $periodoOrigen->nombre))
+        ) {
+            throw new \RuntimeException(
+                'No se pudo determinar el año de origen de la pre-matrícula.'
+            );
+        }
+
+        $anioDestino = (int) $periodoOrigen->nombre + 1;
+
+        $periodoDestino = \App\Models\PeriodoLectivo::query()
+            ->where('sede_id', $formulario->sede_id)
+            ->where('nombre', (string) $anioDestino)
+            ->first();
+
+        if (! $periodoDestino) {
+            throw new \RuntimeException(
+                "No existe el período lectivo {$anioDestino} "
+                . "para la sede {$formulario->sede_id}."
+            );
+        }
+
+        $periodoDestinoId = $periodoDestino->id;
 
         if (empty($periodoDestinoId)) {
             throw new \RuntimeException(
-                'No es posible generar el código del estudiante porque la pre-matrícula no tiene un periodo lectivo asociado.'
+                'No es posible generar el código del estudiante porque '
+                . 'la pre-matrícula no tiene un período lectivo asociado.'
             );
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\DocumentosEstudiante;
 
+use App\Models\PeriodoLectivo;
 use App\Models\PreMatricula;
 use App\Models\Student;
 
@@ -13,7 +14,8 @@ class IncorporarDocumentosPreMatriculaService
     }
 
     public function ejecutar(
-        Student $student
+        Student $student,
+        ?string $numeroFormulario = null
     ): array {
 
         /*
@@ -31,33 +33,68 @@ class IncorporarDocumentosPreMatriculaService
         |
         */
 
-        $preMatricula = PreMatricula::query()
-            ->where(
-                'documento',
-                $student->documento
-            )
-            ->where(
-                'sede_id',
-                $student->sede_id
-            )
-            ->where(function ($query) use ($student) {
-                $query
-                    ->where(
-                        'periodo_destino_id',
-                        $student->periodo_lectivo_id
-                    )
-                    ->orWhere(function ($query) use ($student) {
-                        $query
-                            ->whereNull('periodo_destino_id')
-                            ->where(
-                                'periodo_lectivo_id',
-                                $student->periodo_lectivo_id
-                            );
-                    });
-            })
-            ->with('documentos')
-            ->latest('id')
-            ->first();
+        $numeroFormulario = trim((string) $numeroFormulario);
+
+        if ($numeroFormulario !== '') {
+            $preMatricula = PreMatricula::query()
+                ->where('numero_formulario', $numeroFormulario)
+                ->where('documento', $student->documento)
+                ->where('sede_id', $student->sede_id)
+                ->with('documentos')
+                ->first();
+
+            if ($preMatricula) {
+                $periodoDestinoValido =
+                    (int) $preMatricula->periodo_destino_id ===
+                    (int) $student->periodo_lectivo_id;
+
+                if (! $periodoDestinoValido) {
+                    $periodoOrigen = PeriodoLectivo::query()
+                        ->whereKey($preMatricula->periodo_lectivo_id)
+                        ->where('sede_id', $student->sede_id)
+                        ->first();
+
+                    $periodoEstudiante = PeriodoLectivo::query()
+                        ->whereKey($student->periodo_lectivo_id)
+                        ->where('sede_id', $student->sede_id)
+                        ->first();
+
+                    $anioOrigen = trim((string) ($periodoOrigen?->nombre ?? ''));
+                    $anioEstudiante = trim((string) ($periodoEstudiante?->nombre ?? ''));
+
+                    $periodoDestinoValido =
+                        preg_match('/^\d{4}$/', $anioOrigen) === 1
+                        && preg_match('/^\d{4}$/', $anioEstudiante) === 1
+                        && (int) $anioEstudiante === (int) $anioOrigen + 1;
+                }
+
+                if (! $periodoDestinoValido) {
+                    $preMatricula = null;
+                }
+            }
+        } else {
+            $preMatricula = PreMatricula::query()
+                ->where('documento', $student->documento)
+                ->where('sede_id', $student->sede_id)
+                ->where(function ($query) use ($student) {
+                    $query
+                        ->where(
+                            'periodo_destino_id',
+                            $student->periodo_lectivo_id
+                        )
+                        ->orWhere(function ($query) use ($student) {
+                            $query
+                                ->whereNull('periodo_destino_id')
+                                ->where(
+                                    'periodo_lectivo_id',
+                                    $student->periodo_lectivo_id
+                                );
+                        });
+                })
+                ->with('documentos')
+                ->latest('id')
+                ->first();
+        }
 
         /*
         |--------------------------------------------------------------------------
