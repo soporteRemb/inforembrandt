@@ -386,13 +386,6 @@ class AsignacionConceptoResource extends Resource
                     ->alignEnd()
                     ->sortable(),
 
-                
-
-                Tables\Columns\TextColumn::make('orden')
-                    ->label('Orden')
-                    ->alignCenter()
-                    ->sortable(),
-
                 Tables\Columns\IconColumn::make('activo')
                     ->label('Activo')
                     ->boolean()

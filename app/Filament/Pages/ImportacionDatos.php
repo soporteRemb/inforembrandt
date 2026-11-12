@@ -11,6 +11,8 @@ use App\Services\Importacion\Pensum\PensumImportService;
 use App\Services\Importacion\Docentes\DocentesImportService;
 use App\Services\Importacion\Asignaciones\AsignacionesImportService;
 use App\Services\Importacion\Acudientes\AcudientesImportService;
+use App\Services\Importacion\ConceptosCobro\ConceptosCobroImportService;
+use App\Services\Importacion\AsignacionConceptos\AsignacionConceptosImportService;
 
 use App\Traits\HasPagePermissions;
 
@@ -96,7 +98,23 @@ class ImportacionDatos extends Page
 
     public bool $mostrarModalErroresAcudientes = false;
 
+    public $archivoConceptosCobro = null;
+
+    public array $erroresConceptosCobro = [];
+
+    public ?array $resultadoConceptosCobro = null;
+
+    public bool $mostrarModalErroresConceptosCobro = false;
+
     public string $buscarImportador = '';
+
+    public $archivoAsignacionConceptos = null;
+
+    public array $erroresAsignacionConceptos = [];
+
+    public ?array $resultadoAsignacionConceptos = null;
+
+    public bool $mostrarModalErroresAsignacionConceptos = false;
 
 
 
@@ -387,7 +405,152 @@ class ImportacionDatos extends Page
             ->send();
     }
 
+    public function importarConceptosCobro(): void
+    {
+        if (! $this->archivoConceptosCobro) {
+            Notification::make()
+                ->title('Seleccione un archivo Excel.')
+                ->warning()
+                ->send();
 
+            return;
+        }
+
+        if (! $this->sedeId || ! $this->periodoLectivoId) {
+            Notification::make()
+                ->title('Filtros incompletos')
+                ->body('Seleccione sede y período lectivo antes de importar.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! PeriodoLectivo::query()
+            ->whereKey($this->periodoLectivoId)
+            ->where('sede_id', $this->sedeId)
+            ->exists()) {
+            Notification::make()
+                ->title('Sede y período incompatibles')
+                ->body('El período lectivo seleccionado no pertenece a la sede de destino.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $service = new ConceptosCobroImportService();
+
+        $resultado = $service->importar(
+            $this->archivoConceptosCobro->getRealPath(),
+            [
+                'sede_id' => $this->sedeId,
+                'periodo_lectivo_id' => $this->periodoLectivoId,
+            ]
+        );
+
+        $this->resultadoConceptosCobro = $resultado->toArray();
+        $this->erroresConceptosCobro = $resultado->errores;
+
+        $this->mostrarModalErroresConceptosCobro =
+            $resultado->omitidos > 0 || $resultado->tieneErrores();
+
+        $this->guardarHistorialImportacion(
+            'conceptos_cobro',
+            $this->resultadoConceptosCobro
+        );
+
+        Notification::make()
+            ->title(
+                $resultado->omitidos > 0 || $resultado->tieneErrores()
+                    ? 'Importación finalizada con advertencias'
+                    : 'Importación completada'
+            )
+            ->body(
+                'Filas leídas: ' . $resultado->filasLeidas .
+                ' | Creados: ' . $resultado->creados .
+                ' | Omitidos: ' . $resultado->omitidos
+            )
+            ->{($resultado->omitidos > 0 || $resultado->tieneErrores()) ? 'warning' : 'success'}()
+            ->send();
+    }
+
+    public function importarAsignacionConceptos(): void
+    {
+        if (! $this->archivoAsignacionConceptos) {
+            Notification::make()
+                ->title('Seleccione un archivo Excel.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! $this->sedeId || ! $this->periodoLectivoId) {
+            Notification::make()
+                ->title('Filtros incompletos')
+                ->body('Seleccione sede y período lectivo antes de importar.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        if (! PeriodoLectivo::query()
+            ->whereKey($this->periodoLectivoId)
+            ->where('sede_id', $this->sedeId)
+            ->exists()) {
+            Notification::make()
+                ->title('Sede y período incompatibles')
+                ->body('El período lectivo seleccionado no pertenece a la sede de destino.')
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        $service = new AsignacionConceptosImportService();
+
+        $resultado = $service->importar(
+            $this->archivoAsignacionConceptos->getRealPath(),
+            [
+                'sede_id' => $this->sedeId,
+                'periodo_lectivo_id' => $this->periodoLectivoId,
+            ]
+        );
+
+        $this->resultadoAsignacionConceptos = array_merge(
+            $resultado->toArray(),
+            [
+                'tarifasCreadas' => $service->tarifasCreadas,
+            ]
+        );
+
+        $this->erroresAsignacionConceptos = $resultado->errores;
+
+        $this->mostrarModalErroresAsignacionConceptos =
+            $resultado->omitidos > 0 || $resultado->tieneErrores();
+
+        $this->guardarHistorialImportacion(
+            'asignacion_conceptos',
+            $this->resultadoAsignacionConceptos
+        );
+
+        Notification::make()
+            ->title(
+                $resultado->omitidos > 0 || $resultado->tieneErrores()
+                    ? 'Importación finalizada con advertencias'
+                    : 'Importación completada'
+            )
+            ->body(
+                'Filas leídas: ' . $resultado->filasLeidas .
+                ' | Asignaciones creadas: ' . $resultado->creados .
+                ' | Tarifas creadas: ' . $service->tarifasCreadas .
+                ' | Asignaciones omitidas: ' . $resultado->omitidos
+            )
+            ->{($resultado->omitidos > 0 || $resultado->tieneErrores()) ? 'warning' : 'success'}()
+            ->send();
+    }
 
     public function getSedesProperty()
     {

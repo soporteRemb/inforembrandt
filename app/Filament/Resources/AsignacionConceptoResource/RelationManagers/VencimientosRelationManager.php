@@ -21,21 +21,36 @@ class VencimientosRelationManager extends RelationManager
         return $form
             ->schema([
 
-                Forms\Components\Hidden::make('mes')
-                    ->dehydrateStateUsing(function ($state, Forms\Get $get) {
-                        $fecha = $get('fecha_vencimiento');
 
-                        if (! $fecha) {
-                            return 'SIN_MES';
-                        }
+                Forms\Components\Select::make('mes')
+                    ->label('Mes')
+                    ->options([
+                        'ENERO' => 'Enero',
+                        'FEBRERO' => 'Febrero',
+                        'MARZO' => 'Marzo',
+                        'ABRIL' => 'Abril',
+                        'MAYO' => 'Mayo',
+                        'JUNIO' => 'Junio',
+                        'JULIO' => 'Julio',
+                        'AGOSTO' => 'Agosto',
+                        'SEPTIEMBRE' => 'Septiembre',
+                        'OCTUBRE' => 'Octubre',
+                        'NOVIEMBRE' => 'Noviembre',
+                        'DICIEMBRE' => 'Diciembre',
+                    ])
+                    ->placeholder('Seleccionar mes')
+                    ->native(false),
 
-                        return mb_strtoupper(
-                            \Carbon\Carbon::parse($fecha)
-                                ->locale('es')
-                                ->translatedFormat('F')
-                        );
-                    }),
-                    
+                Forms\Components\TextInput::make('anio')
+                    ->label('Año')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(2000)
+                    ->maxValue(9999)
+                    ->default(fn () => session('anio'))
+                    ->placeholder('Ej. 2027'),
+
+
                 Forms\Components\DatePicker::make('fecha_vencimiento')
                     ->label('Vencimiento')
                     ->native(false)
@@ -184,10 +199,19 @@ class VencimientosRelationManager extends RelationManager
                     )
                     ->color('danger'),
             ])
+
             ->columns([
-                Tables\Columns\TextColumn::make(
-                    'fecha_vencimiento'
-                )
+                Tables\Columns\TextColumn::make('mes')
+                    ->label('Mes')
+                    ->placeholder('—')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('anio')
+                    ->label('Año')
+                    ->placeholder('—')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('fecha_vencimiento')
                     ->label('Vencimiento')
                     ->date('d/m/Y')
                     ->sortable(),

@@ -9,6 +9,7 @@ class ConceptoCobro extends Model
 {
     protected $table = 'concepto_cobros';
 
+
     protected $fillable = [
         'sede_id',
         'periodo_lectivo_id',
@@ -19,16 +20,23 @@ class ConceptoCobro extends Model
         'impuesto',
         'facturar',
         'obligatorio',
+        'portal_acudientes',
+        'aplicar_intereses',
         'activo',
     ];
+
+
 
     protected $casts = [
         'codigo' => 'integer',
         'impuesto' => 'integer',
         'facturar' => 'boolean',
         'obligatorio' => 'boolean',
+        'portal_acudientes' => 'boolean',
+        'aplicar_intereses' => 'boolean',
         'activo' => 'boolean',
     ];
+
 
     public function sede(): BelongsTo
     {

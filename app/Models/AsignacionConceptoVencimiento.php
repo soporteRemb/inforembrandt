@@ -11,12 +11,14 @@ class AsignacionConceptoVencimiento extends Model
     protected $fillable = [
         'asignacion_concepto_id',
         'mes',
+        'anio',
         'fecha_vencimiento',
         'tipo_limite_extemporaneo_id',
         'valor',
     ];
 
     protected $casts = [
+        'anio' => 'integer',
         'fecha_vencimiento' => 'date',
         'valor' => 'decimal:2',
     ];

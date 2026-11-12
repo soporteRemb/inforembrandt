@@ -191,8 +191,9 @@ class ConceptoCobroResource extends Resource
                             ->dehydrateStateUsing(fn ($state) => (int) $state)
                             ->columnSpan(4),
 
-                        Forms\Components\Grid::make(3)
-                            ->columnSpan(5)
+
+                        Forms\Components\Grid::make(5)
+                            ->columnSpan(12)
                             ->schema([
                                 Forms\Components\Toggle::make('facturar')
                                     ->label('Facturar')
@@ -208,7 +209,18 @@ class ConceptoCobroResource extends Resource
                                     ->label('Activo')
                                     ->default(true)
                                     ->inline(false),
+
+                                Forms\Components\Toggle::make('portal_acudientes')
+                                    ->label('Portal acudientes')
+                                    ->default(false)
+                                    ->inline(false),
+
+                                Forms\Components\Toggle::make('aplicar_intereses')
+                                    ->label('Aplicar intereses')
+                                    ->default(false)
+                                    ->inline(false),
                             ]),
+
                     ]),
             ]);
     }
@@ -282,6 +294,24 @@ class ConceptoCobroResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->alignCenter(),
+
+                Tables\Columns\IconColumn::make('portal_acudientes')
+                    ->label('Portal acudientes')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter(),
+
+                Tables\Columns\IconColumn::make('aplicar_intereses')
+                    ->label('Aplicar intereses')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger')
+                    ->alignCenter(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('sede_id')
@@ -318,7 +348,7 @@ class ConceptoCobroResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->label('Editar'),
-                    
+
                 Tables\Actions\DeleteAction::make()
                     ->label('Borrar')
                     ->before(function (
@@ -335,9 +365,9 @@ class ConceptoCobroResource extends Resource
                             $action->cancel();
                         }
                     }),
-                    
+
             ])
-            
+
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make()
                     ->label('Borrar seleccionados'),
